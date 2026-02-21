@@ -1,0 +1,2 @@
+# supermarket-pos
+نظام مبيعات
