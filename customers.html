@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>العملاء</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<header>
+<h2>👥 إدارة العملاء</h2>
+<button onclick="logout()">خروج</button>
+</header>
+
+<div class="pos-container">
+
+<h3>➕ إضافة عميل</h3>
+
+<input type="text" id="c_name" placeholder="اسم العميل">
+<input type="text" id="c_phone" placeholder="رقم الهاتف">
+
+<button onclick="addCustomer()">إضافة</button>
+
+<hr>
+
+<h3>📋 قائمة العملاء</h3>
+<table border="1" width="100%">
+<thead>
+<tr>
+<th>الاسم</th>
+<th>الهاتف</th>
+<th>النقاط</th>
+</tr>
+</thead>
+<tbody id="customersTable"></tbody>
+</table>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/customers.js"></script>
+
+<script>
+protectPage(["manager","admin"]);
+</script>
+
+</body>
+</html>

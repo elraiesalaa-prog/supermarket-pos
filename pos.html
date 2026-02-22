@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+
+<body>
+
+<header>
+<h2>نقطة البيع</h2>
+<button onclick="logout()">خروج</button>
+</header>
+
+<div class="pos-container">
+
+<input type="text" id="barcodeInput" placeholder="امسح الباركود">
+<button onclick="startScanner()">📷 كاميرا</button>
+
+<div id="reader"></div>
+
+<h3>الفاتورة</h3>
+<div id="cart"></div>
+<select id="customerSelect">
+<option value="">عميل نقدي</option>
+</select>
+
+<button onclick="usePoints()">استخدام نقاط</button>
+<h3>الإجمالي: <span id="total">0</span></h3>
+<button onclick="checkout('cash')">دفع نقدي</button>
+<button onclick="requestLocalPayment()">دفع تحويل / موبايل موني</button>
+
+<button onclick="checkout('card')">دفع بطاقة</button>
+<button onclick="printReceipt()">طباعة</button>
+<script>
+protectPage(["cashier","manager","admin"]);
+</script>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/pos.js"></script>
+
+<script>
+if ('serviceWorker' in navigator) {
+navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+<script src="js/pos.js"></script>
+<script>
+loadProducts();
+loadCustomersPOS();
+</script>
+</body>
+</html>

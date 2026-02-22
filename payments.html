@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>مراجعة المدفوعات</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+<h3>
+طلبات جديدة: <span id="notificationCount">0</span>
+</h3>
+
+<audio id="alertSound">
+<source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
+<h2>💳 المدفوعات المعلقة</h2>
+
+<div id="paymentsList"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/payments.js"></script>
+
+</body>
+</html>

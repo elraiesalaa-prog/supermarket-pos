@@ -1,0 +1,4 @@
+https://vmsvmvetlpszsmqigonp.supabase.co
+sb_publishable_4sCsIFqPbKbfCY66CsXuzA_hgOFLWO0
+PASTE_URL_HERE
+PASTE_ANON_KEY_HERE

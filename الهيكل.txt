@@ -1,0 +1,29 @@
+supermarket-erp/
+│
+├── index.html
+├── dashboard.html
+├── pos.html
+├── inventory.html
+├── purchases.html
+├── suppliers.html
+├── customers.html
+├── reports.html
+│
+├── css/
+│   └── style.css
+│
+├── js/
+│   ├── supabase.js
+│   ├── auth.js
+│   ├── pos.js
+│   ├── inventory.js
+│   ├── purchases.js
+│   ├── reports.js
+│   └── utils.js
+│
+├── assets/
+│   ├── logo.png
+│   └── icons/
+│
+├── manifest.json
+└── service-worker.js

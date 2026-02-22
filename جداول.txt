@@ -1,0 +1,74 @@
+create table profiles (
+id uuid references auth.users on delete cascade,
+full_name text,
+role text check (role in ('admin','cashier','manager','storekeeper')),
+created_at timestamp default now(),
+primary key (id)
+);
+create table profiles (
+id uuid references auth.users on delete cascade,
+full_name text,
+role text check (role in ('admin','cashier','manager','storekeeper')),
+created_at timestamp default now(),
+primary key (id)
+);
+create table products (
+id uuid default gen_random_uuid() primary key,
+name text,
+barcode text unique,
+category text,
+cost_price numeric,
+price numeric,
+stock integer default 0,
+min_stock integer default 5,
+supplier_id uuid references suppliers(id),
+created_at timestamp default now()
+);
+
+create table purchases (
+id uuid default gen_random_uuid() primary key,
+supplier_id uuid references suppliers(id),
+total numeric,
+created_at timestamp default now()
+);
+
+create table purchase_items (
+id uuid default gen_random_uuid() primary key,
+purchase_id uuid references purchases(id) on delete cascade,
+product_id uuid references products(id),
+quantity integer,
+cost_price numeric
+);
+
+create table sales (
+id uuid default gen_random_uuid() primary key,
+cashier_id uuid references profiles(id),
+total numeric,
+profit numeric,
+payment_method text,
+
+created_at timestamp default now()
+);
+create table sales (
+id uuid default gen_random_uuid() primary key,
+cashier_id uuid references profiles(id),
+total numeric,
+profit numeric,
+payment_method text,
+created_at timestamp default now()
+);
+
+create table customers (
+id uuid default gen_random_uuid() primary key,
+name text,
+phone text,
+points integer default 0,
+created_at timestamp default now()
+);
+create table if not exists suppliers (
+id uuid default gen_random_uuid() primary key,
+name text,
+phone text,
+address text,
+created_at timestamp default now()
+);

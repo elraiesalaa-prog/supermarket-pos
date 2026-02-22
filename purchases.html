@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إنشاء فاتورة شراء</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<header>
+<h2>🧾 فاتورة شراء</h2>
+<button onclick="logout()">خروج</button>
+</header>
+
+<div class="pos-container">
+
+<select id="supplierSelect"></select>
+
+<hr>
+
+<h3>إضافة منتج للفاتورة</h3>
+
+<select id="productSelect"></select>
+<input type="number" id="p_qty" placeholder="الكمية">
+<input type="number" id="p_cost" placeholder="سعر التكلفة">
+
+<button onclick="addItem()">إضافة</button>
+
+<hr>
+
+<h3>عناصر الفاتورة</h3>
+<div id="purchaseItems"></div>
+
+<h3>الإجمالي: <span id="purchaseTotal">0</span></h3>
+
+<button onclick="savePurchase()">حفظ الفاتورة</button>
+
+</div>
+<button onclick="savePurchase()">حفظ الفاتورة</button>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/purchases.js"></script>
+<script>
+protectPage(["manager","admin"]);
+</script>
+</body>
+</html>
