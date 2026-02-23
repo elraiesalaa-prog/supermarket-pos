@@ -1,60 +1,94 @@
+// ======================
+// تسجيل الدخول
+// ======================
 async function login() {
 
-const { data, error } = await supabase.auth.signInWithPassword({
-email: document.getElementById("email").value,
-password: document.getElementById("password").value
-});
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-if (error) {
-alert("خطأ في تسجيل الدخول");
-return;
+  if (!email || !password) {
+    alert("يرجى إدخال البريد وكلمة المرور");
+    return;
+  }
+
+  const { data, error } = await window.supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await checkUserRole();
 }
 
-checkUserRole();
+
+
+// ======================
+// التحقق من دور المستخدم
+// ======================
+async function checkUserRole() {
+
+  const { data: { user }, error: userError } =
+    await window.supabaseClient.auth.getUser();
+
+  if (userError || !user) {
+    alert("فشل في جلب بيانات المستخدم");
+    return;
+  }
+
+  const { data: profile, error: profileError } =
+    await window.supabaseClient
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+  if (profileError || !profile) {
+    alert("لا يوجد دور للمستخدم");
+    return;
+  }
+
+  localStorage.setItem("role", profile.role);
+
+  // التحويل حسب الدور
+  if (profile.role === "cashier") {
+    window.location.href = "pos.html";
+  }
+
+  if (profile.role === "manager" || profile.role === "admin") {
+    window.location.href = "dashboard.html";
+  }
+
+  if (profile.role === "storekeeper") {
+    window.location.href = "inventory.html";
+  }
 }
 
-async function checkUserRole(){
 
-const { data: { user } } = await supabase.auth.getUser();
 
-const { data: profile } = await supabase
-.from("profiles")
-.select("role")
-.eq("id", user.id)
-.single();
-
-if(!profile){
-alert("لا يوجد دور للمستخدم");
-return;
+// ======================
+// تسجيل الخروج
+// ======================
+async function logout() {
+  await window.supabaseClient.auth.signOut();
+  localStorage.clear();
+  window.location.href = "index.html";
 }
 
-localStorage.setItem("role", profile.role);
 
-if(profile.role === "cashier"){
-location = "pos.html";
-}
 
-if(profile.role === "manager" || profile.role === "admin"){
-location = "dashboard.html";
-}
+// ======================
+// حماية الصفحات
+// ======================
+function protectPage(allowedRoles) {
 
-if(profile.role === "storekeeper"){
-location = "inventory.html";
-}
-}
+  const role = localStorage.getItem("role");
 
-async function logout(){
-await supabase.auth.signOut();
-localStorage.clear();
-location = "index.html";
-}
-
-function protectPage(allowedRoles){
-
-const role = localStorage.getItem("role");
-
-if(!allowedRoles.includes(role)){
-alert("غير مصرح بالدخول");
-location = "dashboard.html";
-}
+  if (!allowedRoles.includes(role)) {
+    alert("غير مصرح بالدخول");
+    window.location.href = "dashboard.html";
+  }
 }
