@@ -11,31 +11,31 @@ async function login() {
     return;
   }
 
-  const { data, error } = await window.supabaseClient.auth.signInWithPassword({
-    email: email,
-    password: password
-  });
+  const { data, error } =
+    await window.supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
 
   if (error) {
     alert(error.message);
     return;
   }
 
-  await checkUserRole();
+  checkUserRole();
 }
 
 
-
 // ======================
-// التحقق من دور المستخدم
+// التحقق من الدور
 // ======================
 async function checkUserRole() {
 
-  const { data: { user }, error: userError } =
+  const { data: { user }, error } =
     await window.supabaseClient.auth.getUser();
 
-  if (userError || !user) {
-    alert("فشل في جلب بيانات المستخدم");
+  if (error || !user) {
+    alert("فشل في جلب المستخدم");
     return;
   }
 
@@ -53,7 +53,6 @@ async function checkUserRole() {
 
   localStorage.setItem("role", profile.role);
 
-  // التحويل حسب الدور
   if (profile.role === "cashier") {
     window.location.href = "pos.html";
   }
@@ -68,7 +67,6 @@ async function checkUserRole() {
 }
 
 
-
 // ======================
 // تسجيل الخروج
 // ======================
@@ -77,7 +75,6 @@ async function logout() {
   localStorage.clear();
   window.location.href = "index.html";
 }
-
 
 
 // ======================
