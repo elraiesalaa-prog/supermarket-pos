@@ -2,16 +2,20 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>إنشاء مستخدم جديد</title>
+<title>لوحة إدارة المستخدمين</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-10 font-sans">
+<body class="bg-gray-100 p-5 font-sans">
 
-<h1 class="text-2xl font-bold mb-5">إنشاء مستخدم جديد</h1>
+<h1 class="text-2xl font-bold mb-5">لوحة إدارة المستخدمين</h1>
 
-<div class="bg-white p-5 rounded shadow w-full max-w-lg">
-  <div class="grid grid-cols-1 gap-4">
+<div class="bg-white p-5 rounded shadow mb-5">
+  <h2 class="text-lg font-semibold mb-3">إنشاء مستخدم جديد</h2>
+  <div class="grid grid-cols-6 gap-3">
     <input id="new_id" type="text" placeholder="معرف المستخدم" class="border p-2 rounded">
     <input id="new_pwd" type="password" placeholder="كلمة المرور" class="border p-2 rounded">
     <input id="new_fullname" type="text" placeholder="الاسم الكامل" class="border p-2 rounded">
@@ -22,46 +26,148 @@
       <option value="بائع">بائع</option>
       <option value="مستخدم عادي">مستخدم عادي</option>
     </select>
-    <button id="btnCreate" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">إنشاء المستخدم</button>
+    <button id="btnCreate" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 col-span-2">إنشاء</button>
   </div>
-  <p id="status" class="mt-3 text-green-600"></p>
+</div>
+
+<div class="bg-white p-5 rounded shadow mb-5">
+  <h2 class="text-lg font-semibold mb-3">البحث والتصفية</h2>
+  <div class="grid grid-cols-4 gap-3 mb-3">
+    <input id="search_name" type="text" placeholder="بحث بالاسم..." class="border p-2 rounded col-span-2">
+    <select id="filter_usertype" class="border p-2 rounded">
+      <option value="">كل الصلاحيات</option>
+      <option value="مدير">مدير</option>
+      <option value="تقني IT">تقني IT</option>
+      <option value="مشرف">مشرف</option>
+      <option value="بائع">بائع</option>
+      <option value="مستخدم عادي">مستخدم عادي</option>
+    </select>
+    <div class="flex gap-2">
+      <button id="btnExcel" class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600">تصدير Excel</button>
+      <button id="btnPDF" class="bg-purple-500 text-white px-3 py-2 rounded hover:bg-purple-600">تصدير PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white p-5 rounded shadow">
+  <h2 class="text-lg font-semibold mb-3">قائمة المستخدمين</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-center border border-gray-300" id="usersTable">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="border p-2">المعرف</th>
+          <th class="border p-2">الاسم الكامل</th>
+          <th class="border p-2">كلمة المرور</th>
+          <th class="border p-2">نوع الصلاحية</th>
+          <th class="border p-2">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // إعداد Supabase
+  // تعريف Supabase
   const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
   const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-  const btnCreate = document.getElementById('btnCreate');
-  const status = document.getElementById('status');
+  // تحميل المستخدمين
+  async function loadUsers() {
+    const search = document.getElementById('search_name').value.trim();
+    const filter = document.getElementById('filter_usertype').value;
 
-  btnCreate.addEventListener('click', async () => {
+    let query = supabase.from('tb_users').select('*').order('id', { ascending: true });
+    if(search) query = query.ilike('fullname', `%${search}%`);
+    if(filter) query = query.eq('usertype', filter);
+
+    const { data, error } = await query;
+    if(error){ alert("خطأ: "+error.message); return; }
+
+    const tbody = document.querySelector('#usersTable tbody');
+    tbody.innerHTML = '';
+    data.forEach(user=>{
+      const tr = document.createElement('tr');
+      if(user.usertype === "مدير") tr.className = 'bg-yellow-50';
+      else if(user.usertype === "تقني IT") tr.className = 'bg-blue-50';
+      else if(user.usertype === "مشرف") tr.className = 'bg-green-50';
+      else if(user.usertype === "بائع") tr.className = 'bg-purple-50';
+      else tr.className = 'bg-white';
+
+      tr.innerHTML = `
+        <td class="border p-2">${user.id}</td>
+        <td class="border p-2">${user.fullname||''}</td>
+        <td class="border p-2">${user.pwd||''}</td>
+        <td class="border p-2">${user.usertype||''}</td>
+        <td class="border p-2">
+          <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onclick="deleteUser('${user.id}')">حذف</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // إنشاء مستخدم جديد وإرسال البيانات إلى tb_users
+  async function createUser(){
     const id = document.getElementById('new_id').value.trim();
     const pwd = document.getElementById('new_pwd').value.trim();
     const fullname = document.getElementById('new_fullname').value.trim();
     const usertype = document.getElementById('new_usertype').value;
 
-    if(!id || !pwd){
-      alert("المعرف وكلمة المرور مطلوبان");
-      return;
-    }
+    if(!id || !pwd){ alert("المعرف وكلمة المرور مطلوبان"); return; }
 
     const { error } = await supabase.from('tb_users').insert([{ id, pwd, fullname, usertype }]);
-    if(error){
-      status.textContent = "حدث خطأ: " + error.message;
-      status.className = "mt-3 text-red-600";
-    } else {
-      status.textContent = "تم إنشاء المستخدم بنجاح!";
-      status.className = "mt-3 text-green-600";
-      // إعادة تعيين الحقول
-      document.getElementById('new_id').value = '';
-      document.getElementById('new_pwd').value = '';
-      document.getElementById('new_fullname').value = '';
-      document.getElementById('new_usertype').selectedIndex = 0;
-    }
-  });
+    if(error){ alert("حدث خطأ: " + error.message); return; }
+
+    alert("تم إنشاء المستخدم بنجاح!");
+    loadUsers();
+
+    // إعادة تعيين الحقول
+    document.getElementById('new_id').value = '';
+    document.getElementById('new_pwd').value = '';
+    document.getElementById('new_fullname').value = '';
+    document.getElementById('new_usertype').selectedIndex = 0;
+  }
+
+  // حذف المستخدم
+  async function deleteUser(id){
+    if(!confirm("هل أنت متأكد من حذف هذا المستخدم؟")) return;
+    const { error } = await supabase.from('tb_users').delete().eq('id', id);
+    if(error){ alert("لا يمكن الحذف: "+error.message); return; }
+    loadUsers();
+  }
+
+  // تصدير Excel
+  async function exportExcel(){
+    const { data, error } = await supabase.from('tb_users').select('*');
+    if(error){ alert("خطأ: "+error.message); return; }
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+    XLSX.writeFile(wb, "Users.xlsx");
+  }
+
+  // تصدير PDF
+  async function exportPDF(){
+    const { data, error } = await supabase.from('tb_users').select('*');
+    if(error){ alert("خطأ: "+error.message); return; }
+    const doc = new jspdf.jsPDF();
+    doc.autoTable({ head:[["المعرف","الاسم","كلمة المرور","نوع الصلاحية"]],
+                    body:data.map(u=>[u.id,u.fullname,u.pwd,u.usertype]) });
+    doc.save("Users.pdf");
+  }
+
+  // ربط الأزرار بالأحداث بعد التأكد من تعريف supabase
+  document.getElementById('btnCreate').addEventListener('click', createUser);
+  document.getElementById('search_name').addEventListener('input', loadUsers);
+  document.getElementById('filter_usertype').addEventListener('change', loadUsers);
+  document.getElementById('btnExcel').addEventListener('click', exportExcel);
+  document.getElementById('btnPDF').addEventListener('click', exportPDF);
+
+  // تحميل المستخدمين عند فتح الصفحة
+  loadUsers();
 });
 </script>
 
