@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>لوحة إدارة المستخدمين - محدثة</title>
+<title>لوحة إدارة المستخدمين</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -69,7 +69,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // إعداد Supabase
+  // إنشاء عميل Supabase
   const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
   const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // إنشاء مستخدم
+  // إنشاء مستخدم جديد
   async function createUser(){
     const id=document.getElementById('new_id').value.trim();
     const pwd=document.getElementById('new_pwd').value.trim();
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     doc.save("Users.pdf");
   }
 
-  // ربط الأزرار
+  // ربط الأزرار بالأحداث
   document.getElementById('btnCreate').addEventListener('click', createUser);
   document.getElementById('search_name').addEventListener('input', loadUsers);
   document.getElementById('filter_usertype').addEventListener('change', loadUsers);
