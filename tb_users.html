@@ -37,7 +37,7 @@
     <select id="filter_usertype" onchange="loadUsers()" class="border p-2 rounded">
       <option value="">كل الصلاحيات</option>
       <option value="مدير">مدير</option>
-      <option value="تقني أي تي">تقني أي تي</option>
+      <option value="تقني IT">تقني IT</option>
       <option value="مشرف">مشرف</option>
       <option value="بائع">بائع</option>
       <option value="مستخدم عادي">مستخدم عادي</option>
@@ -91,7 +91,7 @@ async function loadUsers() {
     const tr = document.createElement('tr');
     // تلوين المديرين
     if(user.usertype === "مدير") tr.className = 'bg-yellow-50';
-    else if(user.usertype === "تقني أي تي") tr.className = 'bg-blue-50';
+    else if(user.usertype === "تقني IT") tr.className = 'bg-blue-50';
     else if(user.usertype === "مشرف") tr.className = 'bg-green-50';
     else if(user.usertype === "بائع") tr.className = 'bg-purple-50';
     else tr.className = 'bg-white';
@@ -103,7 +103,7 @@ async function loadUsers() {
       <td class="border p-2">
         <select class="border p-1 rounded w-full" onchange="updateUser('${user.id}','usertype',this.value)">
           <option value="مدير" ${user.usertype==='مدير'?'selected':''}>مدير</option>
-          <option value="تقني أي تي" ${user.usertype==='تقني أي تي'?'selected':''}>تقني أي تي</option>
+          <option value="تقني IT" ${user.usertype==='تقني IT'?'selected':''}>تقنيIT</option>
           <option value="مشرف" ${user.usertype==='مشرف'?'selected':''}>مشرف</option>
           <option value="بائع" ${user.usertype==='بائع'?'selected':''}>بائع</option>
           <option value="مستخدم عادي" ${user.usertype==='مستخدم عادي'?'selected':''}>مستخدم عادي</option>
@@ -172,4 +172,5 @@ loadUsers();
 
 </body>
 </html>
+
 
