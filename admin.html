@@ -11,6 +11,19 @@
 </div>
 
 </div>
+  <div class="bg-blue-500 text-white flex gap-4 p-2 justify-center">
+
+<button class="px-4 py-1 bg-blue-600 rounded">تفاصيل المنتجات</button>
+
+<button class="px-4 py-1 bg-blue-600 rounded">فواتير مبدئية</button>
+
+<button class="px-4 py-1 bg-blue-600 rounded">فواتير نهائية</button>
+
+<button class="px-4 py-1 bg-blue-600 rounded">إنشاء نسخة احتياطية</button>
+
+<button class="px-4 py-1 bg-blue-600 rounded">استعادة نسخة احتياطية</button>
+
+</div>
 <head>
 
 <meta charset="UTF-8">
@@ -31,15 +44,15 @@ margin-bottom:6px;
 border-radius:8px;
 cursor:pointer;
 transition:0.3s;
-background:rgba(255,255,255,0.25);
+background:#3b82f6;
+color:white;
 font-weight:bold;
 }
 
 .menu:hover{
-background:rgba(255,255,255,0.55);
-transform:translateX(-5px);
+background:#2563eb;
+transform:translateX(-4px);
 }
-
 .panel{
 background:white;
 box-shadow:0 10px 25px rgba(0,0,0,0.2);
@@ -92,25 +105,20 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
 <div class="menu">الأصناف</div>
 <div class="menu">المنتجات</div>
+
 <div class="menu">العملاء</div>
 <div class="menu">الموردين</div>
 
-<hr class="my-3">
+<hr>
 
 <div class="menu">القروض</div>
 <div class="menu">سداد القروض</div>
 
-<hr class="my-3">
-
-<div class="menu">قائمة الأسعار</div>
-<div class="menu">أوزان بالكيلو</div>
-<div class="menu">أوزان بالرطل</div>
-
-<hr class="my-3">
+<hr>
 
 <div class="menu">المصروفات</div>
 
-<hr class="my-3">
+<hr>
 
 <div class="menu">تعديل الترويسة</div>
 
@@ -126,7 +134,7 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 <img 
 src="pic9.png"
 loading="lazy"
-style="max-width:100%; max-height:100%; object-fit:contain;">
+style="max-width:120%; max-height:120%; object-fit:contain;">
 
 </div>
 
@@ -143,25 +151,18 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 </h2>
 
 <div class="menu">المبيعات</div>
-<div class="menu">تفاصيل المنتجات</div>
 <div class="menu">الطلبيات</div>
 <div class="menu">أرباح الطلبيات</div>
 
-<hr class="my-3">
+<hr>
 
-<div class="menu">فواتير مبدئية</div>
-<div class="menu">فواتير نهائية</div>
+<div class="menu">قائمة الأسعار</div>
+<div class="menu">أوزان بالكيلو</div>
+<div class="menu">أوزان بالرطل</div>
 
-<hr class="my-3">
+<hr>
 
-<div class="menu">إنشاء نسخة احتياطية</div>
-<div class="menu">استعادة نسخة احتياطية</div>
-
-<hr class="my-3">
-
-<div class="menu bg-red-500 text-white text-center" onclick="logout()">
-خروج
-</div>
+<div class="menu bg-red-500 text-center">خروج</div>
 
 </div>
 
@@ -252,6 +253,7 @@ loadUser();
 
 </body>
 </html>
+
 
 
 
