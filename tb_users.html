@@ -2,17 +2,17 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>تسجيل مستخدم جديد</title>
+<title>إنشاء مستخدم</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-10 font-sans">
 
-<h1 class="text-2xl font-bold mb-5">تسجيل مستخدم جديد</h1>
+<h1 class="text-2xl font-bold mb-5">إنشاء مستخدم جديد</h1>
 
 <div class="bg-white p-5 rounded shadow w-full max-w-lg">
   <div class="grid grid-cols-1 gap-4">
-    <input id="new_id" type="email" placeholder="البريد الإلكتروني" class="border p-2 rounded">
+    <input id="new_id" type="text" placeholder="معرف المستخدم" class="border p-2 rounded">
     <input id="new_pwd" type="password" placeholder="كلمة المرور" class="border p-2 rounded">
     <input id="new_fullname" type="text" placeholder="الاسم الكامل" class="border p-2 rounded">
     <select id="new_usertype" class="border p-2 rounded">
@@ -22,54 +22,42 @@
       <option value="بائع">بائع</option>
       <option value="مستخدم عادي">مستخدم عادي</option>
     </select>
-    <button id="btnRegister" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">تسجيل المستخدم</button>
+    <button id="btnCreate" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">إنشاء</button>
   </div>
   <p id="status" class="mt-3 text-green-600"></p>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // إعداد Supabase
   const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
   const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
   const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
   const status = document.getElementById('status');
 
-  document.getElementById('btnRegister').addEventListener('click', async () => {
-    const email = document.getElementById('new_id').value.trim();
-    const password = document.getElementById('new_pwd').value.trim();
+  document.getElementById('btnCreate').addEventListener('click', async () => {
+    const id = document.getElementById('new_id').value.trim();
+    const pwd = document.getElementById('new_pwd').value.trim();
     const fullname = document.getElementById('new_fullname').value.trim();
     const usertype = document.getElementById('new_usertype').value;
 
-    if(!email || !password){ alert("البريد الإلكتروني وكلمة المرور مطلوبان"); return; }
-
-    // تسجيل المستخدم في auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password
-    });
-
-    if(authError){
-      status.textContent = "خطأ في التسجيل: " + authError.message;
+    if(!id || !pwd){
+      status.textContent = "المعرف وكلمة المرور مطلوبان";
       status.className = "mt-3 text-red-600";
       return;
     }
 
-    // إضافة بيانات إضافية في جدول tb_users
-    const { error: dbError } = await supabase.from('tb_users').insert([{
-      id: email,       // نستخدم البريد كمفتاح
-      pwd: password,
-      fullname,
-      usertype
-    }]);
+    // إرسال البيانات إلى جدول tb_users
+    const { error } = await supabase.from('tb_users').insert([{ id, pwd, fullname, usertype }]);
 
-    if(dbError){
-      status.textContent = "حدث خطأ عند إضافة البيانات: " + dbError.message;
+    if(error){
+      status.textContent = "حدث خطأ: " + error.message;
       status.className = "mt-3 text-red-600";
       return;
     }
 
-    status.textContent = "تم تسجيل المستخدم بنجاح!";
+    status.textContent = "تم إنشاء المستخدم بنجاح!";
     status.className = "mt-3 text-green-600";
 
     // إعادة تعيين الحقول
