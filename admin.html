@@ -1,128 +1,129 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+
 <meta charset="UTF-8">
 <title>لوحة المدير</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
+
 body{
-background:#f1f5f9;
-font-family:Tahoma;
+background:linear-gradient(135deg,#1e3a8a,#0f172a);
+font-family:tahoma;
 }
-.menu-item{
+
+.menu{
 padding:10px;
-cursor:pointer;
+margin-bottom:6px;
 border-radius:8px;
-margin-bottom:5px;
+cursor:pointer;
+transition:0.3s;
 }
-.menu-item:hover{
+
+.menu:hover{
 background:#2563eb;
 color:white;
+transform:scale(1.05);
 }
+
+.panel{
+background:white;
+box-shadow:0 10px 25px rgba(0,0,0,0.2);
+}
+
 </style>
 
 </head>
+
 <body>
 
 <div class="flex h-screen">
 
-<!-- القائمة الجانبية -->
-<div class="w-64 bg-white shadow-lg p-4 overflow-y-auto">
+<!-- القائمة اليمنى -->
+<div class="w-64 panel p-4 overflow-y-auto">
 
-<h2 class="text-xl font-bold mb-4 text-center">لوحة المدير</h2>
+<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
+القائمة الرئيسية
+</h2>
 
-<div class="menu-item" onclick="openPage('cat')">الأصناف</div>
-<div class="menu-item" onclick="openPage('products')">المنتجات</div>
-<div class="menu-item" onclick="openPage('customers')">العملاء</div>
-<div class="menu-item" onclick="openPage('suppliers')">الموردين</div>
-
-<hr class="my-3">
-
-<div class="menu-item" onclick="openPage('loans')">القروض</div>
-<div class="menu-item" onclick="openPage('loanpay')">سداد القروض</div>
+<div class="menu">الأصناف</div>
+<div class="menu">المنتجات</div>
+<div class="menu">العملاء</div>
+<div class="menu">الموردين</div>
 
 <hr class="my-3">
 
-<div class="menu-item" onclick="openPage('sales')">المبيعات</div>
-<div class="menu-item" onclick="openPage('details')">تفاصيل المنتجات</div>
-<div class="menu-item" onclick="openPage('orders')">الطلبيات</div>
-<div class="menu-item" onclick="openPage('profits')">ارباح الطلبيات</div>
+<div class="menu">القروض</div>
+<div class="menu">سداد القروض</div>
 
 <hr class="my-3">
 
-<div class="menu-item" onclick="openPage('prices')">قائمة الأسعار</div>
-<div class="menu-item" onclick="openPage('kg')">اوزان بالكيلو</div>
-<div class="menu-item" onclick="openPage('lb')">اوزان بالرطل</div>
+<div class="menu">قائمة الأسعار</div>
+<div class="menu">أوزان بالكيلو</div>
+<div class="menu">أوزان بالرطل</div>
 
 <hr class="my-3">
 
-<div class="menu-item" onclick="openPage('proinvoice')">فواتير مبدئية</div>
-<div class="menu-item" onclick="openPage('invoice')">فواتير نهائية</div>
+<div class="menu">المصروفات</div>
 
 <hr class="my-3">
 
-<div class="menu-item" onclick="openPage('expenses')">المصروفات</div>
-
-<hr class="my-3">
-
-<div class="menu-item" onclick="backup()">انشاء نسخة احتياطية</div>
-<div class="menu-item" onclick="restore()">استعادة نسخة احتياطية</div>
-
-<div class="menu-item" onclick="openPage('header')">تعديل الترويسة</div>
-
-<hr class="my-3">
-
-<div class="menu-item bg-red-500 text-white text-center" onclick="logout()">خروج</div>
+<div class="menu">تعديل الترويسة</div>
 
 </div>
 
-<!-- مساحة العمل -->
-<div class="flex-1 p-6">
 
-<h1 class="text-2xl font-bold mb-4">مرحبا بك في لوحة التحكم</h1>
 
-<div id="content" class="bg-white p-6 rounded shadow">
+<!-- الوسط -->
+<div class="flex-1 flex items-center justify-center p-6">
 
-اختر قائمة من اليسار
+<div class="bg-white rounded-xl shadow-2xl p-6 w-full h-full flex items-center justify-center">
+
+<img 
+src="logo.png"
+class="max-h-full max-w-full object-contain"
+alt="صورة النظام">
 
 </div>
 
 </div>
 
+
+
+<!-- القائمة اليسرى -->
+<div class="w-64 panel p-4 overflow-y-auto">
+
+<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
+العمليات
+</h2>
+
+<div class="menu">المبيعات</div>
+<div class="menu">تفاصيل المنتجات</div>
+<div class="menu">الطلبيات</div>
+<div class="menu">أرباح الطلبيات</div>
+
+<hr class="my-3">
+
+<div class="menu">فواتير مبدئية</div>
+<div class="menu">فواتير نهائية</div>
+
+<hr class="my-3">
+
+<div class="menu">إنشاء نسخة احتياطية</div>
+<div class="menu">استعادة نسخة احتياطية</div>
+
+<hr class="my-3">
+
+<div class="menu bg-red-500 text-white text-center">
+خروج
 </div>
 
-<script>
+</div>
 
-function openPage(page){
 
-document.getElementById("content").innerHTML =
-"<h2 class='text-xl font-bold'>"+page+"</h2><p>هنا محتوى الصفحة</p>";
-
-}
-
-function logout(){
-
-localStorage.removeItem("user");
-
-window.location="index.html";
-
-}
-
-function backup(){
-
-alert("سيتم إنشاء نسخة احتياطية");
-
-}
-
-function restore(){
-
-alert("استعادة نسخة احتياطية");
-
-}
-
-</script>
+</div>
 
 </body>
 </html>
