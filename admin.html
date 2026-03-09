@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>لوحة المدير</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{
+background:#f1f5f9;
+font-family:Tahoma;
+}
+.menu-item{
+padding:10px;
+cursor:pointer;
+border-radius:8px;
+margin-bottom:5px;
+}
+.menu-item:hover{
+background:#2563eb;
+color:white;
+}
+</style>
+
+</head>
+<body>
+
+<div class="flex h-screen">
+
+<!-- القائمة الجانبية -->
+<div class="w-64 bg-white shadow-lg p-4 overflow-y-auto">
+
+<h2 class="text-xl font-bold mb-4 text-center">لوحة المدير</h2>
+
+<div class="menu-item" onclick="openPage('cat')">الأصناف</div>
+<div class="menu-item" onclick="openPage('products')">المنتجات</div>
+<div class="menu-item" onclick="openPage('customers')">العملاء</div>
+<div class="menu-item" onclick="openPage('suppliers')">الموردين</div>
+
+<hr class="my-3">
+
+<div class="menu-item" onclick="openPage('loans')">القروض</div>
+<div class="menu-item" onclick="openPage('loanpay')">سداد القروض</div>
+
+<hr class="my-3">
+
+<div class="menu-item" onclick="openPage('sales')">المبيعات</div>
+<div class="menu-item" onclick="openPage('details')">تفاصيل المنتجات</div>
+<div class="menu-item" onclick="openPage('orders')">الطلبيات</div>
+<div class="menu-item" onclick="openPage('profits')">ارباح الطلبيات</div>
+
+<hr class="my-3">
+
+<div class="menu-item" onclick="openPage('prices')">قائمة الأسعار</div>
+<div class="menu-item" onclick="openPage('kg')">اوزان بالكيلو</div>
+<div class="menu-item" onclick="openPage('lb')">اوزان بالرطل</div>
+
+<hr class="my-3">
+
+<div class="menu-item" onclick="openPage('proinvoice')">فواتير مبدئية</div>
+<div class="menu-item" onclick="openPage('invoice')">فواتير نهائية</div>
+
+<hr class="my-3">
+
+<div class="menu-item" onclick="openPage('expenses')">المصروفات</div>
+
+<hr class="my-3">
+
+<div class="menu-item" onclick="backup()">انشاء نسخة احتياطية</div>
+<div class="menu-item" onclick="restore()">استعادة نسخة احتياطية</div>
+
+<div class="menu-item" onclick="openPage('header')">تعديل الترويسة</div>
+
+<hr class="my-3">
+
+<div class="menu-item bg-red-500 text-white text-center" onclick="logout()">خروج</div>
+
+</div>
+
+<!-- مساحة العمل -->
+<div class="flex-1 p-6">
+
+<h1 class="text-2xl font-bold mb-4">مرحبا بك في لوحة التحكم</h1>
+
+<div id="content" class="bg-white p-6 rounded shadow">
+
+اختر قائمة من اليسار
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function openPage(page){
+
+document.getElementById("content").innerHTML =
+"<h2 class='text-xl font-bold'>"+page+"</h2><p>هنا محتوى الصفحة</p>";
+
+}
+
+function logout(){
+
+localStorage.removeItem("user");
+
+window.location="index.html";
+
+}
+
+function backup(){
+
+alert("سيتم إنشاء نسخة احتياطية");
+
+}
+
+function restore(){
+
+alert("استعادة نسخة احتياطية");
+
+}
+
+</script>
+
+</body>
+</html>
