@@ -1,23 +1,63 @@
 <!DOCTYPE html>
 <html lang="ar">
+
 <head>
 
 <meta charset="UTF-8">
-<title>إضافة مستخدم</title>
+<title>إدارة المستخدمين</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<style>
+
+body{
+font-family:Arial;
+padding:30px;
+background:#f4f4f4;
+}
+
+input,select{
+padding:8px;
+margin:5px;
+}
+
+button{
+padding:8px 15px;
+cursor:pointer;
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+margin-top:20px;
+background:white;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:8px;
+text-align:center;
+}
+
+th{
+background:#eee;
+}
+
+</style>
+
 </head>
 
-<body style="font-family:Arial;padding:30px">
+<body>
 
-<h2>إضافة مستخدم</h2>
+<h2>إدارة المستخدمين</h2>
 
-<input id="username" placeholder="اسم المستخدم"><br><br>
+<h3>إضافة مستخدم</h3>
 
-<input id="pwd" type="password" placeholder="كلمة المرور"><br><br>
+<input id="username" placeholder="اسم المستخدم">
 
-<input id="fullname" placeholder="الاسم الكامل"><br><br>
+<input id="pwd" placeholder="كلمة المرور">
+
+<input id="fullname" placeholder="الاسم الكامل">
 
 <select id="usertype">
 
@@ -29,11 +69,36 @@
 
 </select>
 
-<br><br>
-
-<button onclick="createUser()">إنشاء مستخدم</button>
+<button onclick="addUser()">إضافة</button>
 
 <p id="msg"></p>
+
+<hr>
+
+<h3>المستخدمين</h3>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+<th>اسم المستخدم</th>
+<th>كلمة المرور</th>
+<th>نوع المستخدم</th>
+<th>الاسم الكامل</th>
+<th>حذف</th>
+
+</tr>
+
+</thead>
+
+<tbody id="usersTable">
+
+</tbody>
+
+</table>
 
 <script>
 
@@ -42,14 +107,16 @@ const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 
 const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-async function createUser(){
+loadUsers();
 
-let username = document.getElementById("username").value;
-let pwd = document.getElementById("pwd").value;
-let fullname = document.getElementById("fullname").value;
-let usertype = document.getElementById("usertype").value;
+async function addUser(){
 
-const {data,error} = await client
+let username=document.getElementById("username").value;
+let pwd=document.getElementById("pwd").value;
+let fullname=document.getElementById("fullname").value;
+let usertype=document.getElementById("usertype").value;
+
+const {error}=await client
 .from("tb_users")
 .insert([{
 username:username,
@@ -60,13 +127,59 @@ usertype:usertype
 
 if(error){
 
-document.getElementById("msg").innerHTML = error.message;
+document.getElementById("msg").innerHTML=error.message;
 
 }else{
 
-document.getElementById("msg").innerHTML = "تم حفظ المستخدم بنجاح";
+document.getElementById("msg").innerHTML="تمت إضافة المستخدم";
+
+loadUsers();
 
 }
+
+}
+
+async function loadUsers(){
+
+const {data,error}=await client
+.from("tb_users")
+.select("*")
+.order("id",{ascending:true});
+
+let table="";
+
+data.forEach(user=>{
+
+table+=`
+<tr>
+
+<td>${user.id}</td>
+<td>${user.username}</td>
+<td>${user.pwd}</td>
+<td>${user.usertype}</td>
+<td>${user.fullname}</td>
+
+<td>
+<button onclick="deleteUser(${user.id})">حذف</button>
+</td>
+
+</tr>
+`;
+
+});
+
+document.getElementById("usersTable").innerHTML=table;
+
+}
+
+async function deleteUser(id){
+
+await client
+.from("tb_users")
+.delete()
+.eq("id",id);
+
+loadUsers();
 
 }
 
