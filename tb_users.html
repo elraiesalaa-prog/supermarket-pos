@@ -26,15 +26,15 @@
       <option value="بائع">بائع</option>
       <option value="مستخدم عادي">مستخدم عادي</option>
     </select>
-    <button onclick="createUser()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 col-span-2">إنشاء</button>
+    <button id="btnCreate" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 col-span-2">إنشاء</button>
   </div>
 </div>
 
 <div class="bg-white p-5 rounded shadow mb-5">
   <h2 class="text-lg font-semibold mb-3">البحث والتصفية</h2>
   <div class="grid grid-cols-4 gap-3 mb-3">
-    <input id="search_name" type="text" placeholder="بحث بالاسم..." oninput="loadUsers()" class="border p-2 rounded col-span-2">
-    <select id="filter_usertype" onchange="loadUsers()" class="border p-2 rounded">
+    <input id="search_name" type="text" placeholder="بحث بالاسم..." class="border p-2 rounded col-span-2">
+    <select id="filter_usertype" class="border p-2 rounded">
       <option value="">كل الصلاحيات</option>
       <option value="مدير">مدير</option>
       <option value="تقني IT">تقني IT</option>
@@ -43,8 +43,8 @@
       <option value="مستخدم عادي">مستخدم عادي</option>
     </select>
     <div class="flex gap-2">
-      <button onclick="exportExcel()" class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600">تصدير Excel</button>
-      <button onclick="exportPDF()" class="bg-purple-500 text-white px-3 py-2 rounded hover:bg-purple-600">تصدير PDF</button>
+      <button id="btnExcel" class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600">تصدير Excel</button>
+      <button id="btnPDF" class="bg-purple-500 text-white px-3 py-2 rounded hover:bg-purple-600">تصدير PDF</button>
     </div>
   </div>
 </div>
@@ -68,109 +68,115 @@
 </div>
 
 <script>
-// إعداد Supabase
-const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
-const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+document.addEventListener('DOMContentLoaded', () => {
+  // إعداد Supabase
+  const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
+  const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// تحميل المستخدمين
-async function loadUsers() {
-  const search = document.getElementById('search_name').value.trim();
-  const filter = document.getElementById('filter_usertype').value;
+  // تحميل المستخدمين
+  async function loadUsers() {
+    const search = document.getElementById('search_name').value.trim();
+    const filter = document.getElementById('filter_usertype').value;
 
-  let query = supabase.from('tb_users').select('*').order('id',{ascending:true});
-  if(search) query = query.ilike('fullname', `%${search}%`);
-  if(filter) query = query.eq('usertype', filter);
+    let query = supabase.from('tb_users').select('*').order('id',{ascending:true});
+    if(search) query = query.ilike('fullname', `%${search}%`);
+    if(filter) query = query.eq('usertype', filter);
 
-  const { data, error } = await query;
-  if(error){ alert("خطأ: "+error.message); return; }
+    const { data, error } = await query;
+    if(error){ alert("خطأ: "+error.message); return; }
 
-  const tbody = document.querySelector('#usersTable tbody');
-  tbody.innerHTML = '';
-  data.forEach(user=>{
-    const tr = document.createElement('tr');
-    // تلوين المديرين
-    if(user.usertype === "مدير") tr.className = 'bg-yellow-50';
-    else if(user.usertype === "تقني IT") tr.className = 'bg-blue-50';
-    else if(user.usertype === "مشرف") tr.className = 'bg-green-50';
-    else if(user.usertype === "بائع") tr.className = 'bg-purple-50';
-    else tr.className = 'bg-white';
+    const tbody = document.querySelector('#usersTable tbody');
+    tbody.innerHTML = '';
+    data.forEach(user=>{
+      const tr = document.createElement('tr');
+      if(user.usertype === "مدير") tr.className = 'bg-yellow-50';
+      else if(user.usertype === "تقني IT") tr.className = 'bg-blue-50';
+      else if(user.usertype === "مشرف") tr.className = 'bg-green-50';
+      else if(user.usertype === "بائع") tr.className = 'bg-purple-50';
+      else tr.className = 'bg-white';
 
-    tr.innerHTML = `
-      <td class="border p-2">${user.id}</td>
-      <td class="border p-2" contenteditable="true" onblur="updateUser('${user.id}','fullname',this.innerText)">${user.fullname||''}</td>
-      <td class="border p-2"><input type="password" class="border p-1 rounded w-full" value="${user.pwd||''}" onblur="updateUser('${user.id}','pwd',this.value)"></td>
-      <td class="border p-2">
-        <select class="border p-1 rounded w-full" onchange="updateUser('${user.id}','usertype',this.value)">
-          <option value="مدير" ${user.usertype==='مدير'?'selected':''}>مدير</option>
-          <option value="تقني IT" ${user.usertype==='تقني IT'?'selected':''}>تقنيIT</option>
-          <option value="مشرف" ${user.usertype==='مشرف'?'selected':''}>مشرف</option>
-          <option value="بائع" ${user.usertype==='بائع'?'selected':''}>بائع</option>
-          <option value="مستخدم عادي" ${user.usertype==='مستخدم عادي'?'selected':''}>مستخدم عادي</option>
-        </select>
-      </td>
-      <td class="border p-2">
-        <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onclick="deleteUser('${user.id}')">حذف</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
+      tr.innerHTML = `
+        <td class="border p-2">${user.id}</td>
+        <td class="border p-2" contenteditable="true" onblur="updateUser('${user.id}','fullname',this.innerText)">${user.fullname||''}</td>
+        <td class="border p-2"><input type="password" class="border p-1 rounded w-full" value="${user.pwd||''}" onblur="updateUser('${user.id}','pwd',this.value)"></td>
+        <td class="border p-2">
+          <select class="border p-1 rounded w-full" onchange="updateUser('${user.id}','usertype',this.value)">
+            <option value="مدير" ${user.usertype==='مدير'?'selected':''}>مدير</option>
+            <option value="تقني IT" ${user.usertype==='تقني IT'?'selected':''}>تقني IT</option>
+            <option value="مشرف" ${user.usertype==='مشرف'?'selected':''}>مشرف</option>
+            <option value="بائع" ${user.usertype==='بائع'?'selected':''}>بائع</option>
+            <option value="مستخدم عادي" ${user.usertype==='مستخدم عادي'?'selected':''}>مستخدم عادي</option>
+          </select>
+        </td>
+        <td class="border p-2">
+          <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onclick="deleteUser('${user.id}')">حذف</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-// إنشاء مستخدم
-async function createUser(){
-  const id=document.getElementById('new_id').value.trim();
-  const pwd=document.getElementById('new_pwd').value.trim();
-  const fullname=document.getElementById('new_fullname').value.trim();
-  const usertype=document.getElementById('new_usertype').value;
-  if(!id||!pwd){alert("المعرف وكلمة المرور مطلوبان"); return;}
+  // إنشاء مستخدم
+  async function createUser(){
+    const id=document.getElementById('new_id').value.trim();
+    const pwd=document.getElementById('new_pwd').value.trim();
+    const fullname=document.getElementById('new_fullname').value.trim();
+    const usertype=document.getElementById('new_usertype').value;
+    if(!id||!pwd){alert("المعرف وكلمة المرور مطلوبان"); return;}
 
-  const { error }=await supabase.from('tb_users').insert([{id,pwd,fullname,usertype}]);
-  if(error){alert("خطأ: "+error.message); return;}
+    const { error }=await supabase.from('tb_users').insert([{id,pwd,fullname,usertype}]);
+    if(error){alert("خطأ: "+error.message); return;}
+    loadUsers();
+    document.getElementById('new_id').value='';
+    document.getElementById('new_pwd').value='';
+    document.getElementById('new_fullname').value='';
+  }
+
+  // تحديث المستخدم
+  async function updateUser(id,field,value){
+    const { error } = await supabase.from('tb_users').update({[field]:value}).eq('id',id);
+    if(error) alert("خطأ: "+error.message);
+  }
+
+  // حذف المستخدم
+  async function deleteUser(id){
+    if(!confirm("هل أنت متأكد من حذف هذا المستخدم؟")) return;
+    const { error } = await supabase.from('tb_users').delete().eq('id',id);
+    if(error){ alert("لا يمكن الحذف: "+error.message); return;}
+    loadUsers();
+  }
+
+  // تصدير Excel
+  async function exportExcel(){
+    const { data, error } = await supabase.from('tb_users').select('*');
+    if(error){ alert("خطأ: "+error.message); return; }
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+    XLSX.writeFile(wb, "Users.xlsx");
+  }
+
+  // تصدير PDF
+  async function exportPDF(){
+    const { data, error } = await supabase.from('tb_users').select('*');
+    if(error){ alert("خطأ: "+error.message); return; }
+    const doc = new jspdf.jsPDF();
+    doc.autoTable({ head:[["المعرف","الاسم","كلمة المرور","نوع الصلاحية"]], body:data.map(u=>[u.id,u.fullname,u.pwd,u.usertype]) });
+    doc.save("Users.pdf");
+  }
+
+  // ربط الأزرار
+  document.getElementById('btnCreate').addEventListener('click', createUser);
+  document.getElementById('search_name').addEventListener('input', loadUsers);
+  document.getElementById('filter_usertype').addEventListener('change', loadUsers);
+  document.getElementById('btnExcel').addEventListener('click', exportExcel);
+  document.getElementById('btnPDF').addEventListener('click', exportPDF);
+
+  // تحميل المستخدمين عند فتح الصفحة
   loadUsers();
-  document.getElementById('new_id').value='';
-  document.getElementById('new_pwd').value='';
-  document.getElementById('new_fullname').value='';
-}
-
-// تحديث المستخدم
-async function updateUser(id,field,value){
-  const { error } = await supabase.from('tb_users').update({[field]:value}).eq('id',id);
-  if(error) alert("خطأ: "+error.message);
-}
-
-// حذف المستخدم
-async function deleteUser(id){
-  if(!confirm("هل أنت متأكد من حذف هذا المستخدم؟")) return;
-  const { error } = await supabase.from('tb_users').delete().eq('id',id);
-  if(error){ alert("لا يمكن الحذف: "+error.message); return;}
-  loadUsers();
-}
-
-// تصدير Excel
-async function exportExcel(){
-  const { data, error } = await supabase.from('tb_users').select('*');
-  if(error){ alert("خطأ: "+error.message); return; }
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Users");
-  XLSX.writeFile(wb, "Users.xlsx");
-}
-
-// تصدير PDF
-async function exportPDF(){
-  const { data, error } = await supabase.from('tb_users').select('*');
-  if(error){ alert("خطأ: "+error.message); return; }
-  const doc = new jspdf.jsPDF();
-  doc.autoTable({ head:[["المعرف","الاسم","كلمة المرور","نوع الصلاحية"]], body:data.map(u=>[u.id,u.fullname,u.pwd,u.usertype]) });
-  doc.save("Users.pdf");
-}
-
-// تحميل المستخدمين عند فتح الصفحة
-loadUsers();
+});
 </script>
 
 </body>
 </html>
-
-
