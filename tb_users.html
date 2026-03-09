@@ -2,57 +2,80 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>إنشاء مستخدم</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
-</head>
-<body style="font-family:sans-serif;padding:20px;">
+<title>إضافة مستخدم</title>
 
-<h2>إنشاء مستخدم جديد</h2>
-<input id="new_id" placeholder="معرف المستخدم"><br><br>
-<input id="new_pwd" placeholder="كلمة المرور"><br><br>
-<input id="new_fullname" placeholder="الاسم الكامل"><br><br>
-<select id="new_usertype">
-  <option value="مدير">مدير</option>
-  <option value="تقني IT">تقني IT</option>
-  <option value="مشرف">مشرف</option>
-  <option value="بائع">بائع</option>
-  <option value="مستخدم عادي">مستخدم عادي</option>
-</select><br><br>
-<button id="btnCreate">إنشاء مستخدم</button>
-<p id="status"></p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{font-family:Arial;padding:30px}
+input,select{padding:8px;margin:5px;width:200px}
+button{padding:10px 20px}
+</style>
+
+</head>
+
+<body>
+
+<h2>إضافة مستخدم جديد</h2>
+
+<input id="username" placeholder="اسم المستخدم"><br>
+
+<input id="pwd" type="password" placeholder="كلمة المرور"><br>
+
+<input id="fullname" placeholder="الاسم الكامل"><br>
+
+<select id="usertype">
+<option value="مدير">مدير</option>
+<option value="تقني IT">تقني IT</option>
+<option value="مشرف">مشرف</option>
+<option value="بائع">بائع</option>
+<option value="مستخدم عادي">مستخدم عادي</option>
+</select>
+
+<br><br>
+
+<button onclick="createUser()">إنشاء مستخدم</button>
+
+<p id="msg"></p>
 
 <script>
+
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-document.getElementById('btnCreate').addEventListener('click', async () => {
-  const id = document.getElementById('new_id').value.trim();
-  const pwd = document.getElementById('new_pwd').value.trim();
-  const fullname = document.getElementById('new_fullname').value.trim();
-  const usertype = document.getElementById('new_usertype').value;
-  const status = document.getElementById('status');
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-  if(!id || !pwd || !usertype){
-    status.textContent = "المعرف وكلمة المرور ونوع الصلاحية مطلوبان";
-    status.style.color = "red";
-    return;
-  }
+async function createUser(){
 
-  const { error } = await supabase.from('tb_users').insert([{id, pwd, fullname, usertype}]);
-  if(error){
-    status.textContent = "حدث خطأ: " + error.message;
-    status.style.color = "red";
-    return;
-  }
+let username = document.getElementById("username").value;
+let pwd = document.getElementById("pwd").value;
+let fullname = document.getElementById("fullname").value;
+let usertype = document.getElementById("usertype").value;
 
-  status.textContent = "تم إنشاء المستخدم بنجاح!";
-  status.style.color = "green";
+const {data,error} = await supabase
+.from("tb_users")
+.insert([
+{
+username: username,
+pwd: pwd,
+fullname: fullname,
+usertype: usertype
+}
+]);
 
-  document.getElementById('new_id').value='';
-  document.getElementById('new_pwd').value='';
-  document.getElementById('new_fullname').value='';
-});
+if(error){
+
+document.getElementById("msg").innerHTML = error.message;
+
+}else{
+
+document.getElementById("msg").innerHTML = "تم حفظ المستخدم بنجاح";
+
+}
+
+}
+
 </script>
+
 </body>
 </html>
