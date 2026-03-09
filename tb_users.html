@@ -28,12 +28,12 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  // إعداد Supabase
-  const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
-  const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// ✅ تعريف Supabase أولًا
+const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
+const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
+document.addEventListener('DOMContentLoaded', () => {
   const status = document.getElementById('status');
 
   document.getElementById('btnCreate').addEventListener('click', async () => {
@@ -48,9 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // إرسال البيانات إلى جدول tb_users
     const { error } = await supabase.from('tb_users').insert([{ id, pwd, fullname, usertype }]);
-
     if(error){
       status.textContent = "حدث خطأ: " + error.message;
       status.className = "mt-3 text-red-600";
@@ -60,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
     status.textContent = "تم إنشاء المستخدم بنجاح!";
     status.className = "mt-3 text-green-600";
 
-    // إعادة تعيين الحقول
     document.getElementById('new_id').value = '';
     document.getElementById('new_pwd').value = '';
     document.getElementById('new_fullname').value = '';
