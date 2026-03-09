@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>لوحة إدارة المستخدمين - نهائية</title>
+<title>لوحة إدارة المستخدمين - محدثة</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -15,26 +15,32 @@
 
 <div class="bg-white p-5 rounded shadow mb-5">
   <h2 class="text-lg font-semibold mb-3">إنشاء مستخدم جديد</h2>
-  <div class="grid grid-cols-5 gap-3">
+  <div class="grid grid-cols-6 gap-3">
     <input id="new_id" type="text" placeholder="معرف المستخدم" class="border p-2 rounded">
     <input id="new_pwd" type="password" placeholder="كلمة المرور" class="border p-2 rounded">
     <input id="new_fullname" type="text" placeholder="الاسم الكامل" class="border p-2 rounded">
     <select id="new_usertype" class="border p-2 rounded">
-      <option value="admin">مدير</option>
-      <option value="user">مستخدم</option>
+      <option value="مدير">مدير</option>
+      <option value="تقني أي تي">تقني أي تي</option>
+      <option value="مشرف">مشرف</option>
+      <option value="بائع">بائع</option>
+      <option value="مستخدم عادي">مستخدم عادي</option>
     </select>
-    <button onclick="createUser()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">إنشاء</button>
+    <button onclick="createUser()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 col-span-2">إنشاء</button>
   </div>
 </div>
 
 <div class="bg-white p-5 rounded shadow mb-5">
   <h2 class="text-lg font-semibold mb-3">البحث والتصفية</h2>
-  <div class="grid grid-cols-3 gap-3 mb-3">
-    <input id="search_name" type="text" placeholder="بحث بالاسم..." oninput="loadUsers()" class="border p-2 rounded">
+  <div class="grid grid-cols-4 gap-3 mb-3">
+    <input id="search_name" type="text" placeholder="بحث بالاسم..." oninput="loadUsers()" class="border p-2 rounded col-span-2">
     <select id="filter_usertype" onchange="loadUsers()" class="border p-2 rounded">
       <option value="">كل الصلاحيات</option>
-      <option value="admin">مدير</option>
-      <option value="user">مستخدم</option>
+      <option value="مدير">مدير</option>
+      <option value="تقني أي تي">تقني أي تي</option>
+      <option value="مشرف">مشرف</option>
+      <option value="بائع">بائع</option>
+      <option value="مستخدم عادي">مستخدم عادي</option>
     </select>
     <div class="flex gap-2">
       <button onclick="exportExcel()" class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600">تصدير Excel</button>
@@ -83,15 +89,24 @@ async function loadUsers() {
   tbody.innerHTML = '';
   data.forEach(user=>{
     const tr = document.createElement('tr');
-    tr.className = user.usertype==='admin' ? 'bg-yellow-50' : '';
+    // تلوين المديرين
+    if(user.usertype === "مدير") tr.className = 'bg-yellow-50';
+    else if(user.usertype === "تقني أي تي") tr.className = 'bg-blue-50';
+    else if(user.usertype === "مشرف") tr.className = 'bg-green-50';
+    else if(user.usertype === "بائع") tr.className = 'bg-purple-50';
+    else tr.className = 'bg-white';
+
     tr.innerHTML = `
       <td class="border p-2">${user.id}</td>
       <td class="border p-2" contenteditable="true" onblur="updateUser('${user.id}','fullname',this.innerText)">${user.fullname||''}</td>
       <td class="border p-2"><input type="password" class="border p-1 rounded w-full" value="${user.pwd||''}" onblur="updateUser('${user.id}','pwd',this.value)"></td>
       <td class="border p-2">
         <select class="border p-1 rounded w-full" onchange="updateUser('${user.id}','usertype',this.value)">
-          <option value="admin" ${user.usertype==='admin'?'selected':''}>مدير</option>
-          <option value="user" ${user.usertype==='user'?'selected':''}>مستخدم</option>
+          <option value="مدير" ${user.usertype==='مدير'?'selected':''}>مدير</option>
+          <option value="تقني أي تي" ${user.usertype==='تقني أي تي'?'selected':''}>تقني أي تي</option>
+          <option value="مشرف" ${user.usertype==='مشرف'?'selected':''}>مشرف</option>
+          <option value="بائع" ${user.usertype==='بائع'?'selected':''}>بائع</option>
+          <option value="مستخدم عادي" ${user.usertype==='مستخدم عادي'?'selected':''}>مستخدم عادي</option>
         </select>
       </td>
       <td class="border p-2">
