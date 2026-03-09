@@ -1,2 +1,0 @@
-insert into profiles (id, full_name, role)
-values ('05d09f54-d5a1-41c3-b070-244aba3d049e','Admin','admin');
