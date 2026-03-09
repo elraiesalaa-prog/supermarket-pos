@@ -7,6 +7,9 @@
 <title>إدارة المستخدمين</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
 
 <style>
 
@@ -17,20 +20,20 @@ background:#f4f4f4;
 }
 
 input,select{
-padding:8px;
-margin:5px;
+padding:7px;
+margin:4px;
 }
 
 button{
-padding:8px 15px;
+padding:7px 12px;
 cursor:pointer;
 }
 
 table{
 border-collapse:collapse;
 width:100%;
-margin-top:20px;
 background:white;
+margin-top:20px;
 }
 
 th,td{
@@ -54,9 +57,7 @@ background:#eee;
 <h3>إضافة مستخدم</h3>
 
 <input id="username" placeholder="اسم المستخدم">
-
 <input id="pwd" placeholder="كلمة المرور">
-
 <input id="fullname" placeholder="الاسم الكامل">
 
 <select id="usertype">
@@ -75,7 +76,10 @@ background:#eee;
 
 <hr>
 
-<h3>المستخدمين</h3>
+<input id="search" placeholder="بحث..." onkeyup="searchUsers()">
+
+<button onclick="exportExcel()">Excel</button>
+<button onclick="exportPDF()">PDF</button>
 
 <table>
 
@@ -88,26 +92,94 @@ background:#eee;
 <th>كلمة المرور</th>
 <th>نوع المستخدم</th>
 <th>الاسم الكامل</th>
+<th>تعديل</th>
 <th>حذف</th>
 
 </tr>
 
 </thead>
 
-<tbody id="usersTable">
-
-</tbody>
+<tbody id="usersTable"></tbody>
 
 </table>
 
 <script>
 
-const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
-const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+const supabaseUrl="https://vmxbedovoahuggfpcmyk.supabase.co";
+const supabaseKey="sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 
-const client = window.supabase.createClient(supabaseUrl, supabaseKey);
+const client=window.supabase.createClient(supabaseUrl,supabaseKey);
+
+let users=[];
 
 loadUsers();
+
+async function loadUsers(){
+
+const {data}=await client
+.from("tb_users")
+.select("*")
+.order("id",{ascending:true});
+
+users=data;
+
+drawTable(users);
+
+}
+
+function drawTable(data){
+
+let table="";
+
+data.forEach(user=>{
+
+table+=`
+
+<tr>
+
+<td>${user.id}</td>
+
+<td contenteditable="true" id="u${user.id}">${user.username}</td>
+
+<td contenteditable="true" id="p${user.id}">${user.pwd}</td>
+
+<td>
+
+<select id="t${user.id}">
+
+<option ${user.usertype=="مدير"?"selected":""}>مدير</option>
+<option ${user.usertype=="تقني IT"?"selected":""}>تقني IT</option>
+<option ${user.usertype=="مشرف"?"selected":""}>مشرف</option>
+<option ${user.usertype=="بائع"?"selected":""}>بائع</option>
+<option ${user.usertype=="مستخدم عادي"?"selected":""}>مستخدم عادي</option>
+
+</select>
+
+</td>
+
+<td contenteditable="true" id="f${user.id}">${user.fullname}</td>
+
+<td>
+
+<button onclick="updateUser(${user.id})">حفظ</button>
+
+</td>
+
+<td>
+
+<button onclick="deleteUser(${user.id})">حذف</button>
+
+</td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("usersTable").innerHTML=table;
+
+}
 
 async function addUser(){
 
@@ -119,10 +191,10 @@ let usertype=document.getElementById("usertype").value;
 const {error}=await client
 .from("tb_users")
 .insert([{
-username:username,
-pwd:pwd,
-fullname:fullname,
-usertype:usertype
+username,
+pwd,
+fullname,
+usertype
 }]);
 
 if(error){
@@ -139,36 +211,24 @@ loadUsers();
 
 }
 
-async function loadUsers(){
+async function updateUser(id){
 
-const {data,error}=await client
+let username=document.getElementById("u"+id).innerText;
+let pwd=document.getElementById("p"+id).innerText;
+let fullname=document.getElementById("f"+id).innerText;
+let usertype=document.getElementById("t"+id).value;
+
+await client
 .from("tb_users")
-.select("*")
-.order("id",{ascending:true});
+.update({
+username,
+pwd,
+fullname,
+usertype
+})
+.eq("id",id);
 
-let table="";
-
-data.forEach(user=>{
-
-table+=`
-<tr>
-
-<td>${user.id}</td>
-<td>${user.username}</td>
-<td>${user.pwd}</td>
-<td>${user.usertype}</td>
-<td>${user.fullname}</td>
-
-<td>
-<button onclick="deleteUser(${user.id})">حذف</button>
-</td>
-
-</tr>
-`;
-
-});
-
-document.getElementById("usersTable").innerHTML=table;
+loadUsers();
 
 }
 
@@ -183,7 +243,53 @@ loadUsers();
 
 }
 
+function searchUsers(){
+
+let key=document.getElementById("search").value.toLowerCase();
+
+let filtered=users.filter(u=>
+
+u.username.toLowerCase().includes(key) ||
+u.fullname.toLowerCase().includes(key)
+
+);
+
+drawTable(filtered);
+
+}
+
+function exportExcel(){
+
+let ws=XLSX.utils.json_to_sheet(users);
+
+let wb=XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb,ws,"Users");
+
+XLSX.writeFile(wb,"users.xlsx");
+
+}
+
+function exportPDF(){
+
+let doc=new jspdf.jsPDF();
+
+let rows=users.map(u=>[u.id,u.username,u.pwd,u.usertype,u.fullname]);
+
+doc.autoTable({
+
+head:[["ID","Username","Password","Type","Fullname"]],
+
+body:rows
+
+});
+
+doc.save("users.pdf");
+
+}
+
 </script>
 
 </body>
+
 </html>
