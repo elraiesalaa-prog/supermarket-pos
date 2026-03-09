@@ -33,13 +33,43 @@ background:white;
 box-shadow:0 10px 25px rgba(0,0,0,0.2);
 }
 
+.topbar{
+background:#0f172a;
+color:white;
+padding:10px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
 </style>
 
 </head>
 
 <body>
 
-<div class="flex h-screen">
+<!-- الشريط العلوي -->
+<div class="topbar">
+
+<div>
+👤 المستخدم :
+<span id="usernameDisplay"></span>
+</div>
+
+<div>
+
+<button onclick="editUser()"
+class="bg-blue-500 px-3 py-1 rounded">
+تعديل الاسم
+</button>
+
+</div>
+
+</div>
+
+
+
+<div class="flex h-[calc(100vh-50px)]">
 
 <!-- القائمة اليمنى -->
 <div class="w-64 panel p-4 overflow-y-auto">
@@ -81,10 +111,8 @@ box-shadow:0 10px 25px rgba(0,0,0,0.2);
 
 <div class="bg-white rounded-xl shadow-2xl p-6 w-full h-full flex items-center justify-center">
 
-<img 
-src="pic9.png"
-class="max-h-full max-w-full object-contain"
-alt="صورة النظام">
+<img src="pic9.png"
+class="max-h-full max-w-full object-contain">
 
 </div>
 
@@ -116,15 +144,62 @@ alt="صورة النظام">
 
 <hr class="my-3">
 
-<div class="menu bg-red-500 text-white text-center">
+<div class="menu bg-red-500 text-white text-center" onclick="logout()">
 خروج
 </div>
 
 </div>
 
-
 </div>
+
+
+
+<script>
+
+function loadUser(){
+
+let user = localStorage.getItem("username");
+
+if(!user){
+
+user = "مدير النظام";
+
+localStorage.setItem("username",user);
+
+}
+
+document.getElementById("usernameDisplay").innerText = user;
+
+}
+
+
+function editUser(){
+
+let newName = prompt("اكتب اسم المستخدم الجديد");
+
+if(newName){
+
+localStorage.setItem("username",newName);
+
+loadUser();
+
+}
+
+}
+
+
+function logout(){
+
+localStorage.removeItem("username");
+
+window.location="index.html";
+
+}
+
+
+loadUser();
+
+</script>
 
 </body>
 </html>
-
