@@ -20,12 +20,13 @@ margin-bottom:6px;
 border-radius:8px;
 cursor:pointer;
 transition:0.3s;
+background:rgba(255,255,255,0.25);
+font-weight:bold;
 }
 
 .menu:hover{
-background:#2563eb;
-color:white;
-transform:scale(1.05);
+background:rgba(255,255,255,0.5);
+transform:translateX(-4px);
 }
 
 .panel{
@@ -72,7 +73,7 @@ class="bg-blue-500 px-3 py-1 rounded">
 <div class="flex h-[calc(100vh-50px)]">
 
 <!-- القائمة اليمنى -->
-<div class="w-64 panel p-4 overflow-y-auto">
+<div class="w-64 p-4 overflow-y-auto text-white" style="background:#60a5fa;">
 
 <h2 class="text-xl font-bold text-center mb-4 text-blue-700">
 القائمة الرئيسية
@@ -121,7 +122,7 @@ class="max-h-full max-w-full object-contain">
 
 
 <!-- القائمة اليسرى -->
-<div class="w-64 panel p-4 overflow-y-auto">
+<div class="w-64 p-4 overflow-y-auto text-white" style="background:#60a5fa;">
 
 <h2 class="text-xl font-bold text-center mb-4 text-blue-700">
 العمليات
@@ -203,3 +204,4 @@ loadUser();
 
 </body>
 </html>
+
