@@ -2,16 +2,18 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>إنشاء مستخدم</title>
+<title>لوحة إدارة المستخدمين</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-10 font-sans">
 
-<h1 class="text-2xl font-bold mb-5">إنشاء مستخدم جديد</h1>
+<h1 class="text-2xl font-bold mb-5">لوحة إدارة المستخدمين</h1>
 
-<div class="bg-white p-5 rounded shadow w-full max-w-lg">
-  <div class="grid grid-cols-1 gap-4">
+<!-- إنشاء مستخدم جديد -->
+<div class="bg-white p-5 rounded shadow mb-5 w-full max-w-lg">
+  <h2 class="text-lg font-semibold mb-3">إنشاء مستخدم جديد</h2>
+  <div class="grid grid-cols-1 gap-3">
     <input id="new_id" type="text" placeholder="معرف المستخدم" class="border p-2 rounded">
     <input id="new_pwd" type="password" placeholder="كلمة المرور" class="border p-2 rounded">
     <input id="new_fullname" type="text" placeholder="الاسم الكامل" class="border p-2 rounded">
@@ -23,8 +25,27 @@
       <option value="مستخدم عادي">مستخدم عادي</option>
     </select>
     <button id="btnCreate" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">إنشاء</button>
+    <p id="status" class="mt-2 text-green-600"></p>
   </div>
-  <p id="status" class="mt-3 text-green-600"></p>
+</div>
+
+<!-- قائمة المستخدمين -->
+<div class="bg-white p-5 rounded shadow">
+  <h2 class="text-lg font-semibold mb-3">قائمة المستخدمين</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-center border border-gray-300" id="usersTable">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="border p-2">المعرف</th>
+          <th class="border p-2">الاسم الكامل</th>
+          <th class="border p-2">كلمة المرور</th>
+          <th class="border p-2">نوع الصلاحية</th>
+          <th class="border p-2">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
@@ -33,40 +54,85 @@ const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// 2️⃣ كل الكود الذي يستخدم Supabase داخل DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
+// 2️⃣ تحميل المستخدمين وعرضهم
+async function loadUsers() {
+  const { data, error } = await supabase.from('tb_users').select('*').order('id', { ascending: true });
+  if(error){ alert("خطأ: "+error.message); return; }
+
+  const tbody = document.querySelector('#usersTable tbody');
+  tbody.innerHTML = '';
+  data.forEach(user => {
+    const tr = document.createElement('tr');
+    if(user.usertype === "مدير") tr.className = 'bg-yellow-50';
+    else if(user.usertype === "تقني IT") tr.className = 'bg-blue-50';
+    else if(user.usertype === "مشرف") tr.className = 'bg-green-50';
+    else if(user.usertype === "بائع") tr.className = 'bg-purple-50';
+    else tr.className = 'bg-white';
+
+    tr.innerHTML = `
+      <td class="border p-2">${user.id}</td>
+      <td class="border p-2" contenteditable="true" onblur="updateUser('${user.id}','fullname',this.innerText)">${user.fullname||''}</td>
+      <td class="border p-2"><input type="password" class="border p-1 rounded w-full" value="${user.pwd||''}" onblur="updateUser('${user.id}','pwd',this.value)"></td>
+      <td class="border p-2">
+        <select class="border p-1 rounded w-full" onchange="updateUser('${user.id}','usertype',this.value)">
+          <option value="مدير" ${user.usertype==='مدير'?'selected':''}>مدير</option>
+          <option value="تقني IT" ${user.usertype==='تقني IT'?'selected':''}>تقني IT</option>
+          <option value="مشرف" ${user.usertype==='مشرف'?'selected':''}>مشرف</option>
+          <option value="بائع" ${user.usertype==='بائع'?'selected':''}>بائع</option>
+          <option value="مستخدم عادي" ${user.usertype==='مستخدم عادي'?'selected':''}>مستخدم عادي</option>
+        </select>
+      </td>
+      <td class="border p-2">
+        <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onclick="deleteUser('${user.id}')">حذف</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 3️⃣ إنشاء مستخدم جديد
+async function createUser(){
+  const id=document.getElementById('new_id').value.trim();
+  const pwd=document.getElementById('new_pwd').value.trim();
+  const fullname=document.getElementById('new_fullname').value.trim();
+  const usertype=document.getElementById('new_usertype').value;
   const status = document.getElementById('status');
 
-  document.getElementById('btnCreate').addEventListener('click', async () => {
-    const id = document.getElementById('new_id').value.trim();
-    const pwd = document.getElementById('new_pwd').value.trim();
-    const fullname = document.getElementById('new_fullname').value.trim();
-    const usertype = document.getElementById('new_usertype').value;
+  if(!id||!pwd){ status.textContent="المعرف وكلمة المرور مطلوبان"; status.className="mt-2 text-red-600"; return; }
 
-    if(!id || !pwd){
-      status.textContent = "المعرف وكلمة المرور مطلوبان";
-      status.className = "mt-3 text-red-600";
-      return;
-    }
+  const { error } = await supabase.from('tb_users').insert([{id,pwd,fullname,usertype}]);
+  if(error){ status.textContent="حدث خطأ: "+error.message; status.className="mt-2 text-red-600"; return; }
 
-    // إرسال البيانات مباشرة إلى جدول tb_users
-    const { error } = await supabase.from('tb_users').insert([{ id, pwd, fullname, usertype }]);
+  status.textContent="تم إنشاء المستخدم بنجاح!";
+  status.className="mt-2 text-green-600";
 
-    if(error){
-      status.textContent = "حدث خطأ: " + error.message;
-      status.className = "mt-3 text-red-600";
-      return;
-    }
+  document.getElementById('new_id').value='';
+  document.getElementById('new_pwd').value='';
+  document.getElementById('new_fullname').value='';
+  document.getElementById('new_usertype').selectedIndex=0;
 
-    status.textContent = "تم إنشاء المستخدم بنجاح!";
-    status.className = "mt-3 text-green-600";
+  loadUsers();
+}
 
-    document.getElementById('new_id').value = '';
-    document.getElementById('new_pwd').value = '';
-    document.getElementById('new_fullname').value = '';
-    document.getElementById('new_usertype').selectedIndex = 0;
-  });
-});
+// 4️⃣ تحديث المستخدم
+async function updateUser(id,field,value){
+  const { error } = await supabase.from('tb_users').update({[field]:value}).eq('id',id);
+  if(error) alert("خطأ: "+error.message);
+}
+
+// 5️⃣ حذف المستخدم
+async function deleteUser(id){
+  if(!confirm("هل أنت متأكد من حذف هذا المستخدم؟")) return;
+  const { error } = await supabase.from('tb_users').delete().eq('id',id);
+  if(error){ alert("لا يمكن الحذف: "+error.message); return;}
+  loadUsers();
+}
+
+// 6️⃣ ربط زر الإنشاء
+document.getElementById('btnCreate').addEventListener('click', createUser);
+
+// 7️⃣ تحميل المستخدمين عند فتح الصفحة
+loadUsers();
 </script>
 
 </body>
