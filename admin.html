@@ -1,5 +1,16 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+  <div class="bg-blue-700 text-white p-3 flex justify-between items-center">
+
+<div class="text-xl font-bold">
+<span id="storeHeader">نظام إدارة المتجر</span>
+</div>
+
+<div>
+🏪 <span id="storeName">ABM للتجارة والاستثمار </span>
+</div>
+
+</div>
 <head>
 
 <meta charset="UTF-8">
@@ -115,7 +126,7 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 <img 
 src="pic9.png"
 loading="lazy"
-style="max-width:80%; max-height:80%; object-fit:contain;">
+style="max-width:100%; max-height:100%; object-fit:contain;">
 
 </div>
 
@@ -159,6 +170,27 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
 
 <script>
+  function loadStore(){
+
+let name = localStorage.getItem("storeName");
+let header = localStorage.getItem("storeHeader");
+
+if(!name){
+name="متجري";
+localStorage.setItem("storeName",name);
+}
+
+if(!header){
+header="نظام إدارة المتجر";
+localStorage.setItem("storeHeader",header);
+}
+
+document.getElementById("storeName").innerText=name;
+document.getElementById("storeHeader").innerText=header;
+
+}
+
+loadStore();
 function updateClock(){
 
 let now = new Date();
@@ -220,6 +252,7 @@ loadUser();
 
 </body>
 </html>
+
 
 
 
