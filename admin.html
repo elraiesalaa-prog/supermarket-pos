@@ -120,7 +120,7 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
 <hr>
 
-<div class="menu">تعديل الترويسة</div>
+<div class="menu" onclick="editPassword()">تعديل كلمة المرور</div>
 
 </div>
 
@@ -162,7 +162,7 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
 <hr>
 
-<div class="menu bg-red-500 text-center">خروج</div>
+<div class="menu" style="background-color:#ef4444; text-align:center;">خروج</div>
 
 </div>
 
@@ -192,6 +192,23 @@ document.getElementById("storeHeader").innerText=header;
 }
 
 loadStore();
+  function editPassword(){
+  let newPwd = prompt("أدخل كلمة المرور الجديدة:");
+  if(newPwd){
+    // نفترض أن المستخدم الحالي مخزن في localStorage باسم "currentUser"
+    let currentUser = localStorage.getItem("currentUser");
+    if(!currentUser){ alert("لا يوجد مستخدم مسجل!"); return; }
+
+    // تحديث كلمة المرور في جدول tb_users
+    supabase.from('tb_users')
+      .update({pwd:newPwd})
+      .eq('id',currentUser)
+      .then(({error})=>{
+        if(error){ alert("خطأ: "+error.message); return;}
+        alert("تم تعديل كلمة المرور بنجاح");
+      });
+  }
+}
 function updateClock(){
 
 let now = new Date();
@@ -253,6 +270,7 @@ loadUser();
 
 </body>
 </html>
+
 
 
 
