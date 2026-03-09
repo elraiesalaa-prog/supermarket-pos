@@ -1,72 +1,139 @@
-رائع! لإضافة وظيفة **عرض البيانات**، سنقوم بتحديث الصفحة لتشمل جدولاً يقوم بجلب البيانات تلقائياً عند تحميل الصفحة، وكذلك بعد إضافة أي مستخدم جديد.
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>لوحة إدارة المستخدمين</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-10 font-sans">
 
-إليك الكود المحدث:
+<h1 class="text-2xl font-bold mb-5">لوحة إدارة المستخدمين</h1>
 
-```html
-<div class="max-w-4xl mx-auto mt-10 bg-white p-6 rounded shadow">
-    <h2 class="text-xl font-bold mb-4">قائمة المستخدمين</h2>
-    <table class="w-full text-right border-collapse">
-        <thead>
-            <tr class="border-b">
-                <th class="p-2">ID</th>
-                <th class="p-2">الاسم الكامل</th>
-                <th class="p-2">نوع المستخدم</th>
-            </tr>
-        </thead>
-        <tbody id="usersTableBody">
-            </tbody>
+<!-- إنشاء مستخدم جديد -->
+<div class="bg-white p-5 rounded shadow mb-5 w-full max-w-lg">
+  <h2 class="text-lg font-semibold mb-3">إنشاء مستخدم جديد</h2>
+  <div class="grid grid-cols-1 gap-3">
+    <input id="new_id" type="text" placeholder="معرف المستخدم" class="border p-2 rounded">
+    <input id="new_pwd" type="password" placeholder="كلمة المرور" class="border p-2 rounded">
+    <input id="new_fullname" type="text" placeholder="الاسم الكامل" class="border p-2 rounded">
+    <select id="new_usertype" class="border p-2 rounded">
+      <option value="مدير">مدير</option>
+      <option value="تقني IT">تقني IT</option>
+      <option value="مشرف">مشرف</option>
+      <option value="بائع">بائع</option>
+      <option value="مستخدم عادي">مستخدم عادي</option>
+    </select>
+    <button id="btnCreate" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">إنشاء</button>
+    <p id="status" class="mt-2 text-green-600"></p>
+  </div>
+</div>
+
+<!-- قائمة المستخدمين -->
+<div class="bg-white p-5 rounded shadow">
+  <h2 class="text-lg font-semibold mb-3">قائمة المستخدمين</h2>
+  <div class="overflow-x-auto">
+    <table class="w-full text-center border border-gray-300" id="usersTable">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="border p-2">المعرف</th>
+          <th class="border p-2">الاسم الكامل</th>
+          <th class="border p-2">كلمة المرور</th>
+          <th class="border p-2">نوع الصلاحية</th>
+          <th class="border p-2">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
     </table>
+  </div>
 </div>
 
 <script>
-    // دالة لجلب وعرض البيانات
-    async function fetchUsers() {
-        const { data, error } = await supabase
-            .from('tb_users')
-            .select('*');
+// 1️⃣ تعريف Supabase أولًا
+const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
+const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-        if (error) {
-            console.error('خطأ في جلب البيانات:', error);
-            return;
-        }
+// 2️⃣ تحميل المستخدمين وعرضهم
+async function loadUsers() {
+  const { data, error } = await supabase.from('tb_users').select('*').order('id', { ascending: true });
+  if(error){ alert("خطأ: "+error.message); return; }
 
-        const tbody = document.getElementById('usersTableBody');
-        tbody.innerHTML = ''; // تنظيف الجدول
+  const tbody = document.querySelector('#usersTable tbody');
+  tbody.innerHTML = '';
+  data.forEach(user => {
+    const tr = document.createElement('tr');
+    if(user.usertype === "مدير") tr.className = 'bg-yellow-50';
+    else if(user.usertype === "تقني IT") tr.className = 'bg-blue-50';
+    else if(user.usertype === "مشرف") tr.className = 'bg-green-50';
+    else if(user.usertype === "بائع") tr.className = 'bg-purple-50';
+    else tr.className = 'bg-white';
 
-        data.forEach(user => {
-            tbody.innerHTML += `
-                <tr class="border-b">
-                    <td class="p-2">${user.id}</td>
-                    <td class="p-2">${user.fullname}</td>
-                    <td class="p-2">${user.usertype}</td>
-                </tr>
-            `;
-        });
-    }
+    tr.innerHTML = `
+      <td class="border p-2">${user.id}</td>
+      <td class="border p-2" contenteditable="true" onblur="updateUser('${user.id}','fullname',this.innerText)">${user.fullname||''}</td>
+      <td class="border p-2"><input type="password" class="border p-1 rounded w-full" value="${user.pwd||''}" onblur="updateUser('${user.id}','pwd',this.value)"></td>
+      <td class="border p-2">
+        <select class="border p-1 rounded w-full" onchange="updateUser('${user.id}','usertype',this.value)">
+          <option value="مدير" ${user.usertype==='مدير'?'selected':''}>مدير</option>
+          <option value="تقني IT" ${user.usertype==='تقني IT'?'selected':''}>تقني IT</option>
+          <option value="مشرف" ${user.usertype==='مشرف'?'selected':''}>مشرف</option>
+          <option value="بائع" ${user.usertype==='بائع'?'selected':''}>بائع</option>
+          <option value="مستخدم عادي" ${user.usertype==='مستخدم عادي'?'selected':''}>مستخدم عادي</option>
+        </select>
+      </td>
+      <td class="border p-2">
+        <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onclick="deleteUser('${user.id}')">حذف</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
 
-    // تعديل دالة الإضافة لتحديث الجدول تلقائياً
-    async function addUser() {
-        // ... (نفس كود الإضافة السابق) ...
-        const { error } = await supabase.from('tb_users').insert([data]);
+// 3️⃣ إنشاء مستخدم جديد
+async function createUser(){
+  const id=document.getElementById('new_id').value.trim();
+  const pwd=document.getElementById('new_pwd').value.trim();
+  const fullname=document.getElementById('new_fullname').value.trim();
+  const usertype=document.getElementById('new_usertype').value;
+  const status = document.getElementById('status');
 
-        if (error) {
-            alert('خطأ: ' + error.message);
-        } else {
-            alert('تمت الإضافة بنجاح!');
-            fetchUsers(); // تحديث الجدول بعد الإضافة
-        }
-    }
+  if(!id||!pwd){ status.textContent="المعرف وكلمة المرور مطلوبان"; status.className="mt-2 text-red-600"; return; }
 
-    // استدعاء الدالة عند تحميل الصفحة
-    fetchUsers();
+  const { error } = await supabase.from('tb_users').insert([{id,pwd,fullname,usertype}]);
+  if(error){ status.textContent="حدث خطأ: "+error.message; status.className="mt-2 text-red-600"; return; }
+
+  status.textContent="تم إنشاء المستخدم بنجاح!";
+  status.className="mt-2 text-green-600";
+
+  document.getElementById('new_id').value='';
+  document.getElementById('new_pwd').value='';
+  document.getElementById('new_fullname').value='';
+  document.getElementById('new_usertype').selectedIndex=0;
+
+  loadUsers();
+}
+
+// 4️⃣ تحديث المستخدم
+async function updateUser(id,field,value){
+  const { error } = await supabase.from('tb_users').update({[field]:value}).eq('id',id);
+  if(error) alert("خطأ: "+error.message);
+}
+
+// 5️⃣ حذف المستخدم
+async function deleteUser(id){
+  if(!confirm("هل أنت متأكد من حذف هذا المستخدم؟")) return;
+  const { error } = await supabase.from('tb_users').delete().eq('id',id);
+  if(error){ alert("لا يمكن الحذف: "+error.message); return;}
+  loadUsers();
+}
+
+// 6️⃣ ربط زر الإنشاء
+document.getElementById('btnCreate').addEventListener('click', createUser);
+
+// 7️⃣ تحميل المستخدمين عند فتح الصفحة
+loadUsers();
 </script>
 
-```
-
-### تحسينات مقترحة:
-
-1. **تجربة المستخدم (UX):** يمكنك إضافة زر "تحديث" يدوي بجانب عنوان "قائمة المستخدمين" لاستدعاء دالة `fetchUsers()` في حال حدوث تغييرات من جهات أخرى.
-2. **الأمان:** تأكد من إعداد سياسات **RLS** في Supabase للسماح بـ `SELECT` للبيانات التي تريد ظهورها للمستخدمين.
-3. **تنسيق الجدول:** يمكنك استخدام فئات Tailwind مثل `hover:bg-gray-50` للسطور لتعطي مظهراً احترافياً أثناء التصفح.
-
-هل تريد مني مساعدتك في إضافة **زر للحذف (Delete)** بجانب كل مستخدم في الجدول، أم تفضل الانتقال إلى إضافة نظام بحث سريع داخل الجدول؟
+</body>
+</html>
