@@ -161,7 +161,28 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
 <div class="menu" style="background-color:#ef4444; text-align:center;">خروج</div>
 
-</div>
+<!-- نافذة تغيير كلمة المرور -->
+
+<div id="passwordBox" style="display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 0 20px rgba(0,0,0,0.3);
+width:300px">
+
+<h3>تغيير كلمة المرور</h3>
+
+<input type="password" id="oldPass" placeholder="كلمة المرور القديمة">
+<input type="password" id="newPass" placeholder="كلمة المرور الجديدة">
+
+<br><br>
+
+<button onclick="savePassword()">حفظ</button>
+<button onclick="closePassword()">إلغاء</button>
 
 </div>
 
@@ -285,6 +306,7 @@ document.getElementById("usernameDisplay").textContent = user
 </script>
 </body>
 </html>
+
 
 
 
