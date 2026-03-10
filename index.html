@@ -8,7 +8,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
 body{
 margin:0;
 font-family:Tahoma;
@@ -18,7 +17,6 @@ display:flex;
 align-items:center;
 justify-content:center;
 }
-
 .container{
 width:900px;
 background:white;
@@ -27,22 +25,18 @@ border-radius:15px;
 overflow:hidden;
 box-shadow:0 15px 40px rgba(0,0,0,0.4);
 }
-
 .left{
 width:50%;
 background:url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d") center/cover;
 }
-
 .right{
 width:50%;
 padding:40px;
 }
-
 h1{
 text-align:center;
 margin-bottom:30px;
 }
-
 input{
 width:100%;
 padding:12px;
@@ -50,7 +44,6 @@ margin:10px 0;
 border-radius:8px;
 border:1px solid #ccc;
 }
-
 button{
 width:100%;
 padding:12px;
@@ -61,11 +54,9 @@ border-radius:8px;
 font-size:16px;
 cursor:pointer;
 }
-
 button:hover{
 background:#a43931;
 }
-
 </style>
 
 </head>
@@ -81,7 +72,6 @@ background:#a43931;
 <h1>نظام إدارة المبيعات</h1>
 
 <input type="text" id="username" placeholder="اسم المستخدم">
-
 <input type="password" id="password" placeholder="كلمة المرور">
 
 <button onclick="login()">تسجيل الدخول</button>
@@ -91,9 +81,6 @@ background:#a43931;
 </div>
 
 <script>
-
-<script>
-
 const supabaseClient = window.supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
@@ -112,10 +99,8 @@ const {data,error}=await supabaseClient
 .single()
 
 if(error || !data){
-
 alert("بيانات الدخول غير صحيحة")
 return
-
 }
 
 localStorage.setItem("user",data.fullname)
@@ -126,23 +111,20 @@ let type=data.usertype
 if(type=="superuser"){
 window.location="superuser.html"
 }
-
 else if(type=="admin"){
 window.location="dashboard.html"
 }
-
 else if(type=="ituser"){
 window.location="ituser.html"
 }
-
 else if(type=="sealer"){
 window.location="sealer.html"
+else{
+alert("نوع المستخدم غير معروف")
 }
 
 }
-
 </script>
 
 </body>
 </html>
-
