@@ -1,3 +1,83 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>نظام إدارة المبيعات</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+margin:0;
+font-family:Tahoma;
+background:linear-gradient(135deg,#1d4350,#a43931);
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+.container{
+width:900px;
+background:white;
+display:flex;
+border-radius:15px;
+overflow:hidden;
+box-shadow:0 15px 40px rgba(0,0,0,0.4);
+}
+.left{
+width:50%;
+background:url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d") center/cover;
+}
+.right{
+width:50%;
+padding:40px;
+}
+h1{
+text-align:center;
+margin-bottom:30px;
+}
+input{
+width:100%;
+padding:12px;
+margin:10px 0;
+border-radius:8px;
+border:1px solid #ccc;
+}
+button{
+width:100%;
+padding:12px;
+background:#1d4350;
+color:white;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+}
+button:hover{
+background:#a43931;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="left"></div>
+
+<div class="right">
+
+<h1>نظام إدارة المبيعات</h1>
+
+<input type="text" id="username" placeholder="اسم المستخدم">
+<input type="password" id="password" placeholder="كلمة المرور">
+
+<button onclick="login()">تسجيل الدخول</button>
+
+</div>
+
+</div>
+
+
 <script>
 const supabaseClient = window.supabase.createClient(
   "https://vmxbedovoahuggfpcmyk.supabase.co",
@@ -51,4 +131,8 @@ async function login() {
       alert("نوع المستخدم غير معروف")
   }
 }
+
 </script>
+
+</body>
+</html>
