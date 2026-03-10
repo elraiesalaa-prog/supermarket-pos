@@ -72,7 +72,7 @@ align-items:center;
 <div class="topbar">
 
 <div>
-👤 المستخدم :
+👤 مرحبا :
 <span id="usernameDisplay"></span>
 </div>
 
@@ -234,9 +234,25 @@ window.location="index.html";
 loadUser();
 
 </script>
+<script>
 
+document.addEventListener("DOMContentLoaded", function(){
+
+let user = localStorage.getItem("user")
+
+if(!user){
+window.location="index.html"
+return
+}
+
+document.getElementById("usernameDisplay").textContent = user
+
+})
+
+</script>
 </body>
 </html>
+
 
 
 
