@@ -118,16 +118,16 @@ async function login() {
     const type = data.usertype.toLowerCase()
 
     switch (type) {
-      case "superuser":
+      case "مشرف":
         window.location = "superuser.html"
         break
-      case "admin":
-        window.location = "dashboard.html"
+      case "مدير":
+        window.location = "admin.html"
         break
-      case "ituser":
+      case "تقنيIT":
         window.location = "ituser.html"
         break
-      case "sealer":
+      case "بائع":
         window.location = "sealer.html"
         break
       default:
@@ -144,4 +144,5 @@ async function login() {
 
 </body>
 </html>
+
 
