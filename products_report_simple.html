@@ -58,11 +58,10 @@ async function loadReport(){
 
   reportData = data.map(p=>{
     let payQte = Number(p.pay_qte) || 1  // منع القسمة على صفر
-    let piceQte = Number(p.pice_qte) || 1 // منع الصفر
-    let unitCost = Number(p.pay_price)/payQte
+    let piceQte = Number(p.pice_qte) || 1
+    let unitCost = Number(p.pay_price)/payQte  // تكلفة الوحدة
     let profitUnit = Number(p.seal_price) - unitCost
-    if(profitUnit < 0) profitUnit = 0     // منع الربح السالب
-    let totalProfit = profitUnit * piceQte
+    let totalProfit = profitUnit * piceQte      // ربح المنتج حسب طلبك: ضرب ربح الوحدة في عدد القطع فقط
     return {
       product_name: p.product_name,
       cost: unitCost.toFixed(2),
@@ -72,6 +71,7 @@ async function loadReport(){
 
   renderTable(reportData)
 }
+
 function renderTable(list){
   let html=""
   list.forEach(r=>{
@@ -100,4 +100,3 @@ loadReport()
 
 </body>
 </html>
-
