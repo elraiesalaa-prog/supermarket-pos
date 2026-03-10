@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<title>تقرير المنتجات</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+font-family:Tahoma;
+background:#f4f6f9;
+padding:20px;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+h2{
+text-align:center;
+margin-bottom:15px;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:1px solid #ccc;
+border-radius:5px;
+}
+
+button{
+padding:8px 15px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.logout{background:#333;color:white;float:left;margin-bottom:10px}
+
+table{
+width:100%;
+margin-top:15px;
+border-collapse:collapse;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:8px;
+text-align:center;
+}
+
+th{
+background:#007bff;
+color:white;
+}
+
+tr:hover{
+background:#f1f1f1;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<button class="logout" onclick="logout()">خروج</button>
+
+<h2>تقرير المنتجات</h2>
+
+<input type="text" id="searchBox" placeholder="بحث عن منتج..." onkeyup="searchReport()">
+
+<table>
+<thead>
+<tr>
+<th>اسم المنتج</th>
+<th>عدد القطع</th>
+<th>كمية الشراء</th>
+<th>تكلفة المنتج</th>
+<th>تكلفة الوحدة</th>
+<th>سعر بيع الوحدة</th>
+<th>ربح الوحدة</th>
+<th>ربح المنتج</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+
+</div>
+
+<script>
+const supabaseClient = window.supabase.createClient(
+"https://vmxbedovoahuggfpcmyk.supabase.co",
+"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+)
+
+let reportData=[]
+
+async function loadReport(){
+
+// استدعاء التقرير من قاعدة البيانات
+const {data,error} = await supabaseClient
+.from("products")
+.select(`
+product_name,
+pice_qte,
+pay_qte,
+pay_price,
+seal_price
+`)
+orderBy:('id_product',{ascending:true})
+
+if(error){
+console.log(error)
+return
+}
+
+// حساب القيم المطلوبة لكل صف
+reportData = data.map(p=>{
+let totalUnits = Number(p.pice_qte)*Number(p.pay_qte)
+let unitCost = totalUnits===0 ? 0 : Number(p.pay_price)/totalUnits
+let profitUnit = Number(p.seal_price) - unitCost
+let totalProfit = profitUnit * totalUnits
+
+return {
+product_name: p.product_name,
+pice_qte: p.pice_qte,
+pay_qte: p.pay_qte,
+pay_price: p.pay_price,
+unitCost: unitCost.toFixed(2),
+seal_price: Number(p.seal_price).toFixed(2),
+profitUnit: profitUnit.toFixed(2),
+totalProfit: totalProfit.toFixed(2)
+}
+})
+
+renderTable(reportData)
+}
+
+function renderTable(list){
+let html=""
+list.forEach(r=>{
+html+=`
+<tr>
+<td>${r.product_name}</td>
+<td>${r.pice_qte}</td>
+<td>${r.pay_qte}</td>
+<td>${r.pay_price}</td>
+<td>${r.unitCost}</td>
+<td>${r.seal_price}</td>
+<td>${r.profitUnit}</td>
+<td>${r.totalProfit}</td>
+</tr>
+`
+})
+document.getElementById("tableBody").innerHTML=html
+}
+
+// البحث
+function searchReport(){
+let word = document.getElementById("searchBox").value.toLowerCase()
+let filtered = reportData.filter(r=>r.product_name.toLowerCase().includes(word))
+renderTable(filtered)
+}
+
+// خروج
+function logout(){
+window.location.href="index.html"
+}
+
+// تحميل التقرير عند فتح الصفحة
+loadReport()
+</script>
+
+</body>
+</html>
