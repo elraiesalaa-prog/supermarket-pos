@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
 
 <meta charset="UTF-8">
@@ -10,18 +11,18 @@
 <style>
 
 body{
-font-family: Tahoma;
-background:#f4f6f9;
+font-family:Tahoma;
+background:#f2f2f2;
 padding:20px;
 }
 
 .container{
-max-width:700px;
+width:600px;
 margin:auto;
 background:white;
 padding:20px;
-border-radius:10px;
-box-shadow:0 0 10px rgba(0,0,0,0.1);
+border-radius:8px;
+box-shadow:0 0 10px #ccc;
 }
 
 h2{
@@ -37,17 +38,16 @@ border-radius:5px;
 }
 
 button{
-padding:10px 15px;
+padding:8px 15px;
 border:none;
 border-radius:5px;
 cursor:pointer;
-margin-top:10px;
 }
 
 .add{background:#28a745;color:white;}
-.update{background:#ffc107;color:black;}
+.edit{background:#ffc107;}
 .delete{background:#dc3545;color:white;}
-.logout{background:#444;color:white;float:left;}
+.logout{background:#333;color:white;margin-bottom:10px;}
 
 table{
 width:100%;
@@ -56,8 +56,8 @@ border-collapse:collapse;
 }
 
 th,td{
-padding:10px;
 border:1px solid #ddd;
+padding:8px;
 text-align:center;
 }
 
@@ -80,14 +80,16 @@ color:white;
 
 <input type="text" id="description_cat" placeholder="اسم الصنف">
 
-<button class="add" onclick="addCategory()">إضافة صنف</button>
+<br><br>
+
+<button class="add" onclick="addCategory()">حفظ</button>
 
 <table>
 
 <thead>
 <tr>
 <th>الرقم</th>
-<th>اسم الصنف</th>
+<th>الصنف</th>
 <th>تعديل</th>
 <th>حذف</th>
 </tr>
@@ -100,117 +102,133 @@ color:white;
 </div>
 
 <script>
+
 const supabaseClient = window.supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-)
-)
+);
 
-let edit_id = null
+let edit_id = null;
+
 
 // تحميل الأصناف
 async function loadCategories(){
 
-const {data,error} = await supabase
+const {data,error} = await supabaseClient
 .from("categories")
 .select("*")
-.order("id_cat",{ascending:true})
+.order("id_cat",{ascending:true});
 
-let table=""
+let html="";
 
-data.forEach(row=>{
+data.forEach(function(row){
 
-table+=`
+html += `
 <tr>
+
 <td>${row.id_cat}</td>
 <td>${row.description_cat}</td>
 
 <td>
-<button class="update" onclick="editCategory(${row.id_cat},'${row.description_cat}')">
+<button class="edit"
+onclick="editCategory(${row.id_cat},'${row.description_cat}')">
 تعديل
 </button>
 </td>
 
 <td>
-<button class="delete" onclick="deleteCategory(${row.id_cat})">
+<button class="delete"
+onclick="deleteCategory(${row.id_cat})">
 حذف
 </button>
 </td>
 
 </tr>
-`
+`;
 
-})
+});
 
-document.getElementById("tableBody").innerHTML=table
+document.getElementById("tableBody").innerHTML = html;
 
 }
 
-// إضافة صنف
+
+
+// إضافة أو تعديل
 async function addCategory(){
 
-let name=document.getElementById("description_cat").value
+let name = document.getElementById("description_cat").value;
 
 if(name==""){
-alert("اكتب اسم الصنف")
-return
+alert("اكتب اسم الصنف");
+return;
 }
 
 if(edit_id==null){
 
-await supabase
+await supabaseClient
 .from("categories")
-.insert([{description_cat:name}])
+.insert([{description_cat:name}]);
 
 }else{
 
-await supabase
+await supabaseClient
 .from("categories")
 .update({description_cat:name})
-.eq("id_cat",edit_id)
+.eq("id_cat",edit_id);
 
-edit_id=null
-}
-
-document.getElementById("description_cat").value=""
-
-loadCategories()
+edit_id=null;
 
 }
+
+document.getElementById("description_cat").value="";
+
+loadCategories();
+
+}
+
+
 
 // تجهيز التعديل
 function editCategory(id,name){
 
-document.getElementById("description_cat").value=name
-edit_id=id
+document.getElementById("description_cat").value=name;
+
+edit_id=id;
 
 }
+
+
 
 // حذف
 async function deleteCategory(id){
 
-if(!confirm("تأكيد الحذف؟")) return
+if(!confirm("هل تريد حذف الصنف؟")) return;
 
-await supabase
+await supabaseClient
 .from("categories")
 .delete()
-.eq("id_cat",id)
+.eq("id_cat",id);
 
-loadCategories()
+loadCategories();
 
 }
+
+
 
 // خروج
 function logout(){
 
-window.location.href="index.html"
+window.location.href="index.html";
 
 }
 
-loadCategories()
+
+
+// تشغيل الصفحة
+loadCategories();
 
 </script>
 
 </body>
 </html>
-
