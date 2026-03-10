@@ -1,31 +1,171 @@
 <!DOCTYPE html>
 <html lang="ar">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SuperMarket ERP - Login</title>
-<link rel="stylesheet" href="css/style.css">
-</head>
 
-<body class="login-page">
-<link rel="manifest" href="manifest.json">
-<div class="login-box">
-<h2>🛒 SuperMarket ERP</h2>
-<input type="email" id="email" placeholder="البريد الإلكتروني">
-<input type="password" id="password" placeholder="كلمة المرور">
-<button onclick="login()">تسجيل الدخول</button>
-</div>
+<head>
+
+<meta charset="UTF-8">
+<title>نظام إدارة المبيعات</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
-<!-- Supabase Library -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
-<!-- Supabase Config -->
-<script src="js/supabase.js"></script>
+<style>
 
-<!-- Auth Functions -->
-<script src="js/auth.js"></script>
+body{
+margin:0;
+font-family:Tahoma;
+background:linear-gradient(135deg,#1d4350,#a43931);
+height:100vh;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.container{
+width:900px;
+background:white;
+display:flex;
+border-radius:15px;
+overflow:hidden;
+box-shadow:0 15px 40px rgba(0,0,0,0.4);
+}
+
+.left{
+width:50%;
+background:url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d") center/cover;
+}
+
+.right{
+width:50%;
+padding:40px;
+}
+
+h1{
+text-align:center;
+color:#333;
+margin-bottom:30px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin:10px 0;
+border-radius:8px;
+border:1px solid #ccc;
+font-size:16px;
+}
+
+button{
+width:100%;
+padding:12px;
+background:#1d4350;
+color:white;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+}
+
+button:hover{
+background:#a43931;
+}
+
+.footer{
+text-align:center;
+margin-top:20px;
+color:#777;
+font-size:13px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="left"></div>
+
+<div class="right">
+
+<h1>نظام إدارة المبيعات</h1>
+
+<input type="text" id="username" placeholder="اسم المستخدم">
+
+<input type="password" id="password" placeholder="كلمة المرور">
+
+<button onclick="login()">تسجيل الدخول</button>
+
+<div class="footer">
+Sales Management System
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const supabase = window.supabase.createClient(
+"https://vmxbedovoahuggfpcmyk.supabase.co",
+"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+)
+
+async function login(){
+
+let username=document.getElementById("username").value
+let password=document.getElementById("password").value
+
+const {data,error}=await supabase
+.from("tb_users")
+.select("*")
+.eq("id",username)
+.eq("pwd",password)
+.single()
+
+if(error || !data){
+
+alert("اسم المستخدم أو كلمة المرور غير صحيحة")
+
+return
+
+}
+
+let type=data.usertype
+
+if(type=="superuser"){
+
+window.location="superuser.html"
+
+}
+
+else if(type=="admin"){
+
+window.location="admin.html"
+
+}
+
+else if(type=="ituser"){
+
+window.location="ituser.html"
+
+}
+
+else if(type=="sealer"){
+
+window.location="sealer.html"
+
+}
+
+else{
+
+alert("نوع المستخدم غير معروف")
+
+}
+
+}
+
+</script>
+
 </body>
 </html>
