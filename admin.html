@@ -185,110 +185,49 @@ width:300px">
 <button onclick="closePassword()">إلغاء</button>
 
 </div>
-
-
-
 <script>
-  function openSettings(){
-window.location="settings.html";
-}
-  function loadStore(){
 
-let name = localStorage.getItem("storeName");
-let header = localStorage.getItem("storeHeader");
+const supabaseClient = supabase.createClient(
+"https://vmxbedovoahuggfpcmyk.supabase.co",
+"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+)
+
+function loadStore(){
+
+let name = localStorage.getItem("storeName")
+let header = localStorage.getItem("storeHeader")
 
 if(!name){
-name="ABM للتجارة والاستثمار";
-localStorage.setItem("storeName",name);
+name="ABM للتجارة والاستثمار"
+localStorage.setItem("storeName",name)
 }
 
 if(!header){
-header="نظام إدارة االمبيعات";
-localStorage.setItem("storeHeader",header);
+header="نظام إدارة المبيعات"
+localStorage.setItem("storeHeader",header)
 }
 
-document.getElementById("storeName").innerText=name;
-document.getElementById("storeHeader").innerText=header;
+document.getElementById("storeName").innerText=name
+document.getElementById("storeHeader").innerText=header
 
 }
 
-loadStore();
-  function editPassword(){
-  let newPwd = prompt("أدخل كلمة المرور الجديدة:");
-  if(newPwd){
-    // نفترض أن المستخدم الحالي مخزن في localStorage باسم "currentUser"
-    let currentUser = localStorage.getItem("currentUser");
-    if(!currentUser){ alert("لا يوجد مستخدم مسجل!"); return; }
+loadStore()
 
-    // تحديث كلمة المرور في جدول tb_users
-    supabase.from('tb_users')
-      .update({pwd:newPwd})
-      .eq('id',currentUser)
-      .then(({error})=>{
-        if(error){ alert("خطأ: "+error.message); return;}
-        alert("تم تعديل كلمة المرور بنجاح");
-      });
-  }
-}
 function updateClock(){
 
-let now = new Date();
+let now = new Date()
 
-let time = now.toLocaleTimeString();
-let date = now.toLocaleDateString();
+let time = now.toLocaleTimeString()
+let date = now.toLocaleDateString()
 
 document.getElementById("clock").innerHTML =
-"🕒 " + time + " | " + date;
+"🕒 " + time + " | " + date
 
 }
 
-setInterval(updateClock,1000);
-updateClock();
-function loadUser(){
-
-let user = localStorage.getItem("username");
-
-if(!user){
-
-user = "مدير النظام";
-
-localStorage.setItem("username",user);
-
-}
-
-document.getElementById("usernameDisplay").innerText = user;
-
-}
-
-
-function editUser(){
-
-let newName = prompt("اكتب اسم المستخدم الجديد");
-
-if(newName){
-
-localStorage.setItem("username",newName);
-
-loadUser();
-
-}
-
-}
-
-
-function logout(){
-
-localStorage.removeItem("username");
-
-window.location="index.html";
-
-}
-
-
-loadUser();
-
-</script>
-<script>
+setInterval(updateClock,1000)
+updateClock()
 
 document.addEventListener("DOMContentLoaded", function(){
 
@@ -303,9 +242,67 @@ document.getElementById("usernameDisplay").textContent = user
 
 })
 
+function logout(){
+
+localStorage.removeItem("user")
+localStorage.removeItem("role")
+
+window.location="index.html"
+
+}
+
+function editPassword(){
+document.getElementById("passwordBox").style.display="block"
+}
+
+function closePassword(){
+document.getElementById("passwordBox").style.display="none"
+}
+
+async function savePassword(){
+
+let username = localStorage.getItem("user")
+let oldPass = document.getElementById("oldPass").value
+let newPass = document.getElementById("newPass").value
+
+if(!oldPass || !newPass){
+alert("أدخل جميع البيانات")
+return
+}
+
+const {data,error}=await supabaseClient
+.from("tb_users")
+.select("*")
+.eq("fullname",username)
+.eq("pwd",oldPass)
+.single()
+
+if(error || !data){
+alert("كلمة المرور القديمة غير صحيحة")
+return
+}
+
+const {error:updateError}=await supabaseClient
+.from("tb_users")
+.update({pwd:newPass})
+.eq("fullname",username)
+
+if(updateError){
+alert("حدث خطأ أثناء التحديث")
+return
+}
+
+alert("تم تغيير كلمة المرور بنجاح")
+
+closePassword()
+
+}
+
 </script>
+
 </body>
 </html>
+
 
 
 
