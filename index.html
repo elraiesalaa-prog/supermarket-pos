@@ -83,8 +83,8 @@ const supabaseClient = window.supabase.createClient(
   "https://vmxbedovoahuggfpcmyk.supabase.co",
   "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
-
 async function login() {
+  // قراءة بيانات المستخدم من المدخلات مع إزالة الفراغات
   const username = document.getElementById("username").value.trim()
   const password = document.getElementById("password").value.trim()
 
@@ -93,42 +93,50 @@ async function login() {
     return
   }
 
-  // البحث حسب العمود username وليس id
-  const { data, error } = await supabaseClient
-    .from("tb_users")
-    .select("*")
-    .eq("username", username)
-    .eq("pwd", password)
-    .single()
+  try {
+    // البحث في Supabase حسب العمود username و pwd
+    const { data, error } = await supabaseClient
+      .from("tb_users")
+      .select("*")
+      .ilike("username", username) // ilike لتجاهل حساسية الأحرف
+      .eq("pwd", password)
+      .single()
 
-  console.log("Data:", data)
-  console.log("Error:", error)
+    console.log("Data:", data)
+    console.log("Error:", error)
 
-  if (error || !data) {
-    alert("بيانات الدخول غير صحيحة")
-    return
-  }
+    if (error || !data) {
+      alert("بيانات الدخول غير صحيحة")
+      return
+    }
 
-  // حفظ بيانات المستخدم في localStorage
-  localStorage.setItem("user", data.fullname)
-  localStorage.setItem("role", data.usertype)
+    // حفظ بيانات المستخدم
+    localStorage.setItem("user", data.fullname)
+    localStorage.setItem("role", data.usertype)
 
-  // تحويل المستخدم حسب نوعه
-  switch (data.usertype) {
-    case "superuser":
-      window.location = "superuser.html"
-      break
-    case "admin":
-      window.location = "dashboard.html"
-      break
-    case "ituser":
-      window.location = "ituser.html"
-      break
-    case "sealer":
-      window.location = "sealer.html"
-      break
-    default:
-      alert("نوع المستخدم غير معروف")
+    // تحويل المستخدم حسب نوعه مع تجاهل حساسية الأحرف
+    const type = data.usertype.toLowerCase()
+
+    switch (type) {
+      case "superuser":
+        window.location = "superuser.html"
+        break
+      case "admin":
+        window.location = "dashboard.html"
+        break
+      case "ituser":
+        window.location = "ituser.html"
+        break
+      case "sealer":
+        window.location = "sealer.html"
+        break
+      default:
+        alert("نوع المستخدم غير معروف: " + data.usertype)
+    }
+
+  } catch (err) {
+    console.error("Login error:", err)
+    alert("حدث خطأ أثناء تسجيل الدخول")
   }
 }
 
@@ -136,3 +144,4 @@ async function login() {
 
 </body>
 </html>
+
