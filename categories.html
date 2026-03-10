@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+
+<meta charset="UTF-8">
+<title>إدارة الأصناف</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+body{
+font-family: Tahoma;
+background:#f4f6f9;
+padding:20px;
+}
+
+.container{
+max-width:700px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+h2{
+text-align:center;
+}
+
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:1px solid #ccc;
+border-radius:5px;
+}
+
+button{
+padding:10px 15px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+margin-top:10px;
+}
+
+.add{background:#28a745;color:white;}
+.update{background:#ffc107;color:black;}
+.delete{background:#dc3545;color:white;}
+.logout{background:#444;color:white;float:left;}
+
+table{
+width:100%;
+margin-top:20px;
+border-collapse:collapse;
+}
+
+th,td{
+padding:10px;
+border:1px solid #ddd;
+text-align:center;
+}
+
+th{
+background:#007bff;
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<button class="logout" onclick="logout()">خروج</button>
+
+<h2>إدارة الأصناف</h2>
+
+<input type="text" id="description_cat" placeholder="اسم الصنف">
+
+<button class="add" onclick="addCategory()">إضافة صنف</button>
+
+<table>
+
+<thead>
+<tr>
+<th>الرقم</th>
+<th>اسم الصنف</th>
+<th>تعديل</th>
+<th>حذف</th>
+</tr>
+</thead>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+</div>
+
+<script>
+
+const supabase = window.supabase.createClient(
+"https://vmxbedovoahuggfpcmyk.supabase.co",
+"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+)
+
+let edit_id = null
+
+// تحميل الأصناف
+async function loadCategories(){
+
+const {data,error} = await supabase
+.from("categories")
+.select("*")
+.order("id_cat",{ascending:true})
+
+let table=""
+
+data.forEach(row=>{
+
+table+=`
+<tr>
+<td>${row.id_cat}</td>
+<td>${row.description_cat}</td>
+
+<td>
+<button class="update" onclick="editCategory(${row.id_cat},'${row.description_cat}')">
+تعديل
+</button>
+</td>
+
+<td>
+<button class="delete" onclick="deleteCategory(${row.id_cat})">
+حذف
+</button>
+</td>
+
+</tr>
+`
+
+})
+
+document.getElementById("tableBody").innerHTML=table
+
+}
+
+// إضافة صنف
+async function addCategory(){
+
+let name=document.getElementById("description_cat").value
+
+if(name==""){
+alert("اكتب اسم الصنف")
+return
+}
+
+if(edit_id==null){
+
+await supabase
+.from("categories")
+.insert([{description_cat:name}])
+
+}else{
+
+await supabase
+.from("categories")
+.update({description_cat:name})
+.eq("id_cat",edit_id)
+
+edit_id=null
+}
+
+document.getElementById("description_cat").value=""
+
+loadCategories()
+
+}
+
+// تجهيز التعديل
+function editCategory(id,name){
+
+document.getElementById("description_cat").value=name
+edit_id=id
+
+}
+
+// حذف
+async function deleteCategory(id){
+
+if(!confirm("تأكيد الحذف؟")) return
+
+await supabase
+.from("categories")
+.delete()
+.eq("id_cat",id)
+
+loadCategories()
+
+}
+
+// خروج
+function logout(){
+
+window.location.href="index.html"
+
+}
+
+loadCategories()
+
+</script>
+
+</body>
+</html>
