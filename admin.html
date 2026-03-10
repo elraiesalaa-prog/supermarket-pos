@@ -78,7 +78,7 @@ align-items:center;
 <div class="topbar">
 
 <div>
-👤 المستخدم :
+👤 هلا :
 <span id="usernameDisplay"></span>
 </div>
 
@@ -173,33 +173,62 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 </div>
 
 </div>
+<!-- نافذة تغيير كلمة المرور -->
+
+<div id="passwordBox" style="display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 0 20px rgba(0,0,0,0.3);
+width:300px">
+
+<h3>تغيير كلمة المرور</h3>
+
+<input type="password" id="oldPass" placeholder="كلمة المرور القديمة">
+<input type="password" id="newPass" placeholder="كلمة المرور الجديدة">
+
+<br><br>
+
+<button onclick="savePassword()">حفظ</button>
+<button onclick="closePassword()">إلغاء</button>
+
+</div>
 
 
 
 <script>
-  function openSettings(){
-window.location="settings.html";
-}
-  function loadStore(){
+  const supabaseClient = supabase.createClient(
+"https://vmxbedovoahuggfpcmyk.supabase.co",
+"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+)
 
-let name = localStorage.getItem("storeName");
-let header = localStorage.getItem("storeHeader");
+function loadStore(){
+
+let name = localStorage.getItem("storeName")
+let header = localStorage.getItem("storeHeader")
 
 if(!name){
-name="ABM للتجارة والاستثمار";
-localStorage.setItem("storeName",name);
+name="ABM للتجارة والاستثمار"
+localStorage.setItem("storeName",name)
 }
 
 if(!header){
-header="نظام إدارة االمبيعات";
-localStorage.setItem("storeHeader",header);
+header="نظام إدارة المبيعات"
+localStorage.setItem("storeHeader",header)
 }
 
-document.getElementById("storeName").innerText=name;
-document.getElementById("storeHeader").innerText=header;
+document.getElementById("storeName").innerText=name
+document.getElementById("storeHeader").innerText=header
 
 }
-
+  function openSettings(){
+window.location="settings.html";
+}
+  
 loadStore();
   function editPassword(){
   let newPwd = prompt("أدخل كلمة المرور الجديدة:");
