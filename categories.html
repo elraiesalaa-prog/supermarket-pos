@@ -12,29 +12,35 @@
 
 body{
 font-family:Tahoma;
-background:#f2f2f2;
+background:#f4f6f9;
 padding:20px;
 }
 
 .container{
-width:600px;
+max-width:700px;
 margin:auto;
 background:white;
 padding:20px;
-border-radius:8px;
-box-shadow:0 0 10px #ccc;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
 }
 
 h2{
 text-align:center;
+margin-bottom:15px;
 }
 
 input{
 width:100%;
 padding:10px;
-margin-top:10px;
+margin-top:5px;
 border:1px solid #ccc;
 border-radius:5px;
+}
+
+.search{
+margin-top:10px;
+background:#fafafa;
 }
 
 button{
@@ -42,16 +48,17 @@ padding:8px 15px;
 border:none;
 border-radius:5px;
 cursor:pointer;
+margin-top:10px;
 }
 
-.add{background:#28a745;color:white;}
+.save{background:#28a745;color:white;}
 .edit{background:#ffc107;}
 .delete{background:#dc3545;color:white;}
-.logout{background:#333;color:white;margin-bottom:10px;}
+.logout{background:#333;color:white;float:left}
 
 table{
 width:100%;
-margin-top:20px;
+margin-top:15px;
 border-collapse:collapse;
 }
 
@@ -64,6 +71,17 @@ text-align:center;
 th{
 background:#007bff;
 color:white;
+}
+
+tr:hover{
+background:#f1f1f1;
+}
+
+.message{
+text-align:center;
+margin-top:10px;
+color:green;
+font-weight:bold;
 }
 
 </style>
@@ -80,9 +98,11 @@ color:white;
 
 <input type="text" id="description_cat" placeholder="اسم الصنف">
 
-<br><br>
+<button class="save" onclick="saveCategory()">حفظ</button>
 
-<button class="add" onclick="addCategory()">حفظ</button>
+<input type="text" id="searchBox" class="search" placeholder="بحث عن صنف..." onkeyup="searchCategory()">
+
+<div class="message" id="msg"></div>
 
 <table>
 
@@ -106,27 +126,40 @@ color:white;
 const supabaseClient = window.supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-);
+)
 
-let edit_id = null;
+let edit_id=null
+let categories=[]
 
 
 // تحميل الأصناف
 async function loadCategories(){
 
-const {data,error} = await supabaseClient
+const {data,error}=await supabaseClient
 .from("categories")
 .select("*")
-.order("id_cat",{ascending:true});
+.order("id_cat",{ascending:true})
 
-let html="";
+categories=data
 
-data.forEach(function(row){
+renderTable(categories)
 
-html += `
+}
+
+
+// عرض الجدول
+function renderTable(list){
+
+let html=""
+
+list.forEach(function(row){
+
+html+=`
+
 <tr>
 
 <td>${row.id_cat}</td>
+
 <td>${row.description_cat}</td>
 
 <td>
@@ -144,89 +177,118 @@ onclick="deleteCategory(${row.id_cat})">
 </td>
 
 </tr>
-`;
 
-});
+`
 
-document.getElementById("tableBody").innerHTML = html;
+})
+
+document.getElementById("tableBody").innerHTML=html
 
 }
 
 
+// حفظ
+async function saveCategory(){
 
-// إضافة أو تعديل
-async function addCategory(){
-
-let name = document.getElementById("description_cat").value;
+let name=document.getElementById("description_cat").value
 
 if(name==""){
-alert("اكتب اسم الصنف");
-return;
+alert("اكتب اسم الصنف")
+return
 }
 
 if(edit_id==null){
 
 await supabaseClient
 .from("categories")
-.insert([{description_cat:name}]);
+.insert([{description_cat:name}])
+
+showMsg("تمت إضافة الصنف")
 
 }else{
 
 await supabaseClient
 .from("categories")
 .update({description_cat:name})
-.eq("id_cat",edit_id);
+.eq("id_cat",edit_id)
 
-edit_id=null;
+showMsg("تم تعديل الصنف")
 
-}
-
-document.getElementById("description_cat").value="";
-
-loadCategories();
+edit_id=null
 
 }
 
+document.getElementById("description_cat").value=""
+
+loadCategories()
+
+}
 
 
-// تجهيز التعديل
+// تعديل
 function editCategory(id,name){
 
-document.getElementById("description_cat").value=name;
+document.getElementById("description_cat").value=name
 
-edit_id=id;
+edit_id=id
 
 }
-
 
 
 // حذف
 async function deleteCategory(id){
 
-if(!confirm("هل تريد حذف الصنف؟")) return;
+if(!confirm("تأكيد الحذف؟")) return
 
 await supabaseClient
 .from("categories")
 .delete()
-.eq("id_cat",id);
+.eq("id_cat",id)
 
-loadCategories();
+showMsg("تم حذف الصنف")
+
+loadCategories()
 
 }
 
+
+// بحث
+function searchCategory(){
+
+let word=document.getElementById("searchBox").value.toLowerCase()
+
+let filtered=categories.filter(c =>
+c.description_cat.toLowerCase().includes(word)
+)
+
+renderTable(filtered)
+
+}
+
+
+// رسالة
+function showMsg(text){
+
+document.getElementById("msg").innerText=text
+
+setTimeout(()=>{
+
+document.getElementById("msg").innerText=""
+
+},2000)
+
+}
 
 
 // خروج
 function logout(){
 
-window.location.href="index.html";
+window.location.href="index.html"
 
 }
 
 
-
-// تشغيل الصفحة
-loadCategories();
+loadCategories()
 
 </script>
 
