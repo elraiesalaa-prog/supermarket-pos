@@ -276,8 +276,82 @@ document.getElementById("usernameDisplay").textContent = user
 })
 
 </script>
+  <div id="passwordBox" style="display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 0 20px rgba(0,0,0,0.3);
+width:300px">
+
+<h3>تغيير كلمة المرور</h3>
+
+<input type="password" id="oldPass" placeholder="كلمة المرور القديمة">
+
+<input type="password" id="newPass" placeholder="كلمة المرور الجديدة">
+
+<br><br>
+
+<button onclick="savePassword()">حفظ</button>
+<button onclick="closePassword()">إلغاء</button>
+
+</div>
+  <script>
+
+function editPassword(){
+document.getElementById("passwordBox").style.display="block"
+}
+
+function closePassword(){
+document.getElementById("passwordBox").style.display="none"
+}
+
+async function savePassword(){
+
+let username = localStorage.getItem("user")
+let oldPass = document.getElementById("oldPass").value
+let newPass = document.getElementById("newPass").value
+
+if(!oldPass || !newPass){
+alert("أدخل جميع البيانات")
+return
+}
+
+const {data,error}=await supabaseClient
+.from("tb_users")
+.select("*")
+.eq("fullname",username)
+.eq("pwd",oldPass)
+.single()
+
+if(error || !data){
+alert("كلمة المرور القديمة غير صحيحة")
+return
+}
+
+const {error:updateError}=await supabaseClient
+.from("tb_users")
+.update({pwd:newPass})
+.eq("fullname",username)
+
+if(updateError){
+alert("حدث خطأ أثناء التحديث")
+return
+}
+
+alert("تم تغيير كلمة المرور بنجاح")
+
+closePassword()
+
+}
+
+</script>
 </body>
 </html>
+
 
 
 
