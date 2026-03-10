@@ -7,7 +7,8 @@
 <title>إدارة الأصناف</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
 <style>
 
 body{
@@ -99,7 +100,7 @@ font-weight:bold;
 <input type="text" id="description_cat" placeholder="اسم الصنف">
 
 <button class="save" onclick="saveCategory()">حفظ</button>
-
+<button onclick="exportPDF()">تصدير PDF</button>
 <input type="text" id="searchBox" class="search" placeholder="بحث عن صنف..." onkeyup="searchCategory()">
 
 <div class="message" id="msg"></div>
@@ -289,8 +290,36 @@ window.location.href="index.html"
 
 
 loadCategories()
+function exportPDF(){
 
+const { jsPDF } = window.jspdf
+
+let doc = new jsPDF()
+
+let rows = []
+
+categories.forEach(function(cat){
+
+rows.push([
+cat.id_cat,
+cat.description_cat
+])
+
+})
+
+doc.text("كشف الأصناف", 90, 10)
+
+doc.autoTable({
+head:[["الرقم","الصنف"]],
+body:rows,
+startY:20
+})
+
+doc.save("categories.pdf")
+
+}
 </script>
 
 </body>
 </html>
+
