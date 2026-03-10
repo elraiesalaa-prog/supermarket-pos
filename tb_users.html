@@ -63,7 +63,7 @@ background:#eee;
 <select id="usertype">
 
 <option value="مدير">مدير</option>
-<option value="IT">IT</option>
+<option value="تقني حاسوب>تقني حاسوب</option>
 <option value="مشرف">مشرف</option>
 <option value="بائع">بائع</option>
 
@@ -153,7 +153,7 @@ table+=`
 <select id="t${user.id}">
 
 <option ${user.usertype=="مدير"?"selected":""}>مدير</option>
-<option ${user.usertype=="IT"?"selected":""}>IT</option>
+<option ${user.usertype=="تقني حاسوب"?"selected":""}>تقني حاسوب</option>
 <option ${user.usertype=="مشرف"?"selected":""}>مشرف</option>
 <option ${user.usertype=="بائع"?"selected":""}>بائع</option>
 </td>
@@ -294,6 +294,7 @@ doc.save("users.pdf");
 </body>
 
 </html>
+
 
 
 
