@@ -141,7 +141,9 @@ table+=`
 
 <td contenteditable="true" id="u${user.id}">${user.username}</td>
 
-<td contenteditable="true" id="p${user.id}">${user.pwd}</td>
+<td>
+<input type="password" id="p${user.id}" value="${user.pwd}" style="border:none;text-align:center;width:100%;">
+</td>
 
 <td>
 
@@ -293,3 +295,4 @@ doc.save("users.pdf");
 </body>
 
 </html>
+
