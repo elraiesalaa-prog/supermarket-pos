@@ -92,7 +92,9 @@ background:#a43931;
 
 <script>
 
-const supabase = window.supabase.createClient(
+<script>
+
+const supabaseClient = window.supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
@@ -102,7 +104,7 @@ async function login(){
 let username=document.getElementById("username").value
 let password=document.getElementById("password").value
 
-const {data,error}=await supabase
+const {data,error}=await supabaseClient
 .from("tb_users")
 .select("*")
 .eq("id",username)
@@ -126,7 +128,7 @@ window.location="superuser.html"
 }
 
 else if(type=="admin"){
-window.location="admin.html"
+window.location="dashboard.html"
 }
 
 else if(type=="ituser"){
@@ -143,3 +145,4 @@ window.location="sealer.html"
 
 </body>
 </html>
+
