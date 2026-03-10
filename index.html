@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-
 <meta charset="UTF-8">
 <title>نظام إدارة المبيعات</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -58,7 +56,6 @@ button:hover{
 background:#a43931;
 }
 </style>
-
 </head>
 
 <body>
@@ -88,40 +85,41 @@ const supabaseClient = window.supabase.createClient(
 
 async function login(){
 
-let username=document.getElementById("username").value
-let password=document.getElementById("password").value
+  let username=document.getElementById("username").value
+  let password=document.getElementById("password").value
 
-const {data,error}=await supabaseClient
-.from("tb_users")
-.select("*")
-.eq("id",username)
-.eq("pwd",password)
-.single()
+  const {data,error}=await supabaseClient
+    .from("tb_users")
+    .select("*")
+    .eq("id",username)
+    .eq("pwd",password)
+    .single()
 
-if(error || !data){
-alert("بيانات الدخول غير صحيحة")
-return
-}
+  if(error || !data){
+    alert("بيانات الدخول غير صحيحة")
+    return
+  }
 
-localStorage.setItem("user",data.fullname)
-localStorage.setItem("role",data.usertype)
+  localStorage.setItem("user",data.fullname)
+  localStorage.setItem("role",data.usertype)
 
-let type=data.usertype
+  let type=data.usertype
 
-if(type=="superuser"){
-window.location="superuser.html"
-}
-else if(type=="admin"){
-window.location="dashboard.html"
-}
-else if(type=="ituser"){
-window.location="ituser.html"
-}
-else if(type=="sealer"){
-window.location="sealer.html"
-else{
-alert("نوع المستخدم غير معروف")
-}
+  if(type=="superuser"){
+    window.location="superuser.html"
+  }
+  else if(type=="admin"){
+    window.location="dashboard.html"
+  }
+  else if(type=="ituser"){
+    window.location="ituser.html"
+  }
+  else if(type=="sealer"){
+    window.location="sealer.html"
+  }
+  else{
+    alert("نوع المستخدم غير معروف")
+  }
 
 }
 </script>
