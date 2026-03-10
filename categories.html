@@ -9,6 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
+<script src="https://cdn.jsdelivr.net/npm/arabic-persian-reshaper/js/arabic-persian-reshaper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bidi-js/dist/bidi.min.js"></script>
 <style>
 
 body{
@@ -296,18 +300,28 @@ const { jsPDF } = window.jspdf
 
 let doc = new jsPDF()
 
-let rows = []
+let rows=[]
 
 categories.forEach(function(cat){
 
+let name = cat.description_cat
+
+name = ArabicPersianReshaper.reshape(name)
+name = bidi_js(name)
+
 rows.push([
 cat.id_cat,
-cat.description_cat
+name
 ])
 
 })
 
-doc.text("كشف الأصناف", 90, 10)
+let title="كشف الأصناف"
+
+title = ArabicPersianReshaper.reshape(title)
+title = bidi_js(title)
+
+doc.text(title, 90, 10)
 
 doc.autoTable({
 head:[["الرقم","الصنف"]],
@@ -322,4 +336,5 @@ doc.save("categories.pdf")
 
 </body>
 </html>
+
 
