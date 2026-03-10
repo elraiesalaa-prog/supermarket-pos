@@ -78,17 +78,26 @@ align-items:center;
 <div class="topbar">
 
 <div>
-👤 مرحبا :
+👤 المستخدم :
 <span id="usernameDisplay"></span>
 </div>
 
-<div id="clock"></div>
+<script>
 
-<div class="menu" onclick="editPassword()">تعديل كلمة المرور</div>
+document.addEventListener("DOMContentLoaded", function(){
 
+let user = localStorage.getItem("user")
 
-</div>
+if(!user){
+window.location="index.html"
+return
+}
 
+document.getElementById("usernameDisplay").textContent = user
+
+})
+
+</script>
 
 
 <div class="flex h-[calc(100vh-50px)]">
@@ -285,6 +294,7 @@ document.getElementById("usernameDisplay").textContent = user
 </script>
 </body>
 </html>
+
 
 
 
