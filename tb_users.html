@@ -145,12 +145,12 @@ table+=`
 <input type="password" id="p${user.id}" value="${user.pwd}" style="border:none;text-align:center;width:100%;">
 </td>
 
-<select id="t${user.id}">
-
 
 
 </select>
 <td>
+
+<select id="t${user.id}">
 
 <option ${user.usertype=="مدير"?"selected":""}>مدير</option>
 <option ${user.usertype=="تقني IT"?"selected":""}>تقني IT</option>
@@ -294,6 +294,7 @@ doc.save("users.pdf");
 </body>
 
 </html>
+
 
 
 
