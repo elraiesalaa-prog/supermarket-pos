@@ -234,18 +234,29 @@ async function saveProduct(){
 
 let data={
 
-product_name:product_name.value,
-pay_qte:pay_qte.value,
-pice_qte:pice_qte.value,
-qte_in_stock:qte_in_stock.value,
-pay_price:pay_price.value,
-seal_price:seal_price.value,
-pay_date:pay_date.value,
-expare_date:expare_date.value,
-req_id:req_id.value,
-coasts_value:coasts_value.value,
-id_cat:id_cat.value,
-p_weight:p_weight.value
+product_name: product_name.value || null,
+
+pay_qte: pay_qte.value ? Number(pay_qte.value) : null,
+
+pice_qte: pice_qte.value ? Number(pice_qte.value) : null,
+
+qte_in_stock: qte_in_stock.value ? Number(qte_in_stock.value) : null,
+
+pay_price: pay_price.value ? Number(pay_price.value) : null,
+
+seal_price: seal_price.value ? Number(seal_price.value) : null,
+
+pay_date: pay_date.value || null,
+
+expare_date: expare_date.value || null,
+
+req_id: req_id.value || null,
+
+coasts_value: coasts_value.value ? Number(coasts_value.value) : null,
+
+id_cat: id_cat.value ? Number(id_cat.value) : null,
+
+p_weight: p_weight.value || null
 
 }
 
@@ -267,12 +278,9 @@ edit_id=null
 }
 
 clearForm()
-
 loadProducts()
 
 }
-
-
 // تعديل
 function editProduct(id){
 
@@ -348,3 +356,4 @@ loadProducts()
 
 </body>
 </html>
+
