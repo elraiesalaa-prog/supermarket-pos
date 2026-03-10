@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <div class="bg-blue-700 text-white p-3 flex justify-between items-center">
+
+<div class="text-xl font-bold">
+<span id="storeHeader">نظام إدارة االمبيعات</span>
+</div>
+
+<div>
+🏪 <span id="storeName">ABM للتجارة والاستثمار </span>
+</div>
+
+</div>
+  <div class="bg-blue-500 text-white flex gap-4 p-2 justify-center">
+
+<button class="px-4 py-1 bg-blue-600 rounded">فواتير مبدئية</button>
+
+<button class="px-4 py-1 bg-blue-600 rounded">فواتير نهائية</button>
+
+</div>
+<head>
+
+<meta charset="UTF-8">
+<title>لوحة المشرف</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+
+body{
+background:linear-gradient(135deg,#1e3a8a,#0f172a);
+font-family:tahoma;
+}
+
+.menu{
+padding:10px;
+margin-bottom:6px;
+border-radius:8px;
+cursor:pointer;
+transition:0.3s;
+background:#3b82f6;
+color:white;
+font-weight:bold;
+}
+
+.menu:hover{
+background:#2563eb;
+transform:translateX(-4px);
+}
+.panel{
+background:white;
+box-shadow:0 10px 25px rgba(0,0,0,0.2);
+}
+
+.topbar{
+background:#0f172a;
+color:white;
+padding:10px 20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+</style>
+<script src="https://unpkg.com/feather-icons"></script>
+</head>
+
+<body>
+
+<!-- الشريط العلوي -->
+<div class="topbar">
+
+<div>
+👤 المستخدم :
+<span id="usernameDisplay"></span>
+</div>
+
+<div id="clock"></div>
+
+<div class="menu" onclick="editPassword()">تعديل كلمة المرور</div>
+
+
+</div>
+
+
+
+<div class="flex h-[calc(100vh-50px)]">
+
+<!-- القائمة اليمنى -->
+<div class="w-64 p-4 overflow-y-auto text-white"
+style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
+
+<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
+القائمة الرئيسية
+</h2>
+
+<div class="menu">الأصناف</div>
+<div class="menu">المنتجات</div>
+
+<div class="menu">العملاء</div>
+<div class="menu">الموردين</div>
+
+<hr>
+
+<div class="menu">القروض</div>
+<div class="menu">سداد القروض</div>
+
+<hr>
+
+<div class="menu">المصروفات</div>
+
+<hr>
+
+
+</div>
+
+
+
+<!-- الوسط -->
+<div class="flex-1 flex items-center justify-center p-6">
+
+<div class="bg-white rounded-xl shadow-2xl p-10 w-5/6 h-5/6 flex items-center justify-center">
+
+<img 
+src="pic9.png"
+loading="lazy"
+style="max-width:120%; max-height:120%; object-fit:contain;">
+
+</div>
+
+</div>
+
+
+
+<!-- القائمة اليسرى -->
+<div class="w-64 p-4 overflow-y-auto text-white"
+style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
+
+<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
+العمليات
+</h2>
+
+<div class="menu">المبيعات</div>
+<div class="menu">الطلبيات</div>
+
+
+<hr>
+
+<div class="menu">قائمة الأسعار</div>
+<div class="menu">أوزان بالكيلو</div>
+<div class="menu">أوزان بالرطل</div>
+
+<hr>
+
+<div class="menu" style="background-color:#ef4444; text-align:center;">خروج</div>
+
+</div>
+
+</div>
+
+
+
+<script>
+  function openSettings(){
+window.location="settings.html";
+}
+  function loadStore(){
+
+let name = localStorage.getItem("storeName");
+let header = localStorage.getItem("storeHeader");
+
+if(!name){
+name="ABM للتجارة والاستثمار";
+localStorage.setItem("storeName",name);
+}
+
+if(!header){
+header="نظام إدارة االمبيعات";
+localStorage.setItem("storeHeader",header);
+}
+
+document.getElementById("storeName").innerText=name;
+document.getElementById("storeHeader").innerText=header;
+
+}
+
+loadStore();
+  function editPassword(){
+  let newPwd = prompt("أدخل كلمة المرور الجديدة:");
+  if(newPwd){
+    // نفترض أن المستخدم الحالي مخزن في localStorage باسم "currentUser"
+    let currentUser = localStorage.getItem("currentUser");
+    if(!currentUser){ alert("لا يوجد مستخدم مسجل!"); return; }
+
+    // تحديث كلمة المرور في جدول tb_users
+    supabase.from('tb_users')
+      .update({pwd:newPwd})
+      .eq('id',currentUser)
+      .then(({error})=>{
+        if(error){ alert("خطأ: "+error.message); return;}
+        alert("تم تعديل كلمة المرور بنجاح");
+      });
+  }
+}
+function updateClock(){
+
+let now = new Date();
+
+let time = now.toLocaleTimeString();
+let date = now.toLocaleDateString();
+
+document.getElementById("clock").innerHTML =
+"🕒 " + time + " | " + date;
+
+}
+
+setInterval(updateClock,1000);
+updateClock();
+function loadUser(){
+
+let user = localStorage.getItem("username");
+
+if(!user){
+
+user = "مشرف النظام";
+
+localStorage.setItem("username",user);
+
+}
+
+document.getElementById("usernameDisplay").innerText = user;
+
+}
+
+
+function editUser(){
+
+let newName = prompt("اكتب اسم المستخدم الجديد");
+
+if(newName){
+
+localStorage.setItem("username",newName);
+
+loadUser();
+
+}
+
+}
+
+
+function logout(){
+
+localStorage.removeItem("username");
+
+window.location="index.html";
+
+}
+
+
+loadUser();
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
