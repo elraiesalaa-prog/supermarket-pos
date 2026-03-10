@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ar">
-
 <head>
 
 <meta charset="UTF-8">
@@ -41,7 +40,6 @@ padding:40px;
 
 h1{
 text-align:center;
-color:#333;
 margin-bottom:30px;
 }
 
@@ -51,7 +49,6 @@ padding:12px;
 margin:10px 0;
 border-radius:8px;
 border:1px solid #ccc;
-font-size:16px;
 }
 
 button{
@@ -67,13 +64,6 @@ cursor:pointer;
 
 button:hover{
 background:#a43931;
-}
-
-.footer{
-text-align:center;
-margin-top:20px;
-color:#777;
-font-size:13px;
 }
 
 </style>
@@ -95,10 +85,6 @@ font-size:13px;
 <input type="password" id="password" placeholder="كلمة المرور">
 
 <button onclick="login()">تسجيل الدخول</button>
-
-<div class="footer">
-Sales Management System
-</div>
 
 </div>
 
@@ -125,42 +111,30 @@ const {data,error}=await supabase
 
 if(error || !data){
 
-alert("اسم المستخدم أو كلمة المرور غير صحيحة")
-
+alert("بيانات الدخول غير صحيحة")
 return
 
 }
 
+localStorage.setItem("user",data.fullname)
+localStorage.setItem("role",data.usertype)
+
 let type=data.usertype
 
 if(type=="superuser"){
-
 window.location="superuser.html"
-
 }
 
 else if(type=="admin"){
-
 window.location="admin.html"
-
 }
 
 else if(type=="ituser"){
-
 window.location="ituser.html"
-
 }
 
 else if(type=="sealer"){
-
 window.location="sealer.html"
-
-}
-
-else{
-
-alert("نوع المستخدم غير معروف")
-
 }
 
 }
