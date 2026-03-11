@@ -102,15 +102,19 @@ async function loadCoasts(){
 
 // دالة لحساب عدد المنتجات المرتبطة بنفس req_id
 async function getProductCount(req_id){
-  const { data, error } = await supabaseClient
+
+  const { count, error } = await supabaseClient
     .from("products")
-    .select("product_num")
+    .select("*", { count: "exact", head: true })
     .eq("req_id", req_id);
 
-  if(error) return 0;
-  return data ? data.length : 0;
-}
+  if(error){
+    console.log(error.message);
+    return 0;
+  }
 
+  return count || 0;
+}
 // عرض الجدول مع حساب عدد المنتجات وتكلفة المنتج لكل طلبية
 async function renderTable(){
   const searchTerm = document.getElementById("searchInput").value.toLowerCase();
@@ -234,3 +238,4 @@ loadCoasts();
 
 </body>
 </html>
+
