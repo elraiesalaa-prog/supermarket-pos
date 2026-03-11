@@ -82,7 +82,10 @@
 </div>
 
 </div>
-
+<button onclick="distributeCosts()" 
+class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded">
+توزيع التكلفة على المنتجات
+</button>
 <script>
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
@@ -234,8 +237,58 @@ function clearForm(){
 
 // تحميل البيانات عند البداية
 loadCoasts();
+  async function distributeCosts(){
+
+  // الحصول على الطلبات الموجودة في جدول المصروفات
+  const { data: coasts, error } = await supabaseClient
+    .from("coasts")
+    .select("req_id, coast_value");
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  // استخراج الطلبات الفريدة
+  const reqIDs = [...new Set(coasts.map(c => c.req_id))];
+
+  for(const req of reqIDs){
+
+    // حساب اجمالي التكلفة للطلبية
+    const totalCost = coasts
+      .filter(c => c.req_id === req)
+      .reduce((sum,c)=> sum + Number(c.coast_value),0);
+
+    // حساب عدد المنتجات
+    const { count } = await supabaseClient
+      .from("products")
+      .select("*",{count:"exact",head:true})
+      .eq("req_id",req);
+
+    const productCount = count || 0;
+
+    if(productCount === 0) continue;
+
+    const costPerProduct = totalCost / productCount;
+
+    // تحديث المنتجات
+    const { error:updateError } = await supabaseClient
+      .from("products")
+      .update({ coasts_value: costPerProduct })
+      .eq("req_id",req);
+
+    if(updateError){
+      console.log(updateError.message);
+    }
+
+  }
+
+  alert("تم توزيع التكاليف على المنتجات بنجاح");
+
+}
 </script>
 
 </body>
 </html>
+
 
