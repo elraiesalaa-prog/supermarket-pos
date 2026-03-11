@@ -1,184 +1,146 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
+
 <meta charset="UTF-8">
-<title>تقرير المنتجات</title>
+<title>تقرير أرباح المنتجات</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 
-<style>
-body{
-font-family:Tahoma;
-background:#f4f6f9;
-padding:20px;
-}
-
-.container{
-max-width:1200px;
-margin:auto;
-background:white;
-padding:20px;
-border-radius:10px;
-box-shadow:0 0 10px rgba(0,0,0,0.1);
-}
-
-h2{
-text-align:center;
-margin-bottom:15px;
-}
-
-input{
-width:100%;
-padding:10px;
-margin-top:10px;
-border:1px solid #ccc;
-border-radius:5px;
-}
-
-button{
-padding:8px 15px;
-border:none;
-border-radius:5px;
-cursor:pointer;
-margin-top:10px;
-}
-
-.logout{background:#333;color:white;float:left;margin-bottom:10px}
-
-table{
-width:100%;
-margin-top:15px;
-border-collapse:collapse;
-}
-
-th,td{
-border:1px solid #ddd;
-padding:8px;
-text-align:center;
-}
-
-th{
-background:#007bff;
-color:white;
-}
-
-tr:hover{
-background:#f1f1f1;
-}
-
-</style>
 </head>
 
-<body>
+<body class="bg-blue-50 p-6">
 
-<div class="container">
+<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
 
-<button class="logout" onclick="logout()">خروج</button>
+<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
+تقرير أرباح المنتجات
+</h1>
 
-<h2>تقرير المنتجات</h2>
+<div class="mb-4">
+<input id="searchInput" type="text"
+placeholder="بحث باسم المنتج..."
+class="w-full border px-3 py-2 rounded">
+</div>
 
-<input type="text" id="searchBox" placeholder="بحث عن منتج..." onkeyup="searchReport()">
+<div class="overflow-auto">
 
-<table>
-<thead>
+<table class="w-full border text-center">
+
+<thead class="bg-blue-600 text-white">
+
 <tr>
-<th>اسم المنتج</th>
-<th>عدد القطع</th>
-<th>كمية الشراء</th>
-<th>تكلفة المنتج</th>
-<th>تكلفة الوحدة</th>
-<th>سعر بيع الوحدة</th>
-<th>ربح الوحدة</th>
-<th>ربح المنتج</th>
+
+<th class="p-2">اسم المنتج</th>
+<th class="p-2">عدد القطع</th>
+<th class="p-2">كمية الشراء</th>
+<th class="p-2">تكلفة المنتج</th>
+<th class="p-2">تكلفة الوحدة</th>
+<th class="p-2">سعر البيع</th>
+<th class="p-2">ربح الوحدة</th>
+<th class="p-2">ربح المنتج</th>
+
 </tr>
+
 </thead>
+
 <tbody id="tableBody"></tbody>
+
 </table>
 
 </div>
 
-<script>
-const supabaseClient = window.supabase.createClient(
-"https://vmxbedovoahuggfpcmyk.supabase.co",
-"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-)
+<div class="mt-6 text-center">
+<a href="index.html"
+class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
+رجوع
+</a>
+</div>
 
-let reportData=[]
+</div>
+
+<script>
+
+const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
+const supabaseKey = "YOUR_KEY";
+
+const supabaseClient = supabase.createClient(
+supabaseUrl,
+supabaseKey
+);
+
+let reportData = [];
 
 async function loadReport(){
 
-// استدعاء التقرير من قاعدة البيانات
-const {data,error} = await supabaseClient
-.from("products")
-.select(`
-product_name,
-pice_qte,
-pay_qte,
-pay_price,
-seal_price
-`)
-orderBy:('id_product',{ascending:true})
+const { data, error } = await supabaseClient
+.from("products_report")
+.select("*");
 
 if(error){
-console.log(error)
-return
+alert(error.message);
+return;
 }
 
-// حساب القيم المطلوبة لكل صف
-reportData = data.map(p=>{
-let totalUnits = Number(p.pice_qte)*Number(p.pay_qte)
-let unitCost = totalUnits===0 ? 0 : Number(p.pay_price)/totalUnits
-let profitUnit = Number(p.seal_price) - unitCost
-let totalProfit = profitUnit * totalUnits
+reportData = data;
+renderTable();
 
-return {
-product_name: p.product_name,
-pice_qte: p.pice_qte,
-pay_qte: p.pay_qte,
-pay_price: p.pay_price,
-unitCost: unitCost.toFixed(2),
-seal_price: Number(p.seal_price).toFixed(2),
-profitUnit: profitUnit.toFixed(2),
-totalProfit: totalProfit.toFixed(2)
-}
-})
-
-renderTable(reportData)
 }
 
-function renderTable(list){
-let html=""
-list.forEach(r=>{
-html+=`
-<tr>
-<td>${r.product_name}</td>
-<td>${r.pice_qte}</td>
-<td>${r.pay_qte}</td>
-<td>${r.pay_price}</td>
-<td>${r.unitCost}</td>
-<td>${r.seal_price}</td>
-<td>${r.profitUnit}</td>
-<td>${r.totalProfit}</td>
+function renderTable(){
+
+const search = document
+.getElementById("searchInput")
+.value
+.toLowerCase();
+
+let table = "";
+
+reportData
+.filter(row =>
+(row["اسم المنتج"] || "")
+.toLowerCase()
+.includes(search)
+)
+.forEach(row => {
+
+table += `
+<tr class="border">
+
+<td>${row["اسم المنتج"]}</td>
+
+<td>${row["عدد القطع"]}</td>
+
+<td>${row["كمية الشراء"]}</td>
+
+<td>${row["تكلفة المنتج"]}</td>
+
+<td>${Number(row["تكلفة الوحدة"]).toFixed(2)}</td>
+
+<td>${row["سعر بيع الوحدة"]}</td>
+
+<td>${Number(row["ربح الوحدة"]).toFixed(2)}</td>
+
+<td class="font-bold text-green-600">
+${Number(row["ربح المنتج"]).toFixed(2)}
+</td>
+
 </tr>
-`
-})
-document.getElementById("tableBody").innerHTML=html
+`;
+
+});
+
+document.getElementById("tableBody").innerHTML = table;
+
 }
 
-// البحث
-function searchReport(){
-let word = document.getElementById("searchBox").value.toLowerCase()
-let filtered = reportData.filter(r=>r.product_name.toLowerCase().includes(word))
-renderTable(filtered)
-}
+document
+.getElementById("searchInput")
+.addEventListener("input",renderTable);
 
-// خروج
-function logout(){
-window.location.href="index.html"
-}
+loadReport();
 
-// تحميل التقرير عند فتح الصفحة
-loadReport()
 </script>
 
 </body>
