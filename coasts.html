@@ -80,7 +80,9 @@
 </div>
 
 </div>
-
+<button onclick="updateProductCosts()" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded">
+توزيع المصروفات على المنتجات
+</button>
 <script>
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
@@ -191,8 +193,61 @@ function clearForm(){
   updateBtn.textContent = "تعديل"; // إعادة النص إلى "تعديل" بعد الحفظ أو جديد
 }
 
-loadCoasts();
+loadCoasts
+  async function updateProductCosts() {
+  // 1. جلب جميع المصروفات
+  const { data: coasts, error: coastError } = await supabaseClient
+    .from("coasts")
+    .select("req_id, coast_value");
+
+  if (coastError) return alert(coastError.message);
+
+  // 2. تجميع إجمالي تكلفة المصروفات لكل req_id
+  const coastTotals = {};
+  coasts.forEach(c => {
+    if (!coastTotals[c.req_id]) coastTotals[c.req_id] = 0;
+    coastTotals[c.req_id] += Number(c.coast_value);
+  });
+
+  // 3. لكل req_id، تحديث منتجاته في جدول products
+  for (const req_id in coastTotals) {
+    const totalCost = coastTotals[req_id];
+
+    // جلب عدد المنتجات المرتبطة بالطلبية
+    const { data: products, error: prodError } = await supabaseClient
+      .from("products")
+      .select("product_num, coast_value")
+      .eq("req_id", req_id);
+
+    if (prodError) {
+      console.error(`خطأ في جلب المنتجات للطلبية ${req_id}: ${prodError.message}`);
+      continue;
+    }
+
+    const productCount = products.length;
+    if (productCount === 0) continue;
+
+    const perProductCost = totalCost / productCount;
+
+    // تحديث كل منتج بقيمة coast_value الجديدة
+    for (const product of products) {
+      const newCost = (product.coast_value || 0) + perProductCost;
+
+      const { error: updateError } = await supabaseClient
+        .from("products")
+        .update({ coast_value: newCost })
+        .eq("product_num", product.product_num);
+
+      if (updateError) {
+        console.error(`خطأ في تحديث المنتج ${product.product_num}: ${updateError.message}`);
+      }
+    }
+  }
+
+  alert("تم تحديث تكلفة المصروفات لكل المنتجات بنجاح!");
+}
 </script>
 
 </body>
 </html>
+
