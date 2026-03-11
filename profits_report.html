@@ -11,67 +11,44 @@
 
 </head>
 
-<body class="bg-blue-50 p-6">
+<body class="bg-gradient-to-r from-blue-50 to-blue-100 min-h-screen p-6">
 
-<div class="max-w-5xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<div class="max-w-6xl mx-auto bg-white shadow-xl rounded-xl p-6">
 
 <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
 تقرير الأرباح
 </h1>
 
-<!-- رقم الطلبية -->
-<div class="mb-4">
-
-<label class="font-bold">رقم الطلبية</label>
-
-<input id="req_id"
-type="text"
-class="w-full border p-2 rounded"
-placeholder="ادخل رقم الطلبية">
-
+<!-- البحث -->
+<div class="mb-6">
+<input id="reqSearch" type="text"
+placeholder="اكتب رقم الطلبية"
+class="border p-2 rounded w-full">
 </div>
 
-<div class="flex gap-3 mb-6">
-
-<button onclick="calcOrderProfit()"
-class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded">
-
-حساب أرباح الطلبية
-
-</button>
-
-<button onclick="calcTotalProfit()"
-class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">
-
-الأرباح الكلية
-
-</button>
-
-</div>
-
-<!-- النتائج -->
+<!-- ملخص الأرباح -->
 
 <div class="grid grid-cols-2 gap-4 mb-6">
 
 <div class="bg-green-100 p-4 rounded text-center">
 
-<h2 class="font-bold text-lg">أرباح الطلبية</h2>
+<h2 class="text-lg font-bold">أرباح الطلبية</h2>
 
-<p id="orderProfit" class="text-2xl font-bold text-green-700">0</p>
+<div id="orderProfit" class="text-2xl text-green-700">0</div>
 
 </div>
 
 <div class="bg-blue-100 p-4 rounded text-center">
 
-<h2 class="font-bold text-lg">الأرباح الكلية</h2>
+<h2 class="text-lg font-bold">إجمالي الأرباح الكلية</h2>
 
-<p id="totalProfit" class="text-2xl font-bold text-blue-700">0</p>
-
-</div>
+<div id="totalProfit" class="text-2xl text-blue-700">0</div>
 
 </div>
 
-<!-- جدول تفاصيل الطلبية -->
+</div>
+
+<!-- جدول الأرباح -->
 
 <div class="overflow-auto">
 
@@ -81,7 +58,10 @@ class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">
 
 <tr>
 
+<th class="p-2">رقم الطلبية</th>
+
 <th class="p-2">اسم المنتج</th>
+
 <th class="p-2">ربح المنتج</th>
 
 </tr>
@@ -94,22 +74,16 @@ class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">
 
 </div>
 
-<!-- الأزرار -->
-
-<div class="mt-6 flex gap-3 justify-center">
+<div class="flex gap-3 mt-6">
 
 <a href="products.html"
 class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">
-
 تعديل المنتجات
-
 </a>
 
 <a href="index.html"
-class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded">
-
+class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">
 رجوع
-
 </a>
 
 </div>
@@ -121,17 +95,14 @@ class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded">
 const supabaseUrl="https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey="sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 
-const supabaseClient=supabase.createClient(
-supabaseUrl,
-supabaseKey
-);
+const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
 
 let data=[];
 
-async function loadData(){
+async function loadReport(){
 
-const {data:report,error}=await supabaseClient
-.from("products_report")
+const {data:rows,error}=await supabaseClient
+.from("products_reports")
 .select("*");
 
 if(error){
@@ -139,71 +110,83 @@ alert(error.message);
 return;
 }
 
-data=report;
+data=rows;
+
+renderTable();
+
+calcTotal();
 
 }
 
-async function calcOrderProfit(){
+function renderTable(){
 
-const req = document.getElementById("req_id").value;
+let search=document.getElementById("reqSearch").value;
 
-if(!req){
-alert("ادخل رقم الطلبية");
-return;
+let filtered=data;
+
+if(search){
+
+filtered=data.filter(r=>r.req_id==search);
+
 }
 
-// جلب المنتجات الخاصة بالطلبية
-const { data, error } = await supabaseClient
-.from("products_report")
-.select("*")
-.eq("req_id", req);
+let table="";
 
-if(error){
-alert(error.message);
-return;
-}
+filtered.forEach(row=>{
 
-let profit = 0;
-let table = "";
-
-data.forEach(row => {
-
-profit += Number(row["ربح المنتج"]);
-
-table += `
+table+=`
 <tr class="border">
+
+<td>${row.req_id}</td>
+
 <td>${row["اسم المنتج"]}</td>
-<td>${Number(row["ربح المنتج"]).toFixed(2)}</td>
+
+<td>${row["ربح المنتج"]}</td>
+
 </tr>
 `;
 
 });
 
-document.getElementById("tableBody").innerHTML = table;
+document.getElementById("tableBody").innerHTML=table;
 
-document.getElementById("orderProfit").textContent =
-profit.toFixed(2);
+calcOrderProfit(filtered);
 
 }
-function calcTotalProfit(){
+
+function calcTotal(){
 
 let total=0;
 
-data.forEach(row=>{
+data.forEach(r=>{
 
-total+=Number(row["ربح المنتج"]);
+total+=Number(r["ربح المنتج"]);
 
 });
 
-document.getElementById("totalProfit").textContent=
-total.toFixed(2);
+document.getElementById("totalProfit").innerText=total;
 
 }
 
-loadData();
+function calcOrderProfit(rows){
+
+let sum=0;
+
+rows.forEach(r=>{
+
+sum+=Number(r["ربح المنتج"]);
+
+});
+
+document.getElementById("orderProfit").innerText=sum;
+
+}
+
+document.getElementById("reqSearch").addEventListener("input",renderTable);
+
+loadReport();
 
 </script>
 
 </body>
 </html>
-
