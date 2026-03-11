@@ -1,33 +1,94 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
+
 <meta charset="UTF-8">
-<title>تقرير المنتجات معدل</title>
+<title>تقرير أرباح المنتجات</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-body{ font-family:Tahoma; background:#f4f6f9; padding:20px; }
-.container{ max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
-h2{ text-align:center; margin-bottom:15px; }
-input{ width:100%; padding:10px; margin-top:10px; border:1px solid #ccc; border-radius:5px; }
-button{ padding:8px 15px; border:none; border-radius:5px; cursor:pointer; margin-top:10px; }
-.logout{background:#333;color:white;float:left;margin-bottom:10px}
-table{ width:100%; margin-top:15px; border-collapse:collapse; }
-th,td{ border:1px solid #ddd; padding:8px; text-align:center; }
-th{ background:#007bff; color:white; }
-tr:hover{ background:#f1f1f1; }
+
+body{
+font-family:Tahoma;
+background:#f4f6f9;
+padding:20px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+h2{
+text-align:center;
+margin-bottom:15px;
+}
+
+input{
+width:100%;
+padding:10px;
+border:1px solid #ccc;
+border-radius:5px;
+margin-top:10px;
+}
+
+button{
+padding:8px 15px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+.logout{
+background:#333;
+color:white;
+float:left;
+margin-bottom:10px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:8px;
+text-align:center;
+}
+
+th{
+background:#007bff;
+color:white;
+}
+
+tr:hover{
+background:#f1f1f1;
+}
+
 </style>
+
 </head>
+
 <body>
 
 <div class="container">
 
 <button class="logout" onclick="logout()">خروج</button>
 
-<h2>تقرير المنتجات معدل</h2>
+<h2>تقرير أرباح المنتجات</h2>
 
-<input type="text" id="searchBox" placeholder="بحث عن منتج..." onkeyup="searchReport()">
+<input type="text" id="searchBox" placeholder="بحث عن منتج..." onkeyup="searchData()">
 
 <table>
+
 <thead>
 <tr>
 <th>اسم المنتج</th>
@@ -35,67 +96,76 @@ tr:hover{ background:#f1f1f1; }
 <th>ربح المنتج</th>
 </tr>
 </thead>
+
 <tbody id="tableBody"></tbody>
+
 </table>
 
 </div>
 
 <script>
+
 const supabaseClient = window.supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
 
-let reportData=[]
+let reportData = []
 
-async function loadReport(){
-  const {data,error} = await supabaseClient
-    .from("products")
-    .select("product_name,pice_qte,pay_qte,pay_price,seal_price")
+async function loadData(){
 
-  if(error){ console.log(error); return }
+const {data,error} = await supabaseClient
+.from("products_repo")
+.select()
 
-  reportData = data.map(p=>{
-    let payQte = Number(p.pay_qte) || 1      // منع القسمة على صفر
-    let piceQte = Number(p.pice_qte) || 1
-    let unitCost = Number(p.pay_price)/payQte   // تكلفة الوحدة
-    let profitUnit = Number(p.seal_price) - unitCost
-    let totalProfit = (profitUnit * (piceQte * payQte)) / payQte  // الصيغة الجديدة المطلوبة
+if(error){
+console.log(error)
+return
+}
 
-    return {
-      product_name: p.product_name,
-      cost: unitCost.toFixed(2),
-      totalProfit: totalProfit.toFixed(2)
-    }
-  })
+reportData = data
+renderTable(reportData)
 
-  renderTable(reportData)
 }
 
 function renderTable(list){
-  let html=""
-  list.forEach(r=>{
-    html+=`
-    <tr>
-      <td>${r.product_name}</td>
-      <td>${r.cost}</td>
-      <td>${r.totalProfit}</td>
-    </tr>`
-  })
-  document.getElementById("tableBody").innerHTML = html
+
+let html=""
+
+list.forEach(r=>{
+
+html += `
+<tr>
+<td>${r["اسم المنتج"]}</td>
+<td>${Number(r["المنتج"]).toFixed(2)}</td>
+<td>${Number(r["ربح المنتج"]).toFixed(2)}</td>
+</tr>
+`
+
+})
+
+document.getElementById("tableBody").innerHTML = html
+
 }
 
-function searchReport(){
-  let word = document.getElementById("searchBox").value.toLowerCase()
-  let filtered = reportData.filter(r=>r.product_name.toLowerCase().includes(word))
-  renderTable(filtered)
+function searchData(){
+
+let word = document.getElementById("searchBox").value.toLowerCase()
+
+let filtered = reportData.filter(r =>
+r["اسم المنتج"].toLowerCase().includes(word)
+)
+
+renderTable(filtered)
+
 }
 
 function logout(){
-  window.location.href="index.html"
+window.location.href="index.html"
 }
 
-loadReport()
+loadData()
+
 </script>
 
 </body>
