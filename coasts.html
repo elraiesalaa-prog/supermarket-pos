@@ -54,8 +54,8 @@
 </div>
 
 <div class="flex gap-3 mb-6">
-<button onclick="addCoast()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded">إضافة</button>
-<button onclick="updateCoast()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">تعديل</button>
+<button id="addBtn" onclick="addCoast()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded">إضافة</button>
+<button id="updateBtn" onclick="updateCoast()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">تعديل</button>
 <button onclick="clearForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded">جديد</button>
 <a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">رجوع</a>
 </div>
@@ -88,6 +88,7 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let editID=null;
 let coastsData=[];
+const updateBtn = document.getElementById("updateBtn");
 
 async function loadCoasts(){
   const {data,error}=await supabaseClient
@@ -154,6 +155,7 @@ async function editRow(id){
   document.getElementById("coast_discription").value=data.coast_discription;
   document.getElementById("co_date").value=data.co_date;
   document.getElementById("req_id").value=data.req_id;
+  updateBtn.textContent = "حفظ"; // تغيير النص عند التعديل
 }
 
 async function updateCoast(){
@@ -186,6 +188,7 @@ function clearForm(){
   document.getElementById("coast_discription").value="";
   document.getElementById("co_date").value="";
   document.getElementById("req_id").value="";
+  updateBtn.textContent = "تعديل"; // إعادة النص إلى "تعديل" بعد الحفظ أو جديد
 }
 
 loadCoasts();
