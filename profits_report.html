@@ -4,51 +4,28 @@
 <head>
 
 <meta charset="UTF-8">
-<title>تقرير الأرباح</title>
+<title>أرباح الطلبيات</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
 
-<body class="bg-gradient-to-r from-blue-50 to-blue-100 min-h-screen p-6">
+<body class="bg-blue-50 p-6">
 
-<div class="max-w-6xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<div class="max-w-5xl mx-auto bg-white shadow-xl rounded-xl p-6">
 
 <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
-تقرير الأرباح
+تقرير أرباح الطلبيات
 </h1>
 
-<!-- البحث -->
-<div class="mb-6">
-<input id="reqSearch" type="text"
-placeholder="اكتب رقم الطلبية"
+<div class="mb-4">
+
+<input id="searchReq"
+placeholder="بحث برقم الطلبية"
 class="border p-2 rounded w-full">
-</div>
-
-<!-- ملخص الأرباح -->
-
-<div class="grid grid-cols-2 gap-4 mb-6">
-
-<div class="bg-green-100 p-4 rounded text-center">
-
-<h2 class="text-lg font-bold">أرباح الطلبية</h2>
-
-<div id="orderProfit" class="text-2xl text-green-700">0</div>
 
 </div>
-
-<div class="bg-blue-100 p-4 rounded text-center">
-
-<h2 class="text-lg font-bold">إجمالي الأرباح الكلية</h2>
-
-<div id="totalProfit" class="text-2xl text-blue-700">0</div>
-
-</div>
-
-</div>
-
-<!-- جدول الأرباح -->
 
 <div class="overflow-auto">
 
@@ -60,9 +37,7 @@ class="border p-2 rounded w-full">
 
 <th class="p-2">رقم الطلبية</th>
 
-<th class="p-2">اسم المنتج</th>
-
-<th class="p-2">ربح المنتج</th>
+<th class="p-2">ربح الطلبية</th>
 
 </tr>
 
@@ -77,12 +52,12 @@ class="border p-2 rounded w-full">
 <div class="flex gap-3 mt-6">
 
 <a href="products.html"
-class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">
+class="bg-yellow-500 text-white px-5 py-2 rounded">
 تعديل المنتجات
 </a>
 
 <a href="index.html"
-class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">
+class="bg-blue-600 text-white px-5 py-2 rounded">
 رجوع
 </a>
 
@@ -99,10 +74,10 @@ const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
 
 let data=[];
 
-async function loadReport(){
+async function loadData(){
 
 const {data:rows,error}=await supabaseClient
-.from("products_reports")
+.from("orders_profit_reports")
 .select("*");
 
 if(error){
@@ -114,19 +89,17 @@ data=rows;
 
 renderTable();
 
-calcTotal();
-
 }
 
 function renderTable(){
 
-let search=document.getElementById("reqSearch").value;
+let search=document.getElementById("searchReq").value;
 
 let filtered=data;
 
 if(search){
 
-filtered=data.filter(r=>r.req_id==search);
+filtered=data.filter(r=>r.req_id.includes(search));
 
 }
 
@@ -139,9 +112,7 @@ table+=`
 
 <td>${row.req_id}</td>
 
-<td>${row["اسم المنتج"]}</td>
-
-<td>${row["ربح المنتج"]}</td>
+<td>${row.order_profit}</td>
 
 </tr>
 `;
@@ -150,43 +121,14 @@ table+=`
 
 document.getElementById("tableBody").innerHTML=table;
 
-calcOrderProfit(filtered);
-
 }
 
-function calcTotal(){
+document.getElementById("searchReq").addEventListener("input",renderTable);
 
-let total=0;
-
-data.forEach(r=>{
-
-total+=Number(r["ربح المنتج"]);
-
-});
-
-document.getElementById("totalProfit").innerText=total;
-
-}
-
-function calcOrderProfit(rows){
-
-let sum=0;
-
-rows.forEach(r=>{
-
-sum+=Number(r["ربح المنتج"]);
-
-});
-
-document.getElementById("orderProfit").innerText=sum;
-
-}
-
-document.getElementById("reqSearch").addEventListener("input",renderTable);
-
-loadReport();
+loadData();
 
 </script>
 
 </body>
+
 </html>
