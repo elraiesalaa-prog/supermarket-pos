@@ -14,12 +14,10 @@
 تقرير توزيع التكاليف على المنتجات
 </h1>
 
-<!-- شريط البحث -->
 <div class="mb-4">
 <input id="searchInput" type="text" placeholder="ابحث بالرقم، البيان، أو النوع..." class="w-full border px-3 py-2 rounded">
 </div>
 
-<!-- نموذج إدارة التكاليف -->
 <div class="grid grid-cols-2 gap-4 mb-6">
 <div>
 <label class="font-bold">رقم الطلبية</label>
@@ -56,7 +54,6 @@
 </div>
 </div>
 
-<!-- أزرار العمليات -->
 <div class="flex gap-3 mb-6 flex-wrap">
 <button id="addBtn" onclick="addCoast()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded">إضافة</button>
 <button id="updateBtn" onclick="updateCoast()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">تعديل</button>
@@ -64,14 +61,13 @@
 <a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">تراجع</a>
 </div>
 
-<!-- تقرير التكاليف -->
 <div class="overflow-auto">
 <table class="w-full border text-center">
 <thead class="bg-blue-600 text-white">
 <tr>
 <th class="p-2">رقم المنصرف</th>
 <th class="p-2">رقم الطلبية</th>
-<th class="p-2">إجمالي التكلفة</th>
+<th class="p-2">إجمالي المصروف</th>
 <th class="p-2">عدد المنتجات</th>
 <th class="p-2">تكلفة المنتج</th>
 <th class="p-2">النوع</th>
@@ -104,35 +100,39 @@ async function loadCoasts(){
   renderTable();
 }
 
-// عرض البيانات في الجدول مع حساب تكلفة المنتج
-function renderTable(){
+// عرض البيانات مع حساب عدد المنتجات وتكلفة المنتج
+async function renderTable(){
   const searchTerm = document.getElementById("searchInput").value.toLowerCase();
 
-  // تجميع حسب رقم الطلبية
-  const grouped = {};
-  coastsData.forEach(c => {
-    if(!grouped[c.req_id]) grouped[c.req_id] = { total:0, products:[] };
-    grouped[c.req_id].total += Number(c.coast_value);
-    grouped[c.req_id].products.push(c);
-  });
-
   let table = "";
-  for(const req_id in grouped){
-    const group = grouped[req_id];
-    const productCount = group.products.length;
-    const perProductCost = productCount > 0 ? (group.total / productCount).toFixed(2) : 0;
 
-    group.products.forEach(row => {
+  // نحدد كل req_id فريد
+  const reqIDs = [...new Set(coastsData.map(c=>c.req_id))];
+
+  for(const req_id of reqIDs){
+    // جلب عدد المنتجات لكل طلبية من جدول products
+    const { data: products, error: prodError } = await supabaseClient
+      .from("products")
+      .select("product_num")
+      .eq("req_id", req_id);
+    const productCount = prodError ? 0 : products.length;
+
+    // إجمالي المصروفات للطلبية
+    const group = coastsData.filter(c=>c.req_id===req_id);
+    const totalCost = group.reduce((sum,c)=>sum+Number(c.coast_value),0);
+    const perProductCost = productCount>0 ? (totalCost/productCount).toFixed(2) : 0;
+
+    group.forEach(row=>{
       if(
-        (row.req_id || "").toLowerCase().includes(searchTerm) ||
-        (row.coast_discription || "").toLowerCase().includes(searchTerm) ||
-        (row.c_type || "").toLowerCase().includes(searchTerm)
+        (row.req_id||"").toLowerCase().includes(searchTerm) ||
+        (row.coast_discription||"").toLowerCase().includes(searchTerm) ||
+        (row.c_type||"").toLowerCase().includes(searchTerm)
       ){
         table += `
         <tr class="border">
           <td>${row.coast_id}</td>
           <td>${row.req_id || ""}</td>
-          <td>${group.total}</td>
+          <td>${totalCost}</td>
           <td>${productCount}</td>
           <td>${perProductCost}</td>
           <td>${row.c_type}</td>
@@ -144,8 +144,7 @@ function renderTable(){
           <td>
             <button onclick="deleteRow(${row.coast_id})" class="bg-red-600 text-white px-3 py-1 rounded">حذف</button>
           </td>
-        </tr>
-        `;
+        </tr>`;
       }
     });
   }
@@ -155,7 +154,7 @@ function renderTable(){
 
 document.getElementById("searchInput").addEventListener("input", renderTable);
 
-// إضافة مصروف جديد
+// إضافة مصروف
 async function addCoast(){
   const value = document.getElementById("coast_value").value;
   const type = document.getElementById("c_type").value;
@@ -164,8 +163,7 @@ async function addCoast(){
   const req = document.getElementById("req_id").value;
   const product_num = document.getElementById("product_num").value;
 
-  const { error } = await supabaseClient
-    .from("coasts")
+  const { error } = await supabaseClient.from("coasts")
     .insert([{ coast_value:value, c_type:type, coast_discription:desc, co_date:date, req_id:req, product_num }]);
   if(error) return alert(error.message);
   clearForm();
@@ -195,8 +193,7 @@ async function updateCoast(){
   const req = document.getElementById("req_id").value;
   const product_num = document.getElementById("product_num").value;
 
-  const { error } = await supabaseClient
-    .from("coasts")
+  const { error } = await supabaseClient.from("coasts")
     .update({ coast_value:value, c_type:type, coast_discription:desc, co_date:date, req_id:req, product_num })
     .eq("coast_id", editID);
   if(error) return alert(error.message);
