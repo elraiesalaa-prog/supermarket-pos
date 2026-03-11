@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>تقرير المنتجات المختصر</title>
+<title>تقرير المنتجات معدل</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 body{ font-family:Tahoma; background:#f4f6f9; padding:20px; }
@@ -23,7 +23,7 @@ tr:hover{ background:#f1f1f1; }
 
 <button class="logout" onclick="logout()">خروج</button>
 
-<h2>تقرير المنتجات (مختصر)</h2>
+<h2>تقرير المنتجات معدل</h2>
 
 <input type="text" id="searchBox" placeholder="بحث عن منتج..." onkeyup="searchReport()">
 
@@ -56,11 +56,11 @@ async function loadReport(){
   if(error){ console.log(error); return }
 
   reportData = data.map(p=>{
-    let payQte = Number(p.pay_qte) || 1        // منع القسمة على صفر
-    let piceQte = Number(p.pice_qte) || 1      // منع ضرب صفر
+    let payQte = Number(p.pay_qte) || 1      // منع القسمة على صفر
+    let piceQte = Number(p.pice_qte) || 1
     let unitCost = Number(p.pay_price)/payQte   // تكلفة الوحدة
     let profitUnit = Number(p.seal_price) - unitCost
-    let totalProfit = profitUnit * piceQte      // ربح المنتج = ربح الوحدة × عدد القطع فقط
+    let totalProfit = (profitUnit * (piceQte * payQte)) / payQte  // الصيغة الجديدة المطلوبة
 
     return {
       product_name: p.product_name,
