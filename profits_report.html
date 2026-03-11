@@ -145,42 +145,46 @@ data=report;
 
 async function calcOrderProfit(){
 
-const req=document.getElementById("req_id").value;
+const req = document.getElementById("req_id").value;
 
 if(!req){
 alert("ادخل رقم الطلبية");
 return;
 }
 
-const filtered=data.filter(r=>r.req_id==req);
+// جلب المنتجات الخاصة بالطلبية
+const { data, error } = await supabaseClient
+.from("products_report")
+.select("*")
+.eq("req_id", req);
 
-let profit=0;
+if(error){
+alert(error.message);
+return;
+}
 
-let table="";
+let profit = 0;
+let table = "";
 
-filtered.forEach(row=>{
+data.forEach(row => {
 
-profit+=Number(row["ربح المنتج"]);
+profit += Number(row["ربح المنتج"]);
 
-table+=`
+table += `
 <tr class="border">
-
 <td>${row["اسم المنتج"]}</td>
-
 <td>${Number(row["ربح المنتج"]).toFixed(2)}</td>
-
 </tr>
 `;
 
 });
 
-document.getElementById("tableBody").innerHTML=table;
+document.getElementById("tableBody").innerHTML = table;
 
-document.getElementById("orderProfit").textContent=
+document.getElementById("orderProfit").textContent =
 profit.toFixed(2);
 
 }
-
 function calcTotalProfit(){
 
 let total=0;
@@ -202,3 +206,4 @@ loadData();
 
 </body>
 </html>
+
