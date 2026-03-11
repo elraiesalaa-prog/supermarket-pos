@@ -21,6 +21,7 @@
 
 <!-- نموذج الإضافة -->
 <div class="grid grid-cols-2 gap-4 mb-6">
+
 <div>
 <label class="font-bold">رقم الطلبية</label>
 <input id="req_id" type="text" class="w-full border rounded p-2">
@@ -49,13 +50,13 @@
 <label class="font-bold">البيان</label>
 <input id="coast_discription" type="text" class="w-full border rounded p-2">
 </div>
+
 </div>
 
-<div class="flex gap-3 mb-6 flex-wrap">
+<div class="flex gap-3 mb-6">
 <button id="addBtn" onclick="addCoast()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded">إضافة</button>
 <button id="updateBtn" onclick="updateCoast()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">تعديل</button>
 <button onclick="clearForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded">جديد</button>
-<button onclick="updateProductCosts()" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded">توزيع المصروفات على المنتجات</button>
 <a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">رجوع</a>
 </div>
 
@@ -85,30 +86,31 @@ const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-let editID = null;
-let coastsData = [];
+let editID=null;
+let coastsData=[];
 const updateBtn = document.getElementById("updateBtn");
 
-// تحميل بيانات المصروفات
 async function loadCoasts(){
-  const { data, error } = await supabaseClient.from("coasts").select("*").order("coast_id",{ascending:false});
+  const {data,error}=await supabaseClient
+    .from("coasts")
+    .select("*")
+    .order("coast_id",{ascending:false});
   if(error) return alert(error.message);
   coastsData = data;
   renderTable();
 }
 
-// عرض البيانات في الجدول مع البحث
 function renderTable(){
-  const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-  let filtered = coastsData.filter(c =>
+  const searchTerm=document.getElementById("searchInput").value.toLowerCase();
+  let filtered=coastsData.filter(c=>
     (c.req_id || "").toLowerCase().includes(searchTerm) ||
     (c.coast_discription || "").toLowerCase().includes(searchTerm) ||
     (c.c_type || "").toLowerCase().includes(searchTerm)
   );
 
-  let table = "";
-  filtered.forEach(row => {
-    table += `
+  let table="";
+  filtered.forEach(row=>{
+    table+=`
     <tr class="border">
       <td>${row.coast_id}</td>
       <td>${row.req_id || ""}</td>
@@ -125,120 +127,73 @@ function renderTable(){
     </tr>
     `;
   });
-  document.getElementById("tableBody").innerHTML = table;
+  document.getElementById("tableBody").innerHTML=table;
 }
 
-document.getElementById("searchInput").addEventListener("input", renderTable);
+document.getElementById("searchInput").addEventListener("input",renderTable);
 
-// إضافة مصروف جديد
 async function addCoast(){
-  const value = document.getElementById("coast_value").value;
-  const type = document.getElementById("c_type").value;
-  const desc = document.getElementById("coast_discription").value;
-  const date = document.getElementById("co_date").value;
-  const req = document.getElementById("req_id").value;
+  const value=document.getElementById("coast_value").value;
+  const type=document.getElementById("c_type").value;
+  const desc=document.getElementById("coast_discription").value;
+  const date=document.getElementById("co_date").value;
+  const req=document.getElementById("req_id").value;
 
-  const { error } = await supabaseClient
+  const {error}=await supabaseClient
     .from("coasts")
-    .insert([{ coast_value:value, c_type:type, coast_discription:desc, co_date:date, req_id:req }]);
+    .insert([{coast_value:value, c_type:type, coast_discription:desc, co_date:date, req_id:req}]);
   if(error) return alert(error.message);
   clearForm();
   loadCoasts();
 }
 
-// تعديل سجل
 async function editRow(id){
-  editID = id;
-  const { data } = await supabaseClient.from("coasts").select("*").eq("coast_id", id).single();
-  document.getElementById("coast_value").value = data.coast_value;
-  document.getElementById("c_type").value = data.c_type;
-  document.getElementById("coast_discription").value = data.coast_discription;
-  document.getElementById("co_date").value = data.co_date;
-  document.getElementById("req_id").value = data.req_id;
+  editID=id;
+  const {data}=await supabaseClient.from("coasts").select("*").eq("coast_id",id).single();
+  document.getElementById("coast_value").value=data.coast_value;
+  document.getElementById("c_type").value=data.c_type;
+  document.getElementById("coast_discription").value=data.coast_discription;
+  document.getElementById("co_date").value=data.co_date;
+  document.getElementById("req_id").value=data.req_id;
   updateBtn.textContent = "حفظ"; // تغيير النص عند التعديل
 }
 
-// حفظ التعديل
 async function updateCoast(){
   if(!editID) return alert("اختر سجل للتعديل");
-  const value = document.getElementById("coast_value").value;
-  const type = document.getElementById("c_type").value;
-  const desc = document.getElementById("coast_discription").value;
-  const date = document.getElementById("co_date").value;
-  const req = document.getElementById("req_id").value;
+  const value=document.getElementById("coast_value").value;
+  const type=document.getElementById("c_type").value;
+  const desc=document.getElementById("coast_discription").value;
+  const date=document.getElementById("co_date").value;
+  const req=document.getElementById("req_id").value;
 
-  const { error } = await supabaseClient
+  const {error}=await supabaseClient
     .from("coasts")
-    .update({ coast_value:value, c_type:type, coast_discription:desc, co_date:date, req_id:req })
-    .eq("coast_id", editID);
+    .update({coast_value:value, c_type:type, coast_discription:desc, co_date:date, req_id:req})
+    .eq("coast_id",editID);
   if(error) return alert(error.message);
-
-  updateBtn.textContent = "تعديل"; // إعادة النص بعد الحفظ
   clearForm();
   loadCoasts();
 }
 
-// حذف سجل
 async function deleteRow(id){
   if(!confirm("هل تريد حذف هذا السجل؟")) return;
-  const { error } = await supabaseClient.from("coasts").delete().eq("coast_id", id);
+  const {error}=await supabaseClient.from("coasts").delete().eq("coast_id",id);
   if(error) return alert(error.message);
   loadCoasts();
 }
 
-// إعادة النموذج جديد
 function clearForm(){
-  editID = null;
-  document.getElementById("coast_value").value = "";
-  document.getElementById("coast_discription").value = "";
-  document.getElementById("co_date").value = "";
-  document.getElementById("req_id").value = "";
-  updateBtn.textContent = "تعديل";
+  editID=null;
+  document.getElementById("coast_value").value="";
+  document.getElementById("coast_discription").value="";
+  document.getElementById("co_date").value="";
+  document.getElementById("req_id").value="";
+  updateBtn.textContent = "تعديل"; // إعادة النص إلى "تعديل" بعد الحفظ أو جديد
 }
 
-// توزيع المصروفات على المنتجات
-async function updateProductCosts(){
-  const { data: coasts, error: coastError } = await supabaseClient
-    .from("coasts")
-    .select("req_id, coast_value");
-  if(coastError) return alert(coastError.message);
-
-  const coastTotals = {};
-  coasts.forEach(c => {
-    if(!coastTotals[c.req_id]) coastTotals[c.req_id] = 0;
-    coastTotals[c.req_id] += Number(c.coast_value);
-  });
-
-  for(const req_id in coastTotals){
-    const totalCost = coastTotals[req_id];
-
-    const { data: products, error: prodError } = await supabaseClient
-      .from("products")
-      .select("product_num, coast_value")
-      .eq("req_id", req_id);
-    if(prodError) continue;
-
-    const productCount = products.length;
-    if(productCount === 0) continue;
-
-    const perProductCost = totalCost / productCount;
-
-    for(const product of products){
-      const newCost = (product.coast_value || 0) + perProductCost;
-      await supabaseClient
-        .from("products")
-        .update({ coast_value: newCost })
-        .eq("product_num", product.product_num);
-    }
-  }
-
-  alert("تم توزيع المصروفات على المنتجات بنجاح!");
-  loadCoasts();
-}
-
-// تحميل الجدول عند البداية
 loadCoasts();
 </script>
 
 </body>
 </html>
+
