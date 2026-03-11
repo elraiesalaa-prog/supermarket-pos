@@ -100,38 +100,44 @@ async function loadCoasts(){
   renderTable();
 }
 
-// عرض البيانات مع حساب عدد المنتجات وتكلفة المنتج
+// دالة لحساب عدد المنتجات المرتبطة بنفس req_id
+async function getProductCount(req_id){
+  const { data, error } = await supabaseClient
+    .from("products")
+    .select("product_num")
+    .eq("req_id", req_id);
+
+  if(error) return 0;
+  return data ? data.length : 0;
+}
+
+// عرض الجدول مع حساب عدد المنتجات وتكلفة المنتج لكل طلبية
 async function renderTable(){
   const searchTerm = document.getElementById("searchInput").value.toLowerCase();
-
   let table = "";
 
-  // نحدد كل req_id فريد
-  const reqIDs = [...new Set(coastsData.map(c=>c.req_id))];
+  // احصل على كل req_id فريدة
+  const reqIDs = [...new Set(coastsData.map(c => c.req_id))];
 
   for(const req_id of reqIDs){
-    // جلب عدد المنتجات لكل طلبية من جدول products
-    const { data: products, error: prodError } = await supabaseClient
-      .from("products")
-      .select("product_num")
-      .eq("req_id", req_id);
-    const productCount = prodError ? 0 : products.length;
+    // عدد المنتجات المرتبطة فعليًا بهذه الطلبية
+    const productCount = await getProductCount(req_id);
 
     // إجمالي المصروفات للطلبية
-    const group = coastsData.filter(c=>c.req_id===req_id);
+    const group = coastsData.filter(c => c.req_id===req_id);
     const totalCost = group.reduce((sum,c)=>sum+Number(c.coast_value),0);
     const perProductCost = productCount>0 ? (totalCost/productCount).toFixed(2) : 0;
 
     group.forEach(row=>{
       if(
-        (row.req_id||"").toLowerCase().includes(searchTerm) ||
-        (row.coast_discription||"").toLowerCase().includes(searchTerm) ||
-        (row.c_type||"").toLowerCase().includes(searchTerm)
+        (row.req_id || "").toLowerCase().includes(searchTerm) ||
+        (row.coast_discription || "").toLowerCase().includes(searchTerm) ||
+        (row.c_type || "").toLowerCase().includes(searchTerm)
       ){
         table += `
         <tr class="border">
           <td>${row.coast_id}</td>
-          <td>${row.req_id || ""}</td>
+          <td>${row.req_id}</td>
           <td>${totalCost}</td>
           <td>${productCount}</td>
           <td>${perProductCost}</td>
