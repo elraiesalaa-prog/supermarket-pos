@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>إدارة المصروفات</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans p-6">
+
+  <h1 class="text-3xl font-bold text-center mb-6">إدارة المصروفات</h1>
+
+  <!-- أدوات البحث والفرز -->
+  <div class="flex flex-col md:flex-row justify-between mb-4 gap-3">
+    <input type="text" id="searchInput" placeholder="ابحث بالرقم، الوصف، أو النوع..." class="border px-3 py-2 rounded flex-1">
+    <select id="sortSelect" class="border px-3 py-2 rounded">
+      <option value="coast_id">ترتيب حسب ID</option>
+      <option value="coast_value">ترتيب حسب القيمة</option>
+      <option value="co_date">ترتيب حسب التاريخ</option>
+    </select>
+  </div>
+
+  <!-- زر فتح نافذة الإضافة -->
+  <div class="text-center mb-4">
+    <button id="openModalBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">إضافة مصروف جديد</button>
+  </div>
+
+  <!-- جدول عرض المصروفات -->
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white shadow rounded-lg overflow-hidden">
+      <thead class="bg-blue-600 text-white">
+        <tr>
+          <th class="p-2">ID</th>
+          <th class="p-2">رقم الطلب</th>
+          <th class="p-2">القيمة</th>
+          <th class="p-2">الوصف</th>
+          <th class="p-2">رقم المنتج</th>
+          <th class="p-2">التاريخ</th>
+          <th class="p-2">النوع</th>
+          <th class="p-2">الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="coastsTable" class="text-center"></tbody>
+    </table>
+  </div>
+
+  <!-- نافذة منبثقة للنموذج -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4" id="modalTitle">إضافة مصروف</h2>
+      <form id="coastForm" class="space-y-3">
+        <input type="hidden" id="coast_id">
+        <div>
+          <label class="block font-semibold">رقم الطلب:</label>
+          <input type="text" id="req_id" class="w-full border px-2 py-1 rounded" required>
+        </div>
+        <div>
+          <label class="block font-semibold">قيمة المصروف:</label>
+          <input type="number" id="coast_value" class="w-full border px-2 py-1 rounded" required>
+        </div>
+        <div>
+          <label class="block font-semibold">الوصف:</label>
+          <input type="text" id="coast_discription" class="w-full border px-2 py-1 rounded">
+        </div>
+        <div>
+          <label class="block font-semibold">رقم المنتج:</label>
+          <input type="number" id="product_num" class="w-full border px-2 py-1 rounded">
+        </div>
+        <div>
+          <label class="block font-semibold">التاريخ:</label>
+          <input type="date" id="co_date" class="w-full border px-2 py-1 rounded" required>
+        </div>
+        <div>
+          <label class="block font-semibold">نوع المصروف:</label>
+          <input type="text" id="c_type" class="w-full border px-2 py-1 rounded">
+        </div>
+        <div class="flex justify-between mt-4">
+          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">حفظ</button>
+          <button type="button" id="closeModalBtn" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const supabaseUrl = 'https://vmxbedovoahuggfpcmyk.supabase.co';
+    const supabaseKey = 'sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    const tableBody = document.getElementById('coastsTable');
+    const modal = document.getElementById('modal');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const form = document.getElementById('coastForm');
+    const modalTitle = document.getElementById('modalTitle');
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+
+    let coastsData = []; // لتخزين البيانات للبحث والفرز محليًا
+
+    // فتح / غلق النافذة
+    openModalBtn.addEventListener('click', () => {
+      modal.classList.remove('hidden');
+      modalTitle.textContent = 'إضافة مصروف';
+      form.reset();
+      document.getElementById('coast_id').value = '';
+    });
+    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+    // تحميل المصروفات
+    async function loadCoasts() {
+      const { data, error } = await supabase.from('coasts').select('*').order('coast_id', { ascending: true });
+      if (error) return alert(error.message);
+      coastsData = data;
+      renderTable();
+    }
+
+    // عرض الجدول مع البحث والفرز
+    function renderTable() {
+      const searchTerm = searchInput.value.trim().toLowerCase();
+      const sortField = sortSelect.value;
+
+      let filtered = coastsData.filter(c =>
+        c.req_id.toLowerCase().includes(searchTerm) ||
+        (c.coast_discription || '').toLowerCase().includes(searchTerm) ||
+        (c.c_type || '').toLowerCase().includes(searchTerm)
+      );
+
+      filtered.sort((a, b) => {
+        if (sortField === 'coast_value') return a.coast_value - b.coast_value;
+        if (sortField === 'co_date') return new Date(a.co_date) - new Date(b.co_date);
+        return a.coast_id - b.coast_id;
+      });
+
+      tableBody.innerHTML = '';
+      filtered.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.classList.add('border-b');
+        tr.innerHTML = `
+          <td class="p-2">${c.coast_id}</td>
+          <td class="p-2">${c.req_id}</td>
+          <td class="p-2">${c.coast_value}</td>
+          <td class="p-2">${c.coast_discription || ''}</td>
+          <td class="p-2">${c.product_num || ''}</td>
+          <td class="p-2">${c.co_date}</td>
+          <td class="p-2">${c.c_type || ''}</td>
+          <td class="p-2 space-x-2">
+            <button onclick="editCoast(${c.coast_id})" class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">تعديل</button>
+            <button onclick="deleteCoast(${c.coast_id})" class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">حذف</button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    // تحديث الجدول عند البحث أو الفرز
+    searchInput.addEventListener('input', renderTable);
+    sortSelect.addEventListener('change', renderTable);
+
+    // إضافة أو تعديل مصروف
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const coast_id = document.getElementById('coast_id').value;
+      const coastData = {
+        req_id: document.getElementById('req_id').value,
+        coast_value: document.getElementById('coast_value').value,
+        coast_discription: document.getElementById('coast_discription').value,
+        product_num: document.getElementById('product_num').value,
+        co_date: document.getElementById('co_date').value,
+        c_type: document.getElementById('c_type').value
+      };
+
+      let result;
+      if (coast_id) {
+        result = await supabase.from('coasts').update(coastData).eq('coast_id', coast_id);
+      } else {
+        result = await supabase.from('coasts').insert([coastData]);
+      }
+
+      if (result.error) return alert(result.error.message);
+      modal.classList.add('hidden');
+      loadCoasts();
+    });
+
+    // تعديل مصروف
+    async function editCoast(id) {
+      const { data, error } = await supabase.from('coasts').select('*').eq('coast_id', id).single();
+      if (error) return alert(error.message);
+      modal.classList.remove('hidden');
+      modalTitle.textContent = 'تعديل مصروف';
+      document.getElementById('coast_id').value = data.coast_id;
+      document.getElementById('req_id').value = data.req_id;
+      document.getElementById('coast_value').value = data.coast_value;
+      document.getElementById('coast_discription').value = data.coast_discription;
+      document.getElementById('product_num').value = data.product_num;
+      document.getElementById('co_date').value = data.co_date;
+      document.getElementById('c_type').value = data.c_type;
+    }
+
+    // حذف مصروف
+    async function deleteCoast(id) {
+      if (!confirm('هل تريد حذف هذا المصروف؟')) return;
+      const { error } = await supabase.from('coasts').delete().eq('coast_id', id);
+      if (error) return alert(error.message);
+      loadCoasts();
+    }
+
+    loadCoasts();
+  </script>
+</body>
+</html>
