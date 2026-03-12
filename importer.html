@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+<title>إدارة الموردين</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-gradient-to-r from-blue-50 to-blue-100 min-h-screen p-6">
+
+<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
+
+<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
+إدارة الموردين
+</h1>
+
+<!-- البحث -->
+
+<div class="mb-4 flex gap-2">
+
+<input id="search"
+placeholder="بحث باسم المورد أو الشركة"
+class="border p-2 rounded w-full">
+
+<button onclick="renderTable()"
+class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded">
+بحث
+</button>
+
+</div>
+
+<!-- نموذج الإدخال -->
+
+<div class="grid grid-cols-2 gap-4 mb-6">
+
+<input id="name" placeholder="اسم المورد" class="border p-2 rounded">
+
+<input id="comp" placeholder="الشركة" class="border p-2 rounded">
+
+<input id="tel" placeholder="الهاتف" class="border p-2 rounded">
+
+<input id="whatsapp" placeholder="واتساب" class="border p-2 rounded">
+
+<input id="email" placeholder="البريد الإلكتروني" class="border p-2 rounded">
+
+<input type="file" id="image" class="border p-2 rounded">
+
+</div>
+
+<!-- الأزرار -->
+
+<div class="flex gap-3 mb-6">
+
+<button onclick="addImporter()"
+class="bg-green-600 text-white px-5 py-2 rounded">
+إضافة
+</button>
+
+<button onclick="updateImporter()"
+class="bg-yellow-500 text-white px-5 py-2 rounded">
+حفظ التعديل
+</button>
+
+<button onclick="clearForm()"
+class="bg-gray-500 text-white px-5 py-2 rounded">
+جديد
+</button>
+
+<a href="index.html"
+class="bg-blue-600 text-white px-5 py-2 rounded">
+رجوع
+</a>
+
+</div>
+
+<!-- جدول الموردين -->
+
+<div class="overflow-auto">
+
+<table class="w-full border text-center">
+
+<thead class="bg-blue-600 text-white">
+
+<tr>
+
+<th>الصورة</th>
+<th>رقم المورد</th>
+<th>الاسم</th>
+<th>الشركة</th>
+<th>الهاتف</th>
+<th>واتساب</th>
+<th>البريد</th>
+<th>اتصال</th>
+<th>واتساب</th>
+<th>تعديل</th>
+<th>حذف</th>
+
+</tr>
+
+</thead>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<script>
+
+const supabaseUrl="https://vmxbedovoahuggfpcmyk.supabase.co";
+const supabaseKey="sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+
+const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
+
+let data=[];
+let editID=null;
+
+async function loadImporters(){
+
+const {data:rows,error}=await supabaseClient
+.from("importer")
+.select("*")
+.order("import_id",{ascending:false});
+
+if(error){
+alert(error.message);
+return;
+}
+
+data=rows;
+
+renderTable();
+
+}
+
+function renderTable(){
+
+let search=document.getElementById("search").value.toLowerCase();
+
+let filtered=data.filter(r=>
+
+(r.name||"").toLowerCase().includes(search) ||
+(r.comp||"").toLowerCase().includes(search)
+
+);
+
+let table="";
+
+filtered.forEach(row=>{
+
+let img="";
+
+if(row.import_image){
+
+img=`<img src="data:image/png;base64,${row.import_image}" class="w-12 h-12 rounded-full mx-auto">`;
+
+}
+
+table+=`
+
+<tr class="border">
+
+<td>${img}</td>
+<td>${row.import_id}</td>
+<td>${row.name||""}</td>
+<td>${row.comp||""}</td>
+<td>${row.tel||""}</td>
+<td>${row.whatsapp||""}</td>
+<td>${row.email||""}</td>
+
+<td>
+<a href="tel:${row.tel}"
+class="bg-green-500 text-white px-2 py-1 rounded">
+📞
+</a>
+</td>
+
+<td>
+<a href="https://wa.me/${row.whatsapp}"
+target="_blank"
+class="bg-green-600 text-white px-2 py-1 rounded">
+💬
+</a>
+</td>
+
+<td>
+<button onclick="editRow(${row.import_id})"
+class="bg-yellow-400 px-3 py-1 rounded">
+تعديل
+</button>
+</td>
+
+<td>
+<button onclick="deleteRow(${row.import_id})"
+class="bg-red-600 text-white px-3 py-1 rounded">
+حذف
+</button>
+</td>
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("tableBody").innerHTML=table;
+
+}
+
+async function imageToBase64(file){
+
+return new Promise((resolve,reject)=>{
+
+const reader=new FileReader();
+
+reader.onload=()=>resolve(reader.result.split(',')[1]);
+
+reader.onerror=error=>reject(error);
+
+reader.readAsDataURL(file);
+
+});
+
+}
+
+async function addImporter(){
+
+const name=document.getElementById("name").value;
+const comp=document.getElementById("comp").value;
+const tel=document.getElementById("tel").value;
+const whatsapp=document.getElementById("whatsapp").value;
+const email=document.getElementById("email").value;
+
+let imageFile=document.getElementById("image").files[0];
+let base64=null;
+
+if(imageFile){
+
+base64=await imageToBase64(imageFile);
+
+}
+
+const {error}=await supabaseClient
+.from("importer")
+.insert([{name,comp,tel,whatsapp,email,import_image:base64}]);
+
+if(error){
+alert(error.message);
+return;
+}
+
+clearForm();
+loadImporters();
+
+}
+
+async function editRow(id){
+
+editID=id;
+
+const {data}=await supabaseClient
+.from("importer")
+.select("*")
+.eq("import_id",id)
+.single();
+
+document.getElementById("name").value=data.name;
+document.getElementById("comp").value=data.comp;
+document.getElementById("tel").value=data.tel;
+document.getElementById("whatsapp").value=data.whatsapp;
+document.getElementById("email").value=data.email;
+
+}
+
+async function updateImporter(){
+
+if(!editID){
+alert("اختر مورد للتعديل");
+return;
+}
+
+const name=document.getElementById("name").value;
+const comp=document.getElementById("comp").value;
+const tel=document.getElementById("tel").value;
+const whatsapp=document.getElementById("whatsapp").value;
+const email=document.getElementById("email").value;
+
+let imageFile=document.getElementById("image").files[0];
+let base64=null;
+
+if(imageFile){
+
+base64=await imageToBase64(imageFile);
+
+}
+
+const {error}=await supabaseClient
+.from("importer")
+.update({name,comp,tel,whatsapp,email,import_image:base64})
+.eq("import_id",editID);
+
+if(error){
+alert(error.message);
+return;
+}
+
+clearForm();
+loadImporters();
+
+}
+
+async function deleteRow(id){
+
+if(!confirm("هل تريد حذف المورد؟")) return;
+
+const {error}=await supabaseClient
+.from("importer")
+.delete()
+.eq("import_id",id);
+
+if(error){
+alert(error.message);
+return;
+}
+
+loadImporters();
+
+}
+
+function clearForm(){
+
+editID=null;
+
+document.getElementById("name").value="";
+document.getElementById("comp").value="";
+document.getElementById("tel").value="";
+document.getElementById("whatsapp").value="";
+document.getElementById("email").value="";
+document.getElementById("image").value="";
+
+}
+
+document.getElementById("search").addEventListener("input",renderTable);
+
+loadImporters();
+
+</script>
+
+</body>
+</html>
