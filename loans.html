@@ -19,8 +19,6 @@
 إدارة القروض
 </h1>
 
-<!-- البحث -->
-
 <div class="flex gap-3 mb-6">
 
 <input id="search"
@@ -33,8 +31,6 @@ class="bg-green-600 text-white px-5 py-2 rounded">
 </button>
 
 </div>
-
-<!-- نموذج الإدخال -->
 
 <div class="grid grid-cols-3 gap-4 mb-6">
 
@@ -60,8 +56,6 @@ class="bg-green-600 text-white px-5 py-2 rounded">
 
 </div>
 
-<!-- الأزرار -->
-
 <div class="flex gap-3 mb-6">
 
 <button onclick="addLoan()" class="bg-green-600 text-white px-5 py-2 rounded">
@@ -81,8 +75,6 @@ class="bg-green-600 text-white px-5 py-2 rounded">
 </a>
 
 </div>
-
-<!-- جدول القروض -->
 
 <div class="overflow-auto">
 
@@ -130,18 +122,17 @@ let editID=null;
 
 async function loadCustomers(){
 
-const {data:rows}=await supabaseClient
+const {data:rows,error}=await supabaseClient
 .from("customers")
-.select("id_customer,first_name");
+.select("id_customer,first_name")
+.order("first_name");
+
+if(error){alert(error.message);return;}
 
 let options="<option value=''>اختر العميل</option>";
 
 rows.forEach(c=>{
-
-options+=`<option value="${c.id_customer}">
-${c.first_name}
-</option>`;
-
+options+=`<option value="${c.id_customer}">${c.first_name}</option>`;
 });
 
 document.getElementById("customer_id").innerHTML=options;
@@ -152,13 +143,23 @@ async function loadLoans(){
 
 const {data:rows,error}=await supabaseClient
 .from("loans")
-.select("*")
+.select(`
+loan_id,
+loan_discripton,
+loan_value,
+sadad,
+tel,
+whatsapp,
+email,
+loan_date,
+seal_man,
+pay_method,
+customer_id,
+customers(first_name)
+`)
 .order("loan_id",{ascending:false});
 
-if(error){
-alert(error.message);
-return;
-}
+if(error){alert(error.message);return;}
 
 data=rows;
 
@@ -171,7 +172,7 @@ function renderTable(){
 let search=document.getElementById("search").value.toLowerCase();
 
 let filtered=data.filter(r=>
-(r.c_name||"").toLowerCase().includes(search)
+(r.customers?.first_name||"").toLowerCase().includes(search)
 );
 
 let table="";
@@ -180,28 +181,30 @@ filtered.forEach(row=>{
 
 let remain=(row.loan_value||0)-(row.sadad||0);
 
+let date=row.loan_date? new Date(row.loan_date).toLocaleString() : "";
+
 table+=`
 
 <tr class="border">
 
 <td>${row.loan_id}</td>
-<td>${row.c_name||""}</td>
+<td>${row.customers?.first_name||""}</td>
 <td>${row.loan_discripton||""}</td>
 <td>${row.loan_value||0}</td>
 <td>${row.sadad||0}</td>
 <td class="text-red-600 font-bold">${remain}</td>
-<td>${row.loan_date||""}</td>
+<td>${date}</td>
 <td>${row.seal_man||""}</td>
 <td>${row.pay_method||""}</td>
 
 <td>
-<a href="tel:${row.tel}" class="bg-green-500 text-white px-2 py-1 rounded">
+<a href="tel:${row.tel||""}" class="bg-green-500 text-white px-2 py-1 rounded">
 📞
 </a>
 </td>
 
 <td>
-<a href="https://wa.me/${row.whatsapp}" target="_blank"
+<a href="https://wa.me/${row.whatsapp||""}" target="_blank"
 class="bg-green-600 text-white px-2 py-1 rounded">
 💬
 </a>
@@ -235,13 +238,13 @@ async function addLoan(){
 
 const customer_id=document.getElementById("customer_id").value;
 
-const {data:customer}=await supabaseClient
-.from("customers")
-.select("*")
-.eq("id_customer",customer_id)
-.single();
+if(!customer_id){
 
-const c_name=customer.first_name;
+alert("اختر العميل أولا");
+
+return;
+
+}
 
 const loan_discripton=document.getElementById("loan_discripton").value;
 const loan_value=document.getElementById("loan_value").value;
@@ -257,7 +260,6 @@ const {error}=await supabaseClient
 .from("loans")
 .insert([{
 customer_id,
-c_name,
 loan_discripton,
 loan_value,
 sadad,
@@ -269,10 +271,7 @@ pay_method,
 loan_date
 }]);
 
-if(error){
-alert(error.message);
-return;
-}
+if(error){alert(error.message);return;}
 
 clearForm();
 loadLoans();
@@ -283,11 +282,13 @@ async function editRow(id){
 
 editID=id;
 
-const {data}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("loans")
 .select("*")
 .eq("loan_id",id)
 .single();
+
+if(error){alert(error.message);return;}
 
 document.getElementById("customer_id").value=data.customer_id;
 document.getElementById("loan_discripton").value=data.loan_discripton;
@@ -318,10 +319,7 @@ const {error}=await supabaseClient
 .update({loan_discripton,loan_value,sadad})
 .eq("loan_id",editID);
 
-if(error){
-alert(error.message);
-return;
-}
+if(error){alert(error.message);return;}
 
 clearForm();
 loadLoans();
@@ -337,10 +335,7 @@ const {error}=await supabaseClient
 .delete()
 .eq("loan_id",id);
 
-if(error){
-alert(error.message);
-return;
-}
+if(error){alert(error.message);return;}
 
 loadLoans();
 
@@ -350,9 +345,16 @@ function clearForm(){
 
 editID=null;
 
+document.getElementById("customer_id").value="";
 document.getElementById("loan_discripton").value="";
 document.getElementById("loan_value").value="";
 document.getElementById("sadad").value="";
+document.getElementById("tel").value="";
+document.getElementById("whatsapp").value="";
+document.getElementById("email").value="";
+document.getElementById("seal_man").value="";
+document.getElementById("pay_method").value="";
+document.getElementById("loan_date").value="";
 
 }
 
