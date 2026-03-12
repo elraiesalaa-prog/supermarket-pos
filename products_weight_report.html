@@ -4,7 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>تقرير أوزان المنتجات</title>
+<title>تصنيف المنتجات حسب الوزن</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -13,54 +13,92 @@
 
 <body class="bg-blue-50 p-6">
 
-<div class="max-w-6xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
 
 <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
-تقرير أوزان المنتجات
+تصنيف المنتجات حسب الوزن
 </h1>
 
 <!-- البحث -->
 
-<div class="mb-4 flex gap-2">
+<div class="flex gap-3 mb-6">
 
-<input id="searchInput"
+<input id="search"
 placeholder="بحث باسم المنتج"
 class="border p-2 rounded w-full">
 
-<button onclick="renderTable()"
+<button onclick="renderTables()"
 class="bg-green-600 text-white px-5 py-2 rounded">
 بحث
 </button>
 
 </div>
 
-<!-- الجدول -->
+<!-- منتجات بالكيلو -->
 
-<div class="overflow-auto">
+<h2 class="text-xl font-bold text-green-700 mb-2">
+🟢 منتجات بالكيلو
+</h2>
 
-<table class="w-full border text-center">
+<table class="w-full border text-center mb-6">
 
-<thead class="bg-blue-600 text-white">
+<thead class="bg-green-600 text-white">
 
 <tr>
-
 <th class="p-2">اسم المنتج</th>
-
 <th class="p-2">رقم الطلبية</th>
-
 <th class="p-2">الوزن</th>
-
-<th class="p-2">نوع الوزن</th>
-
 </tr>
 
 </thead>
 
-<tbody id="tableBody"></tbody>
+<tbody id="kiloTable"></tbody>
 
 </table>
 
-</div>
+<!-- منتجات بالرطل -->
+
+<h2 class="text-xl font-bold text-yellow-700 mb-2">
+🟡 منتجات بالرطل
+</h2>
+
+<table class="w-full border text-center mb-6">
+
+<thead class="bg-yellow-600 text-white">
+
+<tr>
+<th class="p-2">اسم المنتج</th>
+<th class="p-2">رقم الطلبية</th>
+<th class="p-2">الوزن</th>
+</tr>
+
+</thead>
+
+<tbody id="ratlTable"></tbody>
+
+</table>
+
+<!-- منتجات بدون وزن -->
+
+<h2 class="text-xl font-bold text-red-700 mb-2">
+🔴 منتجات بدون وزن
+</h2>
+
+<table class="w-full border text-center mb-6">
+
+<thead class="bg-red-600 text-white">
+
+<tr>
+<th class="p-2">اسم المنتج</th>
+<th class="p-2">رقم الطلبية</th>
+<th class="p-2">الوزن</th>
+</tr>
+
+</thead>
+
+<tbody id="emptyTable"></tbody>
+
+</table>
 
 <!-- الأزرار -->
 
@@ -102,47 +140,43 @@ return;
 
 data=rows;
 
-renderTable();
+renderTables();
 
 }
 
-function renderTable(){
+function renderTables(){
 
-let search=document.getElementById("searchInput").value.toLowerCase();
+let search=document.getElementById("search").value.toLowerCase();
 
-let filtered=data;
+let kilo="";
+let ratl="";
+let empty="";
 
-if(search){
+data.forEach(row=>{
 
-filtered=data.filter(r=>
-(r.product_name||"").toLowerCase().includes(search)
-);
+let name=(row.product_name||"").toLowerCase();
 
-}
+if(search && !name.includes(search)) return;
 
-let table="";
-
-filtered.forEach(row=>{
-
-table+=`
-
+let tr=`
 <tr class="border">
-
 <td>${row.product_name}</td>
-
 <td>${row.req_id||""}</td>
-
-<td>${row.weight||""}</td>
-
-<td>${row.weight_type}</td>
-
+<td>${row.p_weight||""}</td>
 </tr>
-
 `;
+
+if(row.p_weight==="كيلو") kilo+=tr;
+
+else if(row.p_weight==="رطل") ratl+=tr;
+
+else empty+=tr;
 
 });
 
-document.getElementById("tableBody").innerHTML=table;
+document.getElementById("kiloTable").innerHTML=kilo;
+document.getElementById("ratlTable").innerHTML=ratl;
+document.getElementById("emptyTable").innerHTML=empty;
 
 }
 
