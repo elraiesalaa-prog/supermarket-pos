@@ -10,7 +10,6 @@
 <body class="bg-gray-100 p-6">
 
 <div class="max-w-7xl mx-auto">
-
 <h1 class="text-3xl font-bold text-center mb-6">نظام POS متقدم v3</h1>
 
 <div class="grid grid-cols-3 gap-6">
@@ -170,6 +169,7 @@ window.addItem = function(){
   if(!qte||qte<=0){ alert("ادخل الكمية"); return; }
   if(qte>product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
 
+  // لا نقوم بتغيير المخزون محليًا، Trigger في DB سيقوم بذلك
   cart.push({id_product:productId,name:product.product_name,price:product.seal_price,qte:qte,total:qte*product.seal_price});
   renderCart();
 }
@@ -178,7 +178,7 @@ window.addItem = function(){
 window.updateQty = function(index,value){
   const q=parseFloat(value);
   cart[index].qte = q;
-  cart[index].total = q * cart[index].price;
+  cart[index].total = q*cart[index].price;
   renderCart();
 }
 
@@ -221,49 +221,44 @@ window.printInvoice = function(){
   closeInvoiceModal();
 }
 
-// حفظ الفاتورة (الـ Trigger سيحدث المخزون تلقائياً)
+// حفظ الفاتورة (المخزون سيُخصم تلقائيًا بواسطة Trigger)
 window.saveInvoice = async function(){
   if(cart.length===0){ alert("السلة فارغة"); return; }
   const customer=document.getElementById("customer").value;
   const pay_method=document.getElementById("pay_method").value;
   const seal_man=document.getElementById("seal_man").value;
 
-  try {
-    const { data, error } = await supabase.from("orders_o").insert([{
-      customer_id:customer,date_order:new Date(),pay_method:pay_method,seal_man:seal_man
-    }]).select();
+  // إنشاء الطلب الرئيسي
+  const { data, error } = await supabase.from("orders_o").insert([{
+    customer_id:customer,date_order:new Date(),pay_method:pay_method,seal_man:seal_man
+  }]).select();
 
-    if(error) throw error;
+  if(error){ alert("خطأ في حفظ الفاتورة"); console.log(error); return; }
 
-    const orderId = data[0].id_order;
+  const orderId = data[0].id_order;
 
-    // إدخال تفاصيل الطلب فقط، المخزون سيخصم تلقائياً بواسطة الدالة
-    for(let item of cart){
-      const { error } = await supabase.from("orders_details").insert([{
-        id_product:item.id_product,
-        id_order:orderId,
-        qte:item.qte,
-        price:item.price,
-        descount:0,
-        amount:item.total,
-        total_amount:item.total,
-        id_customer:customer,
-        date_order:new Date(),
-        pay_method:pay_method,
-        seal_man:seal_man
-      }]);
-      if(error) throw error;
-    }
-
-    alert("تمت عملية البيع بنجاح");
-    cart = [];
-    renderCart();
-    await loadProducts();
-
-  } catch (err) {
-    console.error(err);
-    alert("خطأ أثناء حفظ الفاتورة: " + err.message);
+  // إضافة كل تفاصيل الطلب
+  for(let item of cart){
+    const { error: detailError } = await supabase.from("orders_details").insert([{
+      id_product: item.id_product,
+      id_order: orderId,
+      qte: item.qte,
+      price: item.price,
+      descount: 0,
+      amount: item.total,
+      total_amount: item.total,
+      id_customer: customer,
+      date_order: new Date(),
+      pay_method: pay_method,
+      seal_man: seal_man
+    }]);
+    if(detailError){ console.log(detailError); alert("خطأ في حفظ تفاصيل الطلب"); return; }
   }
+
+  alert("تمت عملية البيع بنجاح");
+  cart=[];
+  renderCart();
+  await loadProducts();
 }
 
 // تحميل البيانات عند بدء الصفحة
