@@ -1,0 +1,422 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+<title>نظام المبيعات POS</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+
+<body class="bg-gray-100 p-6">
+
+<div class="max-w-7xl mx-auto">
+
+<h1 class="text-3xl font-bold text-center mb-6">
+نظام المبيعات
+</h1>
+
+
+<div class="grid grid-cols-3 gap-6">
+
+<!-- العملاء -->
+
+<div class="bg-white p-4 rounded shadow">
+
+<h2 class="font-bold mb-3">اختيار العميل</h2>
+
+<select id="customerSelect" class="border p-2 w-full"></select>
+
+</div>
+
+
+<!-- المنتجات -->
+
+<div class="bg-white p-4 rounded shadow">
+
+<h2 class="font-bold mb-3">المنتجات</h2>
+
+<select id="productSelect" class="border p-2 w-full mb-3"></select>
+
+<input id="price" class="border p-2 w-full mb-2" placeholder="السعر" readonly>
+
+<input id="stock" class="border p-2 w-full mb-2" placeholder="المخزون" readonly>
+
+<input id="qty" type="number" class="border p-2 w-full mb-3" placeholder="الكمية">
+
+<button onclick="addToCart()" class="bg-blue-600 text-white w-full py-2 rounded">
+اضافة للسلة
+</button>
+
+</div>
+
+
+<!-- الاجمالي -->
+
+<div class="bg-white p-4 rounded shadow">
+
+<h2 class="font-bold mb-3">الفاتورة</h2>
+
+<div class="text-xl font-bold">
+الاجمالي : <span id="total">0</span>
+</div>
+
+<br>
+
+<button onclick="showInvoice()" class="bg-yellow-500 text-white w-full py-2 rounded mb-2">
+عرض الفاتورة
+</button>
+
+<button onclick="saveInvoice()" class="bg-green-600 text-white w-full py-2 rounded">
+إتمام البيع
+</button>
+
+</div>
+
+</div>
+
+
+<!-- سلة المشتريات -->
+
+<div class="bg-white mt-6 p-4 rounded shadow">
+
+<table class="w-full text-center">
+
+<thead class="bg-gray-200">
+
+<tr>
+
+<th>المنتج</th>
+<th>السعر</th>
+<th>الكمية</th>
+<th>المجموع</th>
+<th>حذف</th>
+
+</tr>
+
+</thead>
+
+<tbody id="cartTable"></tbody>
+
+</table>
+
+</div>
+
+
+</div>
+
+
+<script>
+
+const supabase = window.supabase.createClient(
+"https://vmxbedovoahuggfpcmyk.supabase.co",
+"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+);
+
+let products=[]
+let cart=[]
+
+
+/* تحميل العملاء */
+
+async function loadCustomers(){
+
+const {data,error}=await supabase
+.from("customers")
+.select("id_customer,first_name")
+
+let select=document.getElementById("customerSelect")
+select.innerHTML=""
+
+data.forEach(c=>{
+
+let option=document.createElement("option")
+
+option.value=c.id_customer
+option.textContent=c.first_name
+
+select.appendChild(option)
+
+})
+
+}
+
+
+/* تحميل المنتجات */
+
+async function loadProducts(){
+
+const {data,error}=await supabase
+.from("products")
+.select("id_product,product_name,seal_price,qte_in_stock")
+
+products=data
+
+let select=document.getElementById("productSelect")
+
+select.innerHTML=""
+
+data.forEach(p=>{
+
+let option=document.createElement("option")
+
+option.value=p.id_product
+option.textContent=p.product_name
+
+select.appendChild(option)
+
+})
+
+showProduct()
+
+}
+
+
+/* عرض سعر المنتج */
+
+function showProduct(){
+
+let id=document.getElementById("productSelect").value
+
+let p=products.find(x=>x.id_product==id)
+
+if(!p)return
+
+document.getElementById("price").value=p.seal_price
+document.getElementById("stock").value=p.qte_in_stock
+
+}
+
+document.getElementById("productSelect").addEventListener("change",showProduct)
+
+
+
+/* اضافة للسلة */
+
+function addToCart(){
+
+let productId=document.getElementById("productSelect").value
+
+let qty=parseFloat(document.getElementById("qty").value)
+
+let product=products.find(p=>p.id_product==productId)
+
+if(!qty || qty<=0){
+
+alert("ادخل الكمية")
+
+return
+
+}
+
+if(qty>product.qte_in_stock){
+
+alert("الكمية اكبر من المخزون")
+
+return
+
+}
+
+let total=qty*product.seal_price
+
+cart.push({
+
+id_product:productId,
+name:product.product_name,
+price:product.seal_price,
+qty:qty,
+total:total
+
+})
+
+renderCart()
+
+}
+
+
+
+/* عرض السلة */
+
+function renderCart(){
+
+let table=document.getElementById("cartTable")
+
+table.innerHTML=""
+
+let total=0
+
+cart.forEach((item,index)=>{
+
+total+=item.total
+
+table.innerHTML+=`
+
+<tr>
+
+<td>${item.name}</td>
+
+<td>${item.price}</td>
+
+<td>${item.qty}</td>
+
+<td>${item.total}</td>
+
+<td>
+
+<button onclick="removeItem(${index})" class="text-red-600">
+حذف
+</button>
+
+</td>
+
+</tr>
+
+`
+
+})
+
+document.getElementById("total").innerText=total
+
+}
+
+
+
+/* حذف منتج */
+
+function removeItem(index){
+
+cart.splice(index,1)
+
+renderCart()
+
+}
+
+
+
+/* عرض الفاتورة */
+
+function showInvoice(){
+
+let invoice=""
+
+invoice+="العميل: "+document.getElementById("customerSelect").selectedOptions[0].text+"<br><br>"
+
+invoice+="<table border='1' width='100%'>"
+
+invoice+="<tr><th>المنتج</th><th>السعر</th><th>الكمية</th><th>المجموع</th></tr>"
+
+cart.forEach(i=>{
+
+invoice+=`<tr>
+
+<td>${i.name}</td>
+<td>${i.price}</td>
+<td>${i.qty}</td>
+<td>${i.total}</td>
+
+</tr>`
+
+})
+
+invoice+="</table>"
+
+invoice+="<br> الاجمالي: "+document.getElementById("total").innerText
+
+let w=window.open()
+
+w.document.write(invoice)
+
+}
+
+
+
+/* حفظ الفاتورة */
+
+async function saveInvoice(){
+
+if(cart.length==0){
+
+alert("السلة فارغة")
+
+return
+
+}
+
+let customer=document.getElementById("customerSelect").value
+
+
+const {data,error}=await supabase
+.from("orders_o")
+.insert([{
+
+customer_id:customer,
+date_order:new Date(),
+pay_method:"cash",
+seal_man:"admin"
+
+}])
+.select()
+
+let orderId=data[0].id_order
+
+
+for(let item of cart){
+
+await supabase.from("orders_details").insert([{
+
+id_product:item.id_product,
+id_order:orderId,
+qte:item.qty,
+price:item.price,
+total_amount:item.total
+
+}])
+
+
+const {data:prod}=await supabase
+.from("products")
+.select("qte_in_stock")
+.eq("id_product",item.id_product)
+.single()
+
+
+let newStock=Number(prod.qte_in_stock)-Number(item.qty)
+
+
+await supabase
+.from("products")
+.update({qte_in_stock:newStock})
+.eq("id_product",item.id_product)
+
+}
+
+
+alert("تمت عملية البيع")
+
+cart=[]
+
+renderCart()
+
+loadProducts()
+
+}
+
+
+
+/* تشغيل الصفحة */
+
+loadCustomers()
+
+loadProducts()
+
+</script>
+
+
+</body>
+</html>
+```
