@@ -1,0 +1,325 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+<title>نظام الكاشير POS</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="bg-gray-100">
+
+<div class="p-4">
+
+<h1 class="text-2xl font-bold text-center mb-4">
+نظام الكاشير POS
+</h1>
+
+<div class="grid grid-cols-3 gap-4">
+
+<!-- المنتجات -->
+
+<div class="col-span-2 bg-white p-4 rounded shadow">
+
+<input
+id="search"
+placeholder="بحث عن منتج..."
+class="border p-2 w-full mb-4 rounded"
+/>
+
+<div id="products"
+class="grid grid-cols-4 gap-3 max-h-[500px] overflow-auto">
+</div>
+
+</div>
+
+<!-- الفاتورة -->
+
+<div class="bg-white p-4 rounded shadow">
+
+<h2 class="font-bold mb-2">الفاتورة</h2>
+
+<select id="customer" class="border p-2 w-full mb-2 rounded"></select>
+
+<select id="pay_method" class="border p-2 w-full mb-2 rounded">
+<option value="cash">نقد</option>
+<option value="bank">تحويل</option>
+<option value="later">آجل</option>
+</select>
+
+<input
+id="seal_man"
+placeholder="اسم البائع"
+class="border p-2 w-full mb-2 rounded"
+/>
+
+<table class="w-full text-sm text-center mb-2">
+
+<thead class="bg-gray-200">
+
+<tr>
+
+<th>الصنف</th>
+<th>ك</th>
+<th>س</th>
+<th>إجمالي</th>
+<th></th>
+
+</tr>
+
+</thead>
+
+<tbody id="cart"></tbody>
+
+</table>
+
+<div class="text-lg font-bold mb-2">
+
+الإجمالي :
+<span id="total">0</span>
+
+</div>
+
+<button
+onclick="saveInvoice()"
+class="bg-green-600 text-white w-full py-2 rounded">
+
+حفظ الفاتورة
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const supabase = window.supabase.createClient(
+"YOUR_SUPABASE_URL",
+"YOUR_SUPABASE_KEY"
+)
+
+let products=[]
+let cart=[]
+
+loadProducts()
+loadCustomers()
+
+document.getElementById("search").addEventListener("input",renderProducts)
+
+async function loadProducts(){
+
+const {data} = await supabase
+.from("products")
+.select("*")
+
+products=data
+
+renderProducts()
+
+}
+
+function renderProducts(){
+
+let search=document.getElementById("search").value.toLowerCase()
+
+let container=document.getElementById("products")
+
+container.innerHTML=""
+
+products
+.filter(p=>p.name_product.toLowerCase().includes(search))
+.forEach(p=>{
+
+let card=`
+
+<div
+onclick="addToCart(${p.id_product},'${p.name_product}',${p.price || 0})"
+class="bg-gray-100 p-3 rounded cursor-pointer hover:bg-blue-100 text-center">
+
+${p.name_product}
+
+<br>
+
+<span class="text-sm text-gray-500">
+${p.price || 0}
+</span>
+
+</div>
+`
+
+container.innerHTML+=card
+
+})
+
+}
+
+function addToCart(id,name,price){
+
+let item=cart.find(i=>i.id_product==id)
+
+if(item){
+
+item.qte++
+
+item.total=item.qte*item.price
+
+}else{
+
+cart.push({
+
+id_product:id,
+name:name,
+price:price,
+qte:1,
+total:price
+
+})
+
+}
+
+renderCart()
+
+}
+
+function renderCart(){
+
+let table=document.getElementById("cart")
+
+table.innerHTML=""
+
+let total=0
+
+cart.forEach((i,index)=>{
+
+total+=i.total
+
+let row=`
+
+<tr class="border-b">
+
+<td>${i.name}</td>
+<td>${i.qte}</td>
+<td>${i.price}</td>
+<td>${i.total}</td>
+
+<td>
+
+<button
+onclick="removeItem(${index})"
+class="text-red-600">
+
+✖
+
+</button>
+
+</td>
+
+</tr>
+`
+
+table.innerHTML+=row
+
+})
+
+document.getElementById("total").innerText=total
+
+}
+
+function removeItem(index){
+
+cart.splice(index,1)
+
+renderCart()
+
+}
+
+async function loadCustomers(){
+
+const {data}=await supabase
+.from("customers")
+.select("*")
+
+let select=document.getElementById("customer")
+
+data.forEach(c=>{
+
+let option=document.createElement("option")
+
+option.value=c.id_customer
+option.textContent=c.first_name
+
+select.appendChild(option)
+
+})
+
+}
+
+async function saveInvoice(){
+
+if(cart.length==0){
+
+alert("الفاتورة فارغة")
+
+return
+
+}
+
+let customer=document.getElementById("customer").value
+let pay_method=document.getElementById("pay_method").value
+let seal_man=document.getElementById("seal_man").value
+
+const {data}=await supabase
+.from("orders_o")
+.insert([{
+
+customer_id:customer,
+date_order:new Date(),
+pay_method:pay_method,
+seal_man:seal_man
+
+}])
+.select()
+
+let orderId=data[0].id_order
+
+let details=cart.map(i=>({
+
+id_product:i.id_product,
+id_order:orderId,
+qte:i.qte,
+price:i.price,
+descount:0,
+amount:i.qte*i.price,
+total_amount:i.total,
+id_customer:customer,
+date_order:new Date(),
+pay_method:pay_method,
+seal_man:seal_man
+
+}))
+
+await supabase
+.from("orders_details")
+.insert(details)
+
+alert("تم حفظ الفاتورة")
+
+cart=[]
+
+renderCart()
+
+}
+
+</script>
+
+</body>
+</html>
+```
