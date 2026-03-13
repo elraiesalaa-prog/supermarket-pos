@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
@@ -267,7 +267,6 @@ async function saveInvoice(){
 if(cart.length==0){
 
 alert("الفاتورة فارغة")
-
 return
 
 }
@@ -276,7 +275,9 @@ let customer=document.getElementById("customer").value
 let pay_method=document.getElementById("pay_method").value
 let seal_man=document.getElementById("seal_man").value
 
-const {data}=await supabase
+/* حفظ الفاتورة */
+
+const {data,error}=await supabase
 .from("orders_o")
 .insert([{
 
@@ -288,33 +289,93 @@ seal_man:seal_man
 }])
 .select()
 
+if(error){
+
+console.log(error)
+alert("خطأ في حفظ الفاتورة")
+return
+
+}
+
 let orderId=data[0].id_order
 
-let details=cart.map(i=>({
+/* حفظ التفاصيل + تحديث المخزون */
 
-id_product:i.id_product,
+for(const item of cart){
+
+/* قراءة المخزون الحالي */
+
+const {data:prod,error:stockError}=await supabase
+.from("products")
+.select("qte_in_stock")
+.eq("id_product",item.id_product)
+.single()
+
+if(stockError){
+
+console.log(stockError)
+alert("خطأ في قراءة المخزون")
+return
+
+}
+
+let currentStock=Number(prod.qte_in_stock)
+
+if(currentStock < item.qte){
+
+alert("المخزون غير كافي للمنتج")
+return
+
+}
+
+/* حساب المخزون الجديد */
+
+let newStock=currentStock - item.qte
+
+/* تحديث المخزون */
+
+const {error:updateError}=await supabase
+.from("products")
+.update({qte_in_stock:newStock})
+.eq("id_product",item.id_product)
+
+if(updateError){
+
+console.log(updateError)
+alert("خطأ في تحديث المخزون")
+return
+
+}
+
+/* حفظ تفاصيل الفاتورة */
+
+await supabase
+.from("orders_details")
+.insert([{
+
+id_product:item.id_product,
 id_order:orderId,
-qte:i.qte,
-price:i.price,
+qte:item.qte,
+price:item.price,
 descount:0,
-amount:i.qte*i.price,
-total_amount:i.total,
+amount:item.qte*item.price,
+total_amount:item.total,
 id_customer:customer,
 date_order:new Date(),
 pay_method:pay_method,
 seal_man:seal_man
 
-}))
+}])
 
-await supabase
-.from("orders_details")
-.insert(details)
+}
 
-alert("تم حفظ الفاتورة")
+alert("تم حفظ الفاتورة وتحديث المخزون")
 
 cart=[]
 
 renderCart()
+
+loadProducts()
 
 }
 
@@ -323,3 +384,4 @@ renderCart()
 </body>
 </html>
 ```
+
