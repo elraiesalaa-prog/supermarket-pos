@@ -10,6 +10,7 @@
 <body class="bg-gray-100 p-6">
 
 <div class="max-w-7xl mx-auto">
+
 <h1 class="text-3xl font-bold text-center mb-6">نظام POS متقدم v3</h1>
 
 <div class="grid grid-cols-3 gap-6">
@@ -169,23 +170,32 @@ window.addItem = function(){
   if(!qte||qte<=0){ alert("ادخل الكمية"); return; }
   if(qte>product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
 
-  // لا نقوم بتغيير المخزون محليًا، Trigger في DB سيقوم بذلك
+  product.qte_in_stock -= qte; // تحديث المخزون محلياً
   cart.push({id_product:productId,name:product.product_name,price:product.seal_price,qte:qte,total:qte*product.seal_price});
   renderCart();
+  showProduct();
 }
 
 // تعديل كمية المنتج في السلة
 window.updateQty = function(index,value){
   const q=parseFloat(value);
-  cart[index].qte = q;
-  cart[index].total = q*cart[index].price;
+  const product=products.find(p=>p.id_product==cart[index].id_product);
+  const delta = q - cart[index].qte;
+  if(delta > product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
+  product.qte_in_stock -= delta;
+  cart[index].qte=q;
+  cart[index].total=q*cart[index].price;
   renderCart();
+  showProduct();
 }
 
 // حذف المنتج من السلة
 window.removeItem = function(index){
+  const product=products.find(p=>p.id_product==cart[index].id_product);
+  product.qte_in_stock += cart[index].qte;
   cart.splice(index,1);
   renderCart();
+  showProduct();
 }
 
 // عرض الفاتورة
@@ -221,42 +231,46 @@ window.printInvoice = function(){
   closeInvoiceModal();
 }
 
-// حفظ الفاتورة (المخزون سيُخصم تلقائيًا بواسطة Trigger)
+// حفظ الفاتورة وتحديث المخزون عبر الإجراء المخزن
 window.saveInvoice = async function(){
   if(cart.length===0){ alert("السلة فارغة"); return; }
   const customer=document.getElementById("customer").value;
   const pay_method=document.getElementById("pay_method").value;
   const seal_man=document.getElementById("seal_man").value;
 
-  // إنشاء الطلب الرئيسي
-  const { data, error } = await supabase.from("orders_o").insert([{
-    customer_id:customer,date_order:new Date(),pay_method:pay_method,seal_man:seal_man
+  // أولاً إدراج الطلب في جدول orders_o
+  const { data: orderData, error: orderError } = await supabase.from("orders_o").insert([{
+    customer_id: customer,
+    date_order: new Date(),
+    pay_method: pay_method,
+    seal_man: seal_man
   }]).select();
 
-  if(error){ alert("خطأ في حفظ الفاتورة"); console.log(error); return; }
+  if(orderError){ alert("خطأ في حفظ الطلب"); console.log(orderError); return; }
 
-  const orderId = data[0].id_order;
+  const orderId = orderData[0].id_order;
 
-  // إضافة كل تفاصيل الطلب
+  // استدعاء الإجراء المخزن add_orders_details لكل منتج في السلة
   for(let item of cart){
-    const { error: detailError } = await supabase.from("orders_details").insert([{
-      id_product: item.id_product,
-      id_order: orderId,
-      qte: item.qte,
-      price: item.price,
-      descount: 0,
-      amount: item.total,
-      total_amount: item.total,
-      id_customer: customer,
-      date_order: new Date(),
-      pay_method: pay_method,
-      seal_man: seal_man
-    }]);
-    if(detailError){ console.log(detailError); alert("خطأ في حفظ تفاصيل الطلب"); return; }
+    const { data, error } = await supabase.rpc('add_orders_details', {
+      p_id_product: item.id_product,
+      p_id_order: orderId,
+      p_qte: item.qte,
+      p_price: item.price,
+      p_descount: 0,
+      p_amount: item.total,
+      p_total_amount: item.total,
+      p_id_customer: customer,
+      p_first_name: '',   // يمكن تعبئته إذا أردت
+      p_description_order: '', 
+      p_pay_method: pay_method,
+      p_seal_man: seal_man
+    });
+    if(error){ alert("خطأ في إضافة تفاصيل المنتج"); console.log(error); return; }
   }
 
   alert("تمت عملية البيع بنجاح");
-  cart=[];
+  cart = [];
   renderCart();
   await loadProducts();
 }
