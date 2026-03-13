@@ -1,391 +1,274 @@
 ```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
 <meta charset="UTF-8">
-<title>نظام المبيعات</title>
-
+<title>نظام POS متقدم v3</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-
 <body class="bg-gray-100 p-6">
 
-<h1 class="text-2xl font-bold mb-4 text-center">نظام المبيعات</h1>
+<div class="max-w-7xl mx-auto">
 
-<div class="bg-white p-4 rounded shadow mb-4">
+<h1 class="text-3xl font-bold text-center mb-6">نظام POS متقدم v3</h1>
 
-<label>العميل</label>
+<div class="grid grid-cols-3 gap-6">
+
+<!-- العملاء -->
+<div class="bg-white p-4 rounded shadow">
+<h2 class="font-bold mb-3">العميل</h2>
 <select id="customer" class="border p-2 w-full mb-3"></select>
 
-<label>طريقة الدفع</label>
 <select id="pay_method" class="border p-2 w-full mb-3">
 <option value="cash">نقد</option>
 <option value="bank">تحويل</option>
 <option value="later">آجل</option>
 </select>
 
+<input id="seal_man" class="border p-2 w-full" readonly/>
 </div>
 
-<div class="bg-white p-4 rounded shadow mb-4">
-
-<label>المنتج</label>
+<!-- المنتجات -->
+<div class="bg-white p-4 rounded shadow">
+<h2 class="font-bold mb-3">المنتجات</h2>
 <select id="product" class="border p-2 w-full mb-3"></select>
 
-<div class="grid grid-cols-3 gap-2">
+<div class="flex gap-2 mb-3">
+<input id="price" placeholder="سعر البيع" class="border p-2 w-full" readonly/>
+<input id="stock" placeholder="المخزون" class="border p-2 w-full" readonly/>
+</div>
 
-<input id="price" placeholder="السعر" class="border p-2" readonly>
+<input id="qte" type="number" placeholder="الكمية" class="border p-2 w-full mb-3"/>
+<button onclick="addItem()" class="bg-blue-600 text-white w-full py-2 rounded">إضافة للسلة</button>
+</div>
 
-<input id="stock" placeholder="المخزون" class="border p-2" readonly>
-
-<input id="qty" type="number" placeholder="الكمية" class="border p-2">
+<!-- الإجمالي -->
+<div class="bg-white p-4 rounded shadow">
+<h2 class="font-bold mb-3">الإجمالي</h2>
+<div class="text-xl font-bold mb-4">
+الإجمالي : <span id="total">0</span>
+</div>
+<div class="flex flex-col gap-2">
+<button onclick="showInvoiceModal()" class="bg-yellow-600 text-white w-full py-2 rounded">عرض الفاتورة</button>
+<button onclick="saveInvoice()" class="bg-green-600 text-white w-full py-2 rounded">إتمام البيع</button>
+</div>
+</div>
 
 </div>
 
-<button onclick="addToCart()" class="bg-blue-600 text-white px-4 py-2 mt-3 rounded">
-إضافة للسلة
-</button>
-
-</div>
-
-<div class="bg-white p-4 rounded shadow mb-4">
-
-<h2 class="font-bold mb-2">سلة المشتريات</h2>
-
-<table class="w-full text-center border">
-
+<!-- سلة المشتريات -->
+<div class="bg-white mt-6 p-4 rounded shadow">
+<table class="w-full text-center">
 <thead class="bg-gray-200">
-
 <tr>
 <th>المنتج</th>
 <th>السعر</th>
 <th>الكمية</th>
 <th>المجموع</th>
+<th>تعديل</th>
 <th>حذف</th>
 </tr>
-
 </thead>
-
 <tbody id="cart"></tbody>
-
 </table>
+</div>
 
-<div class="mt-3 font-bold">
-الإجمالي: <span id="total">0</span>
+<!-- نافذة عرض الفاتورة -->
+<div id="invoiceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+<div class="bg-white p-6 rounded w-96 relative max-h-[80vh] overflow-y-auto">
+<h2 class="text-xl font-bold mb-3 text-center">فاتورة البيع</h2>
+<div id="invoiceContent" class="text-right text-sm mb-4"></div>
+<div class="flex justify-end gap-2">
+<button onclick="printInvoice()" class="bg-blue-600 text-white px-3 py-1 rounded">طباعة</button>
+<button onclick="closeInvoiceModal()" class="bg-gray-400 text-white px-3 py-1 rounded">إغلاق</button>
+</div>
+</div>
 </div>
 
 </div>
-
-<div class="flex gap-3">
-
-<button onclick="showInvoice()" class="bg-yellow-600 text-white px-4 py-2 rounded">
-عرض الفاتورة
-</button>
-
-<button onclick="saveSale()" class="bg-green-600 text-white px-4 py-2 rounded">
-إتمام البيع
-</button>
-
-</div>
-
-<div id="invoiceBox" class="hidden bg-white p-4 mt-5 rounded shadow"></div>
 
 <script>
+document.addEventListener("DOMContentLoaded", async () => {
 
 const supabase = window.supabase.createClient(
-"https://vmxbedovoahuggfpcmyk.supabase.co",
-"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+  "https://vmxbedovoahuggfpcmyk.supabase.co",
+  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
 
-let products = []
-let cart = []
+const currentUserName = "Alaadin Adam";
+document.getElementById("seal_man").value = currentUserName;
 
-async function loadCustomers(){
+let products = [];
+let cart = [];
 
-const {data} = await supabase
-.from("customers")
-.select("id_customer,first_name")
-
-const select = document.getElementById("customer")
-select.innerHTML=""
-
-data.forEach(c=>{
-
-let op=document.createElement("option")
-op.value=c.id_customer
-op.textContent=c.first_name
-
-select.appendChild(op)
-
-})
-
+// تحميل العملاء
+async function loadCustomers() {
+  const select = document.getElementById("customer");
+  select.innerHTML = "";
+  const { data, error } = await supabase.from("customers").select("id_customer,first_name");
+  if(error){ console.log(error); alert("خطأ في تحميل العملاء"); return; }
+  data.forEach(c=>{
+    const option=document.createElement("option");
+    option.value=c.id_customer;
+    option.textContent=c.first_name;
+    select.appendChild(option);
+  });
 }
 
-async function loadProducts(){
-
-const {data} = await supabase
-.from("products")
-.select("id_product,product_name,seal_price,qte_in_stock")
-
-products=data
-
-const select=document.getElementById("product")
-
-select.innerHTML=""
-
-data.forEach(p=>{
-
-let op=document.createElement("option")
-
-op.value=p.id_product
-op.textContent=p.product_name
-
-select.appendChild(op)
-
-})
-
-showProduct()
-
+// تحميل المنتجات
+async function loadProducts() {
+  const select = document.getElementById("product");
+  select.innerHTML = "";
+  const { data, error } = await supabase.from("products").select("id_product,product_name,seal_price,qte_in_stock");
+  if(error){ console.log(error); alert("خطأ في تحميل المنتجات"); return; }
+  products = data;
+  data.forEach(p=>{
+    const option=document.createElement("option");
+    option.value=p.id_product;
+    option.textContent=p.product_name;
+    select.appendChild(option);
+  });
+  select.addEventListener("change", showProduct);
+  showProduct();
 }
 
+// عرض سعر ومخزون المنتج
 function showProduct(){
-
-const id=document.getElementById("product").value
-
-const p=products.find(x=>x.id_product==id)
-
-if(!p)return
-
-document.getElementById("price").value=p.seal_price
-document.getElementById("stock").value=p.qte_in_stock
-
+  const id=document.getElementById("product").value;
+  const p=products.find(x=>x.id_product==id);
+  if(!p) return;
+  document.getElementById("price").value=p.seal_price;
+  document.getElementById("stock").value=p.qte_in_stock;
 }
 
-document.getElementById("product").addEventListener("change",showProduct)
-
-function addToCart(){
-
-const id=document.getElementById("product").value
-const qty=parseFloat(document.getElementById("qty").value)
-
-const p=products.find(x=>x.id_product==id)
-
-if(!qty || qty<=0){
-
-alert("ادخل الكمية")
-return
-
-}
-
-if(qty>p.qte_in_stock){
-
-alert("المخزون غير كافي")
-return
-
-}
-
-cart.push({
-
-id_product:p.id_product,
-name:p.product_name,
-price:p.seal_price,
-qty:qty,
-total:qty*p.seal_price
-
-})
-
-renderCart()
-
-}
-
+// عرض السلة
 function renderCart(){
-
-const table=document.getElementById("cart")
-
-table.innerHTML=""
-
-let total=0
-
-cart.forEach((i,index)=>{
-
-total+=i.total
-
-table.innerHTML+=`
-
-<tr>
-
-<td>${i.name}</td>
-<td>${i.price}</td>
-<td>${i.qty}</td>
-<td>${i.total}</td>
-
-<td>
-<button onclick="removeItem(${index})" class="text-red-600">
-حذف
-</button>
-</td>
-
-</tr>
-
-`
-
-})
-
-document.getElementById("total").innerText=total
-
+  const table=document.getElementById("cart");
+  table.innerHTML="";
+  let total=0;
+  cart.forEach((i,index)=>{
+    total+=i.total;
+    table.innerHTML+=`
+    <tr class="border-b">
+      <td>${i.name}</td>
+      <td>${i.price}</td>
+      <td><input type="number" value="${i.qte}" min="1" style="width:60px" onchange="updateQty(${index},this.value)"/></td>
+      <td>${i.total}</td>
+      <td><button onclick="updateQty(${index},document.querySelectorAll('#cart input')[${index}].value)" class="text-blue-600">تحديث</button></td>
+      <td><button onclick="removeItem(${index})" class="text-red-600">حذف</button></td>
+    </tr>`;
+  });
+  document.getElementById("total").innerText=total;
 }
 
-function removeItem(i){
+// إضافة منتج للسلة
+window.addItem = function(){
+  const productId = document.getElementById("product").value;
+  const qte = parseFloat(document.getElementById("qte").value);
+  const product = products.find(p=>p.id_product==productId);
+  if(!qte||qte<=0){ alert("ادخل الكمية"); return; }
+  if(qte>product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
 
-cart.splice(i,1)
-
-renderCart()
-
+  product.qte_in_stock -= qte; // تحديث المخزون محلياً
+  cart.push({id_product:productId,name:product.product_name,price:product.seal_price,qte:qte,total:qte*product.seal_price});
+  renderCart();
+  showProduct();
 }
 
-function showInvoice(){
-
-if(cart.length==0){
-
-alert("السلة فارغة")
-return
-
+// تعديل كمية المنتج في السلة
+window.updateQty = function(index,value){
+  const q=parseFloat(value);
+  const product=products.find(p=>p.id_product==cart[index].id_product);
+  const delta = q - cart[index].qte;
+  if(delta > product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
+  product.qte_in_stock -= delta;
+  cart[index].qte=q;
+  cart[index].total=q*cart[index].price;
+  renderCart();
+  showProduct();
 }
 
-let html=`
-
-<h3 class="font-bold mb-2">فاتورة البيع</h3>
-
-<table class="w-full border text-center">
-
-<thead class="bg-gray-200">
-
-<tr>
-
-<th>المنتج</th>
-<th>السعر</th>
-<th>الكمية</th>
-<th>المجموع</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-`
-
-cart.forEach(i=>{
-
-html+=`
-
-<tr>
-
-<td>${i.name}</td>
-<td>${i.price}</td>
-<td>${i.qty}</td>
-<td>${i.total}</td>
-
-</tr>
-
-`
-
-})
-
-html+=`</tbody></table>`
-
-html+=`<br><strong>الإجمالي: ${document.getElementById("total").innerText}</strong>`
-
-const box=document.getElementById("invoiceBox")
-
-box.innerHTML=html
-box.classList.remove("hidden")
-
+// حذف المنتج من السلة
+window.removeItem = function(index){
+  const product=products.find(p=>p.id_product==cart[index].id_product);
+  product.qte_in_stock += cart[index].qte;
+  cart.splice(index,1);
+  renderCart();
+  showProduct();
 }
 
-async function saveSale(){
-
-if(cart.length==0){
-
-alert("السلة فارغة")
-return
-
+// عرض الفاتورة
+window.showInvoiceModal = function(){
+  if(cart.length===0){ alert("السلة فارغة"); return; }
+  const container=document.getElementById("invoiceContent");
+  container.innerHTML=`<table class="w-full text-right border-collapse border border-gray-400">
+  <thead class="bg-gray-200"><tr><th class="border p-1">المنتج</th><th class="border p-1">السعر</th><th class="border p-1">الكمية</th><th class="border p-1">المجموع</th></tr></thead><tbody>`;
+  cart.forEach(i=>{ container.innerHTML+=`<tr><td class="border p-1">${i.name}</td><td class="border p-1">${i.price}</td><td class="border p-1">${i.qte}</td><td class="border p-1">${i.total}</td></tr>`; });
+  container.innerHTML+=`</tbody></table><p class="mt-2"><strong>الإجمالي:</strong> ${document.getElementById("total").innerText}</p>`;
+  container.innerHTML+=`<p><strong>العميل:</strong> ${document.getElementById("customer").selectedOptions[0].text} <br> <strong>البائع:</strong> ${document.getElementById("seal_man").value} <br> <strong>طريقة الدفع:</strong> ${document.getElementById("pay_method").value}</p>`;
+  document.getElementById("invoiceModal").classList.remove("hidden");
 }
 
-const customer=document.getElementById("customer").value
-const pay_method=document.getElementById("pay_method").value
-
-const {data,error} = await supabase
-.from("orders_o")
-.insert([{
-
-customer_id:customer,
-date_order:new Date(),
-pay_method:pay_method,
-seal_man:"POS"
-
-}])
-.select()
-
-if(error){
-
-alert("خطأ في حفظ الفاتورة")
-console.log(error)
-return
-
+// إغلاق نافذة الفاتورة
+window.closeInvoiceModal = function(){
+  document.getElementById("invoiceModal").classList.add("hidden");
 }
 
-const orderId=data[0].id_order
-
-for(let item of cart){
-
-await supabase
-.from("orders_details")
-.insert([{
-
-id_product:item.id_product,
-id_order:orderId,
-qte:item.qty,
-price:item.price,
-amount:item.total,
-total_amount:item.total,
-id_customer:customer,
-date_order:new Date(),
-pay_method:pay_method,
-seal_man:"POS"
-
-}])
-
-const {data:prod} = await supabase
-.from("products")
-.select("qte_in_stock")
-.eq("id_product",item.id_product)
-.single()
-
-const newStock = Number(prod.qte_in_stock) - Number(item.qty)
-
-await supabase
-.from("products")
-.update({qte_in_stock:newStock})
-.eq("id_product",item.id_product)
-
+// طباعة الفاتورة
+window.printInvoice = function(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:"p",unit:"mm",format:"a4"});
+  doc.setFontSize(14);
+  doc.text("فاتورة المبيعات",105,10,null,null,"center");
+  let y=20;
+  cart.forEach(i=>{
+    doc.text(`${i.name} - ${i.qte} × ${i.price} = ${i.total}`,10,y);
+    y+=7;
+  });
+  doc.text(`الإجمالي: ${document.getElementById("total").innerText}`,10,y+5);
+  doc.save("invoice.pdf");
+  closeInvoiceModal();
 }
 
-alert("تمت عملية البيع")
+// حفظ الفاتورة وتحديث المخزون في Supabase
+window.saveInvoice = async function(){
+  if(cart.length===0){ alert("السلة فارغة"); return; }
+  const customer=document.getElementById("customer").value;
+  const pay_method=document.getElementById("pay_method").value;
+  const seal_man=document.getElementById("seal_man").value;
 
-cart=[]
-renderCart()
+  const { data, error } = await supabase.from("orders_o").insert([{
+    customer_id:customer,date_order:new Date(),pay_method:pay_method,seal_man:seal_man
+  }]).select();
 
-loadProducts()
+  if(error){ alert("خطأ في حفظ الفاتورة"); console.log(error); return; }
 
+  const orderId=data[0].id_order;
+
+  // تحديث تفاصيل كل منتج وتحديث المخزون في Supabase
+  for(let item of cart){
+    await supabase.from("orders_details").insert([{
+      id_product:item.id_product,id_order:orderId,qte:item.qte,price:item.price,
+      descount:0,amount:item.total,total_amount:item.total,
+      id_customer:customer,date_order:new Date(),pay_method:pay_method,seal_man:seal_man
+    }]);
+    const product=products.find(p=>p.id_product==item.id_product);
+    await supabase.from("products").update({qte_in_stock:product.qte_in_stock}).eq("id_product",item.id_product);
+  }
+
+  alert("تمت عملية البيع بنجاح");
+  cart=[];
+  renderCart();
+  await loadProducts();
 }
 
-loadCustomers()
-loadProducts()
+// تحميل البيانات عند بدء الصفحة
+await loadCustomers();
+await loadProducts();
 
+});
 </script>
 
 </body>
