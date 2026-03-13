@@ -1,4 +1,4 @@
-```html
+```html id="sales-final"
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
@@ -79,10 +79,10 @@
 </div>
 
 <script>
+// ربط Supabase
 const supabase = window.supabase.createClient(
-https://vmxbedovoahuggfpcmyk.supabase.co
-sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU
-
+  "https://vmxbedovoahuggfpcmyk.supabase.co",
+  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
 
 let products = [];
@@ -93,14 +93,14 @@ const currentUserName = "Alaadin Adam";
 
 init();
 
-async function init() {
+async function init(){
   document.getElementById("seal_man").value = currentUserName;
   await loadCustomers();
   await loadProducts();
 }
 
 /* تحميل العملاء */
-async function loadCustomers() {
+async function loadCustomers(){
   const select = document.getElementById("customer");
   select.innerHTML = "";
 
@@ -108,13 +108,13 @@ async function loadCustomers() {
     .from("customers")
     .select("id_customer,first_name");
 
-  if (error) {
+  if(error){
     console.log(error);
     alert("خطأ في تحميل العملاء");
     return;
   }
 
-  data.forEach(c => {
+  data.forEach(c=>{
     let option = document.createElement("option");
     option.value = c.id_customer;
     option.textContent = c.first_name;
@@ -123,7 +123,7 @@ async function loadCustomers() {
 }
 
 /* تحميل المنتجات */
-async function loadProducts() {
+async function loadProducts(){
   const select = document.getElementById("product");
   select.innerHTML = "";
 
@@ -131,7 +131,7 @@ async function loadProducts() {
     .from("products")
     .select("id_product,product_name,seal_price,qte_in_stock");
 
-  if (error) {
+  if(error){
     console.log(error);
     alert("خطأ في تحميل المنتجات");
     return;
@@ -139,7 +139,7 @@ async function loadProducts() {
 
   products = data;
 
-  data.forEach(p => {
+  data.forEach(p=>{
     let option = document.createElement("option");
     option.value = p.id_product;
     option.textContent = p.product_name;
@@ -151,26 +151,26 @@ async function loadProducts() {
 }
 
 /* اظهار السعر والمخزون */
-function showProduct() {
+function showProduct(){
   const id = document.getElementById("product").value;
-  const p = products.find(x => x.id_product == id);
-  if (!p) return;
+  const p = products.find(x=>x.id_product == id);
+  if(!p) return;
   document.getElementById("price").value = p.seal_price;
   document.getElementById("stock").value = p.qte_in_stock;
 }
 
 /* اضافة للسلة */
-function addItem() {
+function addItem(){
   const productId = document.getElementById("product").value;
   const qte = parseFloat(document.getElementById("qte").value);
-  const product = products.find(p => p.id_product == productId);
+  const product = products.find(p=>p.id_product==productId);
 
-  if (!qte || qte <= 0) {
+  if(!qte || qte<=0){
     alert("ادخل الكمية");
     return;
   }
 
-  if (qte > product.qte_in_stock) {
+  if(qte > product.qte_in_stock){
     alert("الكمية أكبر من المخزون");
     return;
   }
@@ -189,12 +189,12 @@ function addItem() {
 }
 
 /* عرض السلة */
-function renderCart() {
+function renderCart(){
   const table = document.getElementById("cart");
   table.innerHTML = "";
-
   let total = 0;
-  cart.forEach((i, index) => {
+
+  cart.forEach((i,index)=>{
     total += i.total;
     table.innerHTML += `
       <tr class="border-b">
@@ -210,14 +210,14 @@ function renderCart() {
   document.getElementById("total").innerText = total;
 }
 
-function removeItem(index) {
-  cart.splice(index, 1);
+function removeItem(index){
+  cart.splice(index,1);
   renderCart();
 }
 
 /* حفظ الفاتورة */
-async function saveInvoice() {
-  if (cart.length === 0) {
+async function saveInvoice(){
+  if(cart.length===0){
     alert("السلة فارغة");
     return;
   }
@@ -236,7 +236,7 @@ async function saveInvoice() {
     }])
     .select();
 
-  if (error) {
+  if(error){
     alert("خطأ في حفظ الفاتورة");
     console.log(error);
     return;
@@ -244,7 +244,7 @@ async function saveInvoice() {
 
   const orderId = data[0].id_order;
 
-  for (let item of cart) {
+  for(let item of cart){
     await supabase.from("orders_details").insert([{
       id_product: item.id_product,
       id_order: orderId,
@@ -259,12 +259,12 @@ async function saveInvoice() {
       seal_man: seal_man
     }]);
 
-    const product = products.find(p => p.id_product == item.id_product);
+    const product = products.find(p=>p.id_product==item.id_product);
     const newStock = product.qte_in_stock - item.qte;
 
     await supabase
       .from("products")
-      .update({ qte_in_stock: newStock })
+      .update({qte_in_stock:newStock})
       .eq("id_product", item.id_product);
   }
 
@@ -279,4 +279,3 @@ async function saveInvoice() {
 </body>
 </html>
 ```
-
