@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -21,9 +22,9 @@
 <select id="customer" class="border p-2 w-full mb-3"></select>
 
 <select id="pay_method" class="border p-2 w-full mb-3">
-<option value="cash">كاش</option>
-<option value="bank">بنكك</option>
-<option value="later">تحويل بنكي</option>
+<option value="cash">نقد</option>
+<option value="bank">تحويل</option>
+<option value="later">آجل</option>
 </select>
 
 <input id="seal_man" class="border p-2 w-full" readonly/>
@@ -35,8 +36,8 @@
 <select id="product" class="border p-2 w-full mb-3"></select>
 
 <div class="flex gap-2 mb-3">
-<input id="pay_price " placeholder="سعر البيع" class="border p-2 w-full" readonly/>
-<input id="qte_in_stock " placeholder="المخزون" class="border p-2 w-full" readonly/>
+<input id="price" placeholder="سعر البيع" class="border p-2 w-full" readonly/>
+<input id="stock" placeholder="المخزون" class="border p-2 w-full" readonly/>
 </div>
 
 <input id="qte" type="number" placeholder="الكمية" class="border p-2 w-full mb-3"/>
@@ -138,8 +139,8 @@ function showProduct(){
   const id=document.getElementById("product").value;
   const p=products.find(x=>x.id_product==id);
   if(!p) return;
-  document.getElementById("pay_price ").value=p.seal_price;
-  document.getElementById("qte_in_stock ").value=p.qte_in_stock;
+  document.getElementById("price").value=p.seal_price;
+  document.getElementById("stock").value=p.qte_in_stock;
 }
 
 // عرض السلة
@@ -170,22 +171,32 @@ window.addItem = function(){
   if(!qte||qte<=0){ alert("ادخل الكمية"); return; }
   if(qte>product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
 
+  product.qte_in_stock -= qte; // تحديث المخزون محلياً
   cart.push({id_product:productId,name:product.product_name,price:product.seal_price,qte:qte,total:qte*product.seal_price});
   renderCart();
+  showProduct();
 }
 
 // تعديل كمية المنتج في السلة
 window.updateQty = function(index,value){
   const q=parseFloat(value);
-  cart[index].qte = q;
-  cart[index].total = q * cart[index].price;
+  const product=products.find(p=>p.id_product==cart[index].id_product);
+  const delta = q - cart[index].qte;
+  if(delta > product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
+  product.qte_in_stock -= delta;
+  cart[index].qte=q;
+  cart[index].total=q*cart[index].price;
   renderCart();
+  showProduct();
 }
 
 // حذف المنتج من السلة
 window.removeItem = function(index){
+  const product=products.find(p=>p.id_product==cart[index].id_product);
+  product.qte_in_stock += cart[index].qte;
   cart.splice(index,1);
   renderCart();
+  showProduct();
 }
 
 // عرض الفاتورة
@@ -221,49 +232,36 @@ window.printInvoice = function(){
   closeInvoiceModal();
 }
 
-// حفظ الفاتورة
+// حفظ الفاتورة وتحديث المخزون في Supabase
 window.saveInvoice = async function(){
   if(cart.length===0){ alert("السلة فارغة"); return; }
   const customer=document.getElementById("customer").value;
   const pay_method=document.getElementById("pay_method").value;
   const seal_man=document.getElementById("seal_man").value;
 
-  try {
-    const { data, error } = await supabase.from("orders_o").insert([{
-      customer_id:customer,date_order:new Date(),pay_method:pay_method,seal_man:seal_man
-    }]).select();
+  const { data, error } = await supabase.from("orders_o").insert([{
+    customer_id:customer,date_order:new Date(),pay_method:pay_method,seal_man:seal_man
+  }]).select();
 
-    if(error) throw error;
+  if(error){ alert("خطأ في حفظ الفاتورة"); console.log(error); return; }
 
-    const orderId = data[0].id_order;
+  const orderId=data[0].id_order;
 
-    // إدخال تفاصيل الطلب (الـ Trigger سيحدث المخزون تلقائيًا)
-    for(let item of cart){
-      const { error } = await supabase.from("orders_details").insert([{
-        id_product:item.id_product,
-        id_order:orderId,
-        qte:item.qte,
-        price:item.price,
-        descount:0,
-        amount:item.total,
-        total_amount:item.total,
-        id_customer:customer,
-        date_order:new Date(),
-        pay_method:pay_method,
-        seal_man:seal_man
-      }]);
-      if(error) throw error;
-    }
-
-    alert("تمت عملية البيع بنجاح");
-    cart = [];
-    renderCart();
-    await loadProducts();
-
-  } catch (err) {
-    console.error(err);
-    alert("حدث خطأ أثناء حفظ الفاتورة: " + err.message);
+  // تحديث تفاصيل كل منتج وتحديث المخزون في Supabase
+  for(let item of cart){
+    await supabase.from("orders_details").insert([{
+      id_product:item.id_product,id_order:orderId,qte:item.qte,price:item.price,
+      descount:0,amount:item.total,total_amount:item.total,
+      id_customer:customer,date_order:new Date(),pay_method:pay_method,seal_man:seal_man
+    }]);
+    const product=products.find(p=>p.id_product==item.id_product);
+    await supabase.from("products").update({qte_in_stock:product.qte_in_stock}).eq("id_product",item.id_product);
   }
+
+  alert("تمت عملية البيع بنجاح");
+  cart=[];
+  renderCart();
+  await loadProducts();
 }
 
 // تحميل البيانات عند بدء الصفحة
@@ -275,3 +273,4 @@ await loadProducts();
 
 </body>
 </html>
+```
