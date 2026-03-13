@@ -10,7 +10,6 @@
 <body class="bg-gray-100 p-6">
 
 <div class="max-w-7xl mx-auto">
-
 <h1 class="text-3xl font-bold text-center mb-6">نظام POS متقدم v3</h1>
 
 <div class="grid grid-cols-3 gap-6">
@@ -231,28 +230,28 @@ window.printInvoice = function(){
   closeInvoiceModal();
 }
 
-// حفظ الفاتورة وتحديث المخزون عبر الإجراء المخزن
+// حفظ الفاتورة باستخدام الإجراء المخزن
 window.saveInvoice = async function(){
   if(cart.length===0){ alert("السلة فارغة"); return; }
   const customer=document.getElementById("customer").value;
   const pay_method=document.getElementById("pay_method").value;
   const seal_man=document.getElementById("seal_man").value;
 
-  // أولاً إدراج الطلب في جدول orders_o
-  const { data: orderData, error: orderError } = await supabase.from("orders_o").insert([{
-    customer_id: customer,
-    date_order: new Date(),
-    pay_method: pay_method,
-    seal_man: seal_man
+  // إنشاء الطلب الرئيسي
+  const { data, error } = await supabase.from("orders_o").insert([{
+    customer_id:customer,
+    date_order:new Date(),
+    pay_method:pay_method,
+    seal_man:seal_man
   }]).select();
 
-  if(orderError){ alert("خطأ في حفظ الطلب"); console.log(orderError); return; }
+  if(error){ alert("خطأ في حفظ الفاتورة"); console.log(error); return; }
 
-  const orderId = orderData[0].id_order;
+  const orderId=data[0].id_order;
 
-  // استدعاء الإجراء المخزن add_orders_details لكل منتج في السلة
+  // إدخال كل عنصر باستخدام الإجراء المخزن
   for(let item of cart){
-    const { data, error } = await supabase.rpc('add_orders_details', {
+    const { error: rpcError } = await supabase.rpc('add_orders_details', {
       p_id_product: item.id_product,
       p_id_order: orderId,
       p_qte: item.qte,
@@ -261,16 +260,16 @@ window.saveInvoice = async function(){
       p_amount: item.total,
       p_total_amount: item.total,
       p_id_customer: customer,
-      p_first_name: '',   // يمكن تعبئته إذا أردت
-      p_description_order: '', 
+      p_first_name: '',
+      p_description_order: '',
       p_pay_method: pay_method,
       p_seal_man: seal_man
     });
-    if(error){ alert("خطأ في إضافة تفاصيل المنتج"); console.log(error); return; }
+    if(rpcError){ console.log(rpcError); alert("خطأ في إدخال تفاصيل الطلب"); return; }
   }
 
   alert("تمت عملية البيع بنجاح");
-  cart = [];
+  cart=[];
   renderCart();
   await loadProducts();
 }
