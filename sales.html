@@ -106,11 +106,19 @@ let products=[]
 
 async function loadCustomers(){
 
-let {data}=await supabase
-.from("customers")
-.select("id_customer,first_name")
+const { data, error } = await supabase
+.from('customers')
+.select('*')
+
+console.log("customers",data,error)
+
+if(error){
+alert(error.message)
+return
+}
 
 let select=document.getElementById("customerSelect")
+select.innerHTML=""
 
 data.forEach(c=>{
 
@@ -127,13 +135,21 @@ select.appendChild(op)
 
 async function loadProducts(){
 
-let {data}=await supabase
-.from("products")
-.select("*")
+const { data, error } = await supabase
+.from('products')
+.select('*')
+
+console.log("products",data,error)
+
+if(error){
+alert(error.message)
+return
+}
 
 products=data
 
 let select=document.getElementById("productSelect")
+select.innerHTML=""
 
 data.forEach(p=>{
 
@@ -147,7 +163,6 @@ select.appendChild(op)
 })
 
 }
-
 function addToCart(){
 
 let productId=document.getElementById("productSelect").value
