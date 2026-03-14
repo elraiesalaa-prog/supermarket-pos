@@ -81,9 +81,7 @@
 </table>
 
 <div class="text-left mt-4 text-xl">
-
 الإجمالي: <span id="total">0</span>
-
 </div>
 
 <button onclick="saveInvoice()" class="mt-6 bg-green-600 text-white p-3 rounded w-full">
@@ -94,14 +92,12 @@
 
 <script>
 
-const supabaseClient = window.supabase.createClient(
+const supabase = window.supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-
 )
 
 let cart=[]
-
 let products=[]
 
 async function loadCustomers(){
@@ -109,8 +105,6 @@ async function loadCustomers(){
 const { data, error } = await supabase
 .from('customers')
 .select('*')
-
-console.log("customers",data,error)
 
 if(error){
 alert(error.message)
@@ -139,8 +133,6 @@ const { data, error } = await supabase
 .from('products')
 .select('*')
 
-console.log("products",data,error)
-
 if(error){
 alert(error.message)
 return
@@ -163,6 +155,7 @@ select.appendChild(op)
 })
 
 }
+
 function addToCart(){
 
 let productId=document.getElementById("productSelect").value
@@ -234,11 +227,16 @@ renderCart()
 
 async function saveInvoice(){
 
+if(cart.length==0){
+alert("السلة فارغة")
+return
+}
+
 let customer=document.getElementById("customerSelect").value
 let payMethod=document.getElementById("payMethod").value
 let sealMan=document.getElementById("sealMan").value
 
-let {data:order}=await supabase
+let {data:order,error:orderError}=await supabase
 .from("orders_o")
 .insert({
 
@@ -251,10 +249,16 @@ seal_man:sealMan
 .select()
 .single()
 
+if(orderError){
+alert(orderError.message)
+return
+}
+
 let orderId=order.id_order
 
 for(let item of cart){
 
+// حفظ تفاصيل البيع
 await supabase
 .from("orders_details")
 .insert({
@@ -272,13 +276,30 @@ seal_man:sealMan
 
 })
 
+// قراءة المخزون الحالي
+const { data:prod } = await supabase
+.from("products")
+.select("qte_in_stock")
+.eq("id_product",item.id_product)
+.single()
+
+let newStock = Number(prod.qte_in_stock) - Number(item.qte)
+
+// تحديث المخزون
+await supabase
+.from("products")
+.update({ qte_in_stock:newStock })
+.eq("id_product",item.id_product)
+
 }
 
-alert("تم حفظ الفاتورة")
+alert("تم حفظ الفاتورة وتحديث المخزون")
 
 cart=[]
 
 renderCart()
+
+loadProducts()
 
 }
 
