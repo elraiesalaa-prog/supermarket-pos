@@ -169,7 +169,7 @@ window.addItem = function(){
   if(!qte||qte<=0){ alert("ادخل الكمية"); return; }
   if(qte>product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
 
-  product.qte_in_stock -= qte; // تحديث المخزون محلياً
+  product.qte_in_stock = qte; // تحديث المخزون محلياً
   cart.push({id_product:productId,name:product.product_name,price:product.seal_price,qte:qte,total:qte*product.seal_price});
   renderCart();
   showProduct();
