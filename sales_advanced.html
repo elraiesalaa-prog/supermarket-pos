@@ -292,58 +292,84 @@ total:qte*product.seal_price
 renderCart()
 
 }
-window.printPDF = function(){
+<script>
+window.printPDF = function() {
+    // إنشاء عنصر مؤقت للفاتورة
+    const element = document.createElement('div');
+    element.style.fontFamily = 'Arial, Tahoma, sans-serif';
+    element.setAttribute('dir', 'rtl');
+    element.style.width = '100%';
 
-const { jsPDF } = window.jspdf
+    // عنوان الفاتورة
+    const title = document.createElement('h2');
+    title.innerText = 'فاتورة بيع';
+    title.style.textAlign = 'center';
+    title.style.fontSize = '20px';
+    title.style.marginBottom = '10px';
+    element.appendChild(title);
 
-let doc = new jsPDF()
+    // بيانات البائع والتاريخ
+    const seller = document.createElement('div');
+    seller.innerText = 'البائع : ' + document.getElementById('seal_man').value;
+    seller.style.textAlign = 'right';
+    seller.style.marginBottom = '5px';
+    element.appendChild(seller);
 
-doc.setFont("Cairo-Regular","normal")
+    const date = document.createElement('div');
+    date.innerText = 'التاريخ : ' + new Date().toLocaleDateString();
+    date.style.textAlign = 'right';
+    date.style.marginBottom = '15px';
+    element.appendChild(date);
 
-let y=20
+    // إنشاء الجدول
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.innerHTML = `
+        <thead>
+            <tr style="background:#ddd;">
+                <th style="border:1px solid #000;padding:5px;text-align:right">المنتج</th>
+                <th style="border:1px solid #000;padding:5px;text-align:right">السعر</th>
+                <th style="border:1px solid #000;padding:5px;text-align:right">الكمية</th>
+                <th style="border:1px solid #000;padding:5px;text-align:right">المجموع</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${cart.map(item => `
+                <tr>
+                    <td style="border:1px solid #000;padding:5px;text-align:right">${item.name}</td>
+                    <td style="border:1px solid #000;padding:5px;text-align:right">${item.price}</td>
+                    <td style="border:1px solid #000;padding:5px;text-align:right">${item.qte}</td>
+                    <td style="border:1px solid #000;padding:5px;text-align:right">${item.total}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    element.appendChild(table);
 
-doc.setFontSize(18)
-doc.text("فاتورة بيع",105,y,{align:"center"})
+    // الإجمالي
+    const total = cart.reduce((acc, i) => acc + i.total, 0);
+    const totalDiv = document.createElement('div');
+    totalDiv.innerText = 'الإجمالي : ' + total;
+    totalDiv.style.textAlign = 'right';
+    totalDiv.style.fontSize = '16px';
+    totalDiv.style.fontWeight = 'bold';
+    totalDiv.style.marginTop = '15px';
+    element.appendChild(totalDiv);
 
-y+=10
+    // إعدادات html2pdf
+    const opt = {
+        margin: 0.5,
+        filename: 'فاتورة.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
+    };
 
-doc.setFontSize(12)
-doc.text("البائع : "+document.getElementById("seal_man").value,190,y,{align:"right"})
-
-y+=10
-doc.text("التاريخ : "+new Date().toLocaleDateString(),190,y,{align:"right"})
-
-y+=15
-
-doc.text("المنتج",190,y,{align:"right"})
-doc.text("السعر",140,y,{align:"right"})
-doc.text("الكمية",110,y,{align:"right"})
-doc.text("المجموع",80,y,{align:"right"})
-
-y+=10
-
-let total=0
-
-cart.forEach(i=>{
-
-doc.text(i.name.toString(),190,y,{align:"right"})
-doc.text(i.price.toString(),140,y,{align:"right"})
-doc.text(i.qte.toString(),110,y,{align:"right"})
-doc.text(i.total.toString(),80,y,{align:"right"})
-
-total+=i.total
-y+=10
-
-})
-
-y+=10
-
-doc.setFontSize(14)
-doc.text("الإجمالي : "+total,190,y,{align:"right"})
-
-doc.save("invoice.pdf")
-
+    // توليد وحفظ PDF
+    html2pdf().set(opt).from(element).save();
 }
+</script>
 /* حذف من السلة */
 
 window.removeItem = function(index){
