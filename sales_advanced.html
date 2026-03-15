@@ -280,22 +280,25 @@ let orderId=data[0].id_order
 
 for(let item of cart){
 
-await supabase.rpc("add_orders_details",{
+await supabase
+.from("orders_details")
+.insert([{
 
-p_id_product:item.id_product,
-p_id_order:orderId,
-p_qte:item.qte,
-p_price:item.price,
-p_descount:0,
-p_amount:item.total,
-p_total_amount:item.total,
-p_id_customer:customer,
-p_first_name:"",
-p_description_order:"",
-p_pay_method:pay_method,
-p_seal_man:seal_man
+id_product:item.id_product,
+id_order:orderId,
+qte:item.qte,
+price:item.price,
+descount:0,
+amount:item.total,
+total_amount:item.total,
+id_customer:customer,
+date_order:new Date(),
+pay_method:pay_method,
+description_order:"",
+seal_man:seal_man,
+first_name:""
 
-})
+}])
 
 }
 
