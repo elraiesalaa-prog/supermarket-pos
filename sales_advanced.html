@@ -130,7 +130,17 @@
 <div class="text-xl font-bold mt-4 text-left">
 الإجمالي : <span id="invoiceTotal">0</span>
 </div>
+<div class="flex justify-center gap-4 mt-4">
 
+<button onclick="printPDF()" class="bg-blue-600 text-white px-4 py-2 rounded">
+طباعة PDF
+</button>
+
+<button onclick="closeInvoice()" class="bg-red-600 text-white px-4 py-2 rounded">
+إغلاق
+</button>
+
+</div>
 <div class="flex justify-center gap-4 mt-4">
 <button onclick="closeInvoice()" class="bg-red-600 text-white px-4 py-2 rounded">
 إغلاق
@@ -280,7 +290,60 @@ total:qte*product.seal_price
 renderCart()
 
 }
+window.printPDF = function(){
 
+const { jsPDF } = window.jspdf
+let doc = new jsPDF("p","mm","a4")
+
+let y = 20
+
+doc.setFontSize(18)
+doc.text("فاتورة بيع", 105, y, {align:"center"})
+
+y += 10
+
+doc.setFontSize(12)
+doc.text("البائع: " + document.getElementById("seal_man").value, 180, y, {align:"right"})
+
+y += 10
+
+doc.text("التاريخ: " + new Date().toLocaleDateString(), 180, y, {align:"right"})
+
+y += 15
+
+doc.text("المنتج", 180, y, {align:"right"})
+doc.text("السعر", 140, y, {align:"right"})
+doc.text("الكمية", 110, y, {align:"right"})
+doc.text("المجموع", 80, y, {align:"right"})
+
+y += 5
+doc.line(20,y,190,y)
+
+y += 10
+
+let total = 0
+
+cart.forEach(item=>{
+
+doc.text(item.name.toString(),180,y,{align:"right"})
+doc.text(item.price.toString(),140,y,{align:"right"})
+doc.text(item.qte.toString(),110,y,{align:"right"})
+doc.text(item.total.toString(),80,y,{align:"right"})
+
+total += item.total
+
+y += 10
+
+})
+
+y += 10
+
+doc.setFontSize(14)
+doc.text("الإجمالي: " + total, 180, y, {align:"right"})
+
+doc.save("invoice.pdf")
+
+}
 /* حذف من السلة */
 
 window.removeItem = function(index){
