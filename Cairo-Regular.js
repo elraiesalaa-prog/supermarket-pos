@@ -1,14 +1,8 @@
-/* Cairo-Regular font for jsPDF */
-
-var CairoRegular = "AAEAAAALAIAAAwAwT1MvMg8SBJYAAAC8AAAAYGNtYXABd2S3AAABHAAAAExnYXNwAAAAEAAAAXgAAAAIZ2x5Zg9bX2sAAAGAAAAAjGhlYWQJ0Qz3AAAB2AAAADZoaGVhB8YFhQAAAgAAAAAkaG10eA3kA0AAAAgAAAAAGGxvY2EAIgAOAAACMAAAABptYXhwAA0AGgAAAjgAAAAgbmFtZbM6PjQAAAJYAAABrnBvc3QAAwAAAAAEGAAAACBwcmVwAAEAAAAABJgAAAAEAAEAAAABAACkAwPA/8AAAwABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAEAAQAAAwAAAwABAAQAAAAA";
-
-/* register font in jsPDF */
-
 (function (jsPDFAPI) {
 
-var font = CairoRegular;
+jsPDFAPI.addFileToVFS("Cairo-Regular.ttf",
+"AAEAAAARAQAABAAQR0RFRp...ضع هنا الخط الكامل Base64 ...");
 
-jsPDFAPI.addFileToVFS("Cairo-Regular.ttf", font);
-jsPDFAPI.addFont("Cairo-Regular.ttf", "Cairo", "normal");
+jsPDFAPI.addFont("Cairo-Regular.ttf","Cairo","normal");
 
 })(jsPDF.API);
