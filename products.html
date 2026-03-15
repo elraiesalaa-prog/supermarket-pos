@@ -312,19 +312,20 @@ edit_id=id
 
 // حذف
 async function deleteProduct(id){
+  if(!confirm("تأكيد الحذف؟")) return
 
-if(!confirm("تأكيد الحذف؟")) return
+  const { data, error } = await supabaseClient
+    .from("products")
+    .delete()
+    .eq("id_product", id)
 
-await supabaseClient
-.from("products")
-.delete()
-.eq("id_product",id)
+  if(error){
+    alert("حدث خطأ أثناء الحذف: " + error.message)
+    return
+  }
 
-loadProducts()
-
+  loadProducts()
 }
-
-
 // بحث
 function searchProduct(){
 
