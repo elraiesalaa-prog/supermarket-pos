@@ -232,59 +232,49 @@ document.getElementById("tableBody").innerHTML=html
 // حفظ
 async function saveProduct(){
 
-  // حساب المخزون تلقائياً بناءً على الكمية وعدد القطع
-  let stockCalculated = 0
-  if(pay_qte.value && pice_qte.value){
-    stockCalculated = Number(pay_qte.value) * Number(pice_qte.value)
-  }
+  // تحقق من القيم الرقمية
+  let payQte = Number(pay_qte.value) || 0
+  let piceQte = Number(pice_qte.value) || 0
 
-  let data={
+  // حساب المخزون تلقائياً
+  let stockCalculated = payQte * piceQte
 
+  let data = {
     product_name: product_name.value || null,
-
-    pay_qte: pay_qte.value ? Number(pay_qte.value) : null,
-
-    pice_qte: pice_qte.value ? Number(pice_qte.value) : null,
-
-    qte_in_stock: stockCalculated, // تعبئة تلقائية
-
-    pay_price: pay_price.value ? Number(pay_price.value) : null,
-
-    seal_price: seal_price.value ? Number(seal_price.value) : null,
-
+    pay_qte: payQte || null,
+    pice_qte: piceQte || null,
+    qte_in_stock: stockCalculated || null,
+    pay_price: Number(pay_price.value) || null,
+    seal_price: Number(seal_price.value) || null,
     pay_date: pay_date.value || null,
-
     expare_date: expare_date.value || null,
-
     req_id: req_id.value || null,
-
-    coasts_value: coasts_value.value ? Number(coasts_value.value) : null,
-
-    id_cat: id_cat.value ? Number(id_cat.value) : null,
-
+    coasts_value: Number(coasts_value.value) || 0,
+    id_cat: Number(id_cat.value) || null,
     p_weight: p_weight.value || null
-
   }
 
-  if(edit_id==null){
+  try {
+    if(edit_id == null){
+      const {data:inserted, error} = await supabaseClient
+        .from("products")
+        .insert([data])
+      if(error) throw error
+    } else {
+      const {data:updated, error} = await supabaseClient
+        .from("products")
+        .update(data)
+        .eq("id_product", edit_id)
+      if(error) throw error
+      edit_id = null
+    }
 
-    await supabaseClient
-    .from("products")
-    .insert([data])
+    clearForm()
+    loadProducts()
 
-  }else{
-
-    await supabaseClient
-    .from("products")
-    .update(data)
-    .eq("id_product",edit_id)
-
-    edit_id=null
-
+  } catch(err){
+    alert("حدث خطأ أثناء الحفظ: " + err.message)
   }
-
-  clearForm()
-  loadProducts()
 
 }
 // تعديل
@@ -314,17 +304,18 @@ edit_id=id
 async function deleteProduct(id){
   if(!confirm("تأكيد الحذف؟")) return
 
-  const { data, error } = await supabaseClient
-    .from("products")
-    .delete()
-    .eq("id_product", id)
+  try {
+    const {data, error} = await supabaseClient
+      .from("products")
+      .delete()
+      .eq("id_product", id)
+    if(error) throw error
 
-  if(error){
-    alert("حدث خطأ أثناء الحذف: " + error.message)
-    return
+    loadProducts()
+
+  } catch(err){
+    alert("لا يمكن حذف المنتج: " + err.message)
   }
-
-  loadProducts()
 }
 // بحث
 function searchProduct(){
