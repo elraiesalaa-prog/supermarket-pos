@@ -81,7 +81,9 @@
 </table>
 
 <div class="text-left mt-4 text-xl">
+
 الإجمالي: <span id="total">0</span>
+
 </div>
 
 <button onclick="saveInvoice()" class="mt-6 bg-green-600 text-white p-3 rounded w-full">
@@ -162,7 +164,27 @@ let productId=document.getElementById("productSelect").value
 let qte=parseFloat(document.getElementById("qte").value)
 let price=parseFloat(document.getElementById("price").value)
 
+if(!qte || qte<=0){
+alert("ادخل الكمية")
+return
+}
+
+if(!price || price<=0){
+alert("ادخل السعر")
+return
+}
+
 let product=products.find(p=>p.id_product==productId)
+
+if(!product){
+alert("المنتج غير موجود")
+return
+}
+
+if(qte > product.qte_in_stock){
+alert("المخزون غير كاف")
+return
+}
 
 let total=qte*price
 
@@ -236,7 +258,7 @@ let customer=document.getElementById("customerSelect").value
 let payMethod=document.getElementById("payMethod").value
 let sealMan=document.getElementById("sealMan").value
 
-let {data:order,error:orderError}=await supabase
+const {data:order,error:orderError}=await supabase
 .from("orders_o")
 .insert({
 
@@ -258,8 +280,7 @@ let orderId=order.id_order
 
 for(let item of cart){
 
-// حفظ تفاصيل البيع
-await supabase
+const {error:detailError}=await supabase
 .from("orders_details")
 .insert({
 
@@ -276,20 +297,33 @@ seal_man:sealMan
 
 })
 
-// قراءة المخزون الحالي
-const { data:prod } = await supabase
+if(detailError){
+alert(detailError.message)
+return
+}
+
+const {data:prod,error:stockError1}=await supabase
 .from("products")
 .select("qte_in_stock")
 .eq("id_product",item.id_product)
 .single()
 
-let newStock = Number(prod.qte_in_stock) - Number(item.qte)
+if(stockError1){
+alert(stockError1.message)
+return
+}
 
-// تحديث المخزون
-await supabase
+let newStock=Number(prod.qte_in_stock)-Number(item.qte)
+
+const {error:stockError2}=await supabase
 .from("products")
-.update({ qte_in_stock:newStock })
+.update({qte_in_stock:newStock})
 .eq("id_product",item.id_product)
+
+if(stockError2){
+alert(stockError2.message)
+return
+}
 
 }
 
