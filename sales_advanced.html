@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
+
 <meta charset="UTF-8">
 <title>نظام POS متقدم v3</title>
 
@@ -20,6 +22,7 @@
 
 <!-- العملاء -->
 <div class="bg-white p-4 rounded shadow">
+
 <h2 class="font-bold mb-3">العميل</h2>
 
 <select id="customer" class="border p-2 w-full mb-3"></select>
@@ -102,6 +105,41 @@
 
 </div>
 
+<!-- نافذة الفاتورة -->
+<div id="invoiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+
+<div class="bg-white p-6 rounded shadow w-3/4 max-w-3xl">
+
+<h2 class="text-xl font-bold mb-4 text-center">فاتورة البيع</h2>
+
+<table class="w-full text-center border">
+
+<thead class="bg-gray-200">
+<tr>
+<th class="border p-2">المنتج</th>
+<th class="border p-2">السعر</th>
+<th class="border p-2">الكمية</th>
+<th class="border p-2">المجموع</th>
+</tr>
+</thead>
+
+<tbody id="invoiceTable"></tbody>
+
+</table>
+
+<div class="text-xl font-bold mt-4 text-left">
+الإجمالي : <span id="invoiceTotal">0</span>
+</div>
+
+<div class="flex justify-center gap-4 mt-4">
+<button onclick="closeInvoice()" class="bg-red-600 text-white px-4 py-2 rounded">
+إغلاق
+</button>
+</div>
+
+</div>
+</div>
+
 <script>
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -110,164 +148,204 @@ const supabase = window.supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
-const currentUserName="Alaadin Adam"
-document.getElementById("seal_man").value=currentUserName
 
-let products=[]
-let cart=[]
+const currentUserName = "Alaadin Adam"
+document.getElementById("seal_man").value = currentUserName
+
+let products = []
+let cart = []
+
+/* تحميل العملاء */
 
 async function loadCustomers(){
 
-const {data,error}=await supabase
+const {data,error} = await supabase
 .from("customers")
 .select("id_customer,first_name")
 
-if(error){alert(error.message);return}
+if(error){ alert(error.message); return }
 
-let select=document.getElementById("customer")
-select.innerHTML=""
+let select = document.getElementById("customer")
+select.innerHTML = ""
 
 data.forEach(c=>{
-let op=document.createElement("option")
-op.value=c.id_customer
-op.textContent=c.first_name
+let op = document.createElement("option")
+op.value = c.id_customer
+op.textContent = c.first_name
 select.appendChild(op)
 })
 
 }
 
+/* تحميل المنتجات */
+
 async function loadProducts(){
 
-const {data,error}=await supabase
+const {data,error} = await supabase
 .from("products")
 .select("id_product,product_name,seal_price,qte_in_stock")
 
-if(error){alert(error.message);return}
+if(error){ alert(error.message); return }
 
-products=data
+products = data
 
-let select=document.getElementById("product")
-select.innerHTML=""
+let select = document.getElementById("product")
+select.innerHTML = ""
 
 data.forEach(p=>{
-let op=document.createElement("option")
-op.value=p.id_product
-op.textContent=p.product_name
+let op = document.createElement("option")
+op.value = p.id_product
+op.textContent = p.product_name
 select.appendChild(op)
 })
 
 select.addEventListener("change",showProduct)
+
 showProduct()
 
 }
 
+/* عرض المنتج */
+
 function showProduct(){
 
-let id=document.getElementById("product").value
-let p=products.find(x=>x.id_product==id)
+let id = document.getElementById("product").value
+let p = products.find(x=>x.id_product==id)
 
-if(!p)return
+if(!p) return
 
-document.getElementById("price").value=p.seal_price
-document.getElementById("stock").value=p.qte_in_stock
+document.getElementById("price").value = p.seal_price
+document.getElementById("stock").value = p.qte_in_stock
 
 }
 
+/* عرض السلة */
+
 function renderCart(){
 
-let table=document.getElementById("cart")
-table.innerHTML=""
+let table = document.getElementById("cart")
+table.innerHTML = ""
 
-let total=0
+let total = 0
 
 cart.forEach((i,index)=>{
 
-total+=i.total
+total += i.total
 
-table.innerHTML+=`
-
+table.innerHTML += `
 <tr class="border-b">
-
 <td>${i.name}</td>
 <td>${i.price}</td>
 <td>${i.qte}</td>
 <td>${i.total}</td>
-
 <td>
-<button onclick="removeItem(${index})" class="text-red-600">
-حذف
-</button>
+<button onclick="removeItem(${index})" class="text-red-600">حذف</button>
 </td>
-
 </tr>
-
 `
 
 })
 
-document.getElementById("total").innerText=total
+document.getElementById("total").innerText = total
 
 }
 
-window.addItem=function(){
+/* إضافة للسلة */
 
-let productId=document.getElementById("product").value
-let qte=parseFloat(document.getElementById("qte").value)
+window.addItem = function(){
 
-let product=products.find(p=>p.id_product==productId)
+let productId = document.getElementById("product").value
+let qte = parseFloat(document.getElementById("qte").value)
 
-if(!qte||qte<=0){alert("ادخل الكمية");return}
+let product = products.find(p=>p.id_product==productId)
 
-if(qte>product.qte_in_stock){
+if(!qte || qte<=0){
+alert("ادخل الكمية")
+return
+}
+
+if(qte > product.qte_in_stock){
 alert("الكمية أكبر من المخزون")
 return
 }
 
 cart.push({
-
 id_product:productId,
 name:product.product_name,
 price:product.seal_price,
 qte:qte,
 total:qte*product.seal_price
-
 })
 
 renderCart()
 
 }
 
-window.removeItem=function(index){
+/* حذف من السلة */
 
+window.removeItem = function(index){
 cart.splice(index,1)
-
 renderCart()
+}
+
+/* عرض الفاتورة */
+
+window.showInvoiceModal = function(){
+
+let table = document.getElementById("invoiceTable")
+table.innerHTML = ""
+
+let total = 0
+
+cart.forEach(i=>{
+
+total += i.total
+
+table.innerHTML += `
+<tr>
+<td class="border p-2">${i.name}</td>
+<td class="border p-2">${i.price}</td>
+<td class="border p-2">${i.qte}</td>
+<td class="border p-2">${i.total}</td>
+</tr>
+`
+
+})
+
+document.getElementById("invoiceTotal").innerText = total
+document.getElementById("invoiceModal").classList.remove("hidden")
 
 }
 
-window.saveInvoice=async function(){
+/* إغلاق الفاتورة */
+
+window.closeInvoice = function(){
+document.getElementById("invoiceModal").classList.add("hidden")
+}
+
+/* حفظ الفاتورة */
+
+window.saveInvoice = async function(){
 
 if(cart.length==0){
 alert("السلة فارغة")
 return
 }
 
-let btn=document.getElementById("saveBtn")
-btn.disabled=true
+let btn = document.getElementById("saveBtn")
+btn.disabled = true
 
-let customer=document.getElementById("customer").value
-let pay_method=document.getElementById("pay_method").value
-let seal_man=document.getElementById("seal_man").value
+let customer = document.getElementById("customer").value
+let pay_method = document.getElementById("pay_method").value
+let seal_man = document.getElementById("seal_man").value
 
-const {data,error}=await supabase
+const {data,error} = await supabase
 .from("orders_o")
 .insert([{
-
 customer_id:customer,
 date_order:new Date(),
 pay_method:pay_method,
 seal_man:seal_man
-
 }]).select()
 
 if(error){
@@ -276,14 +354,13 @@ btn.disabled=false
 return
 }
 
-let orderId=data[0].id_order
+let orderId = data[0].id_order
 
 for(let item of cart){
 
 await supabase
 .from("orders_details")
 .insert([{
-
 id_product:item.id_product,
 id_order:orderId,
 qte:item.qte,
@@ -297,7 +374,6 @@ pay_method:pay_method,
 description_order:"",
 seal_man:seal_man,
 first_name:""
-
 }])
 
 }
@@ -312,6 +388,8 @@ await loadProducts()
 btn.disabled=false
 
 }
+
+/* تحميل البيانات */
 
 await loadCustomers()
 await loadProducts()
