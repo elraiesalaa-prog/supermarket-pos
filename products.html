@@ -232,53 +232,59 @@ document.getElementById("tableBody").innerHTML=html
 // حفظ
 async function saveProduct(){
 
-let data={
+  // حساب المخزون تلقائياً بناءً على الكمية وعدد القطع
+  let stockCalculated = 0
+  if(pay_qte.value && pice_qte.value){
+    stockCalculated = Number(pay_qte.value) * Number(pice_qte.value)
+  }
 
-product_name: product_name.value || null,
+  let data={
 
-pay_qte: pay_qte.value ? Number(pay_qte.value) : null,
+    product_name: product_name.value || null,
 
-pice_qte: pice_qte.value ? Number(pice_qte.value) : null,
+    pay_qte: pay_qte.value ? Number(pay_qte.value) : null,
 
-qte_in_stock: qte_in_stock.value ? Number(qte_in_stock.value) : null,
+    pice_qte: pice_qte.value ? Number(pice_qte.value) : null,
 
-pay_price: pay_price.value ? Number(pay_price.value) : null,
+    qte_in_stock: stockCalculated, // تعبئة تلقائية
 
-seal_price: seal_price.value ? Number(seal_price.value) : null,
+    pay_price: pay_price.value ? Number(pay_price.value) : null,
 
-pay_date: pay_date.value || null,
+    seal_price: seal_price.value ? Number(seal_price.value) : null,
 
-expare_date: expare_date.value || null,
+    pay_date: pay_date.value || null,
 
-req_id: req_id.value || null,
+    expare_date: expare_date.value || null,
 
-coasts_value: coasts_value.value ? Number(coasts_value.value) : null,
+    req_id: req_id.value || null,
 
-id_cat: id_cat.value ? Number(id_cat.value) : null,
+    coasts_value: coasts_value.value ? Number(coasts_value.value) : null,
 
-p_weight: p_weight.value || null
+    id_cat: id_cat.value ? Number(id_cat.value) : null,
 
-}
+    p_weight: p_weight.value || null
 
-if(edit_id==null){
+  }
 
-await supabaseClient
-.from("products")
-.insert([data])
+  if(edit_id==null){
 
-}else{
+    await supabaseClient
+    .from("products")
+    .insert([data])
 
-await supabaseClient
-.from("products")
-.update(data)
-.eq("id_product",edit_id)
+  }else{
 
-edit_id=null
+    await supabaseClient
+    .from("products")
+    .update(data)
+    .eq("id_product",edit_id)
 
-}
+    edit_id=null
 
-clearForm()
-loadProducts()
+  }
+
+  clearForm()
+  loadProducts()
 
 }
 // تعديل
