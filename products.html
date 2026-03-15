@@ -232,53 +232,48 @@ document.getElementById("tableBody").innerHTML=html
 // حفظ
 async function saveProduct(){
 
-let data={
+  // التأكد من القيم الرقمية
+  let payQte = Number(pay_qte.value) || 0
+  let piceQte = Number(pice_qte.value) || 0
 
-product_name: product_name.value || null,
+  // حساب المخزون تلقائياً
+  let stockCalculated = payQte * piceQte
 
-pay_qte: pay_qte.value ? Number(pay_qte.value) : null,
+  let data = {
+    product_name: product_name.value || null,
+    pay_qte: payQte,
+    pice_qte: piceQte,
+    qte_in_stock: stockCalculated,
+    pay_price: Number(pay_price.value) || 0,
+    seal_price: Number(seal_price.value) || 0,
+    pay_date: pay_date.value || null,
+    expare_date: expare_date.value || null,
+    req_id: req_id.value || null,
+    coasts_value: Number(coasts_value.value) || 0,
+    id_cat: Number(id_cat.value) || 1, // اختيار افتراضي
+    p_weight: p_weight.value || null
+  }
 
-pice_qte: pice_qte.value ? Number(pice_qte.value) : null,
+  try {
+    if(edit_id == null){
+      const {data:inserted, error} = await supabaseClient
+        .from("products")
+        .insert([data])
+      if(error) throw error
+    } else {
+      const {data:updated, error} = await supabaseClient
+        .from("products")
+        .update(data)
+        .eq("id_product", edit_id)
+      if(error) throw error
+      edit_id = null
+    }
 
-qte_in_stock: qte_in_stock.value ? Number(qte_in_stock.value) : null,
-
-pay_price: pay_price.value ? Number(pay_price.value) : null,
-
-seal_price: seal_price.value ? Number(seal_price.value) : null,
-
-pay_date: pay_date.value || null,
-
-expare_date: expare_date.value || null,
-
-req_id: req_id.value || null,
-
-coasts_value: coasts_value.value ? Number(coasts_value.value) : null,
-
-id_cat: id_cat.value ? Number(id_cat.value) : null,
-
-p_weight: p_weight.value || null
-
-}
-
-if(edit_id==null){
-
-await supabaseClient
-.from("products")
-.insert([data])
-
-}else{
-
-await supabaseClient
-.from("products")
-.update(data)
-.eq("id_product",edit_id)
-
-edit_id=null
-
-}
-
-clearForm()
-loadProducts()
+    clearForm()
+    loadProducts()
+  } catch(err){
+    alert("حدث خطأ أثناء الحفظ: " + err.message)
+  }
 
 }
 // تعديل
