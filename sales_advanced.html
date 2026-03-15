@@ -9,6 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
 <script src="Cairo-Regular.js"></script>
 
 </head>
@@ -294,53 +295,51 @@ renderCart()
 window.printPDF = function(){
 
 const { jsPDF } = window.jspdf
-let doc = new jsPDF("p","mm","a4")
 
-let y = 20
+let doc = new jsPDF()
+
+doc.setFont("Cairo-Regular","normal")
+
+let y=20
 
 doc.setFontSize(18)
-doc.text("فاتورة بيع", 105, y, {align:"center"})
+doc.text("فاتورة بيع",105,y,{align:"center"})
 
-y += 10
+y+=10
 
 doc.setFontSize(12)
-doc.text("البائع: " + document.getElementById("seal_man").value, 180, y, {align:"right"})
+doc.text("البائع : "+document.getElementById("seal_man").value,190,y,{align:"right"})
 
-y += 10
+y+=10
+doc.text("التاريخ : "+new Date().toLocaleDateString(),190,y,{align:"right"})
 
-doc.text("التاريخ: " + new Date().toLocaleDateString(), 180, y, {align:"right"})
+y+=15
 
-y += 15
+doc.text("المنتج",190,y,{align:"right"})
+doc.text("السعر",140,y,{align:"right"})
+doc.text("الكمية",110,y,{align:"right"})
+doc.text("المجموع",80,y,{align:"right"})
 
-doc.text("المنتج", 180, y, {align:"right"})
-doc.text("السعر", 140, y, {align:"right"})
-doc.text("الكمية", 110, y, {align:"right"})
-doc.text("المجموع", 80, y, {align:"right"})
+y+=10
 
-y += 5
-doc.line(20,y,190,y)
+let total=0
 
-y += 10
+cart.forEach(i=>{
 
-let total = 0
+doc.text(i.name.toString(),190,y,{align:"right"})
+doc.text(i.price.toString(),140,y,{align:"right"})
+doc.text(i.qte.toString(),110,y,{align:"right"})
+doc.text(i.total.toString(),80,y,{align:"right"})
 
-cart.forEach(item=>{
-
-doc.text(item.name.toString(),180,y,{align:"right"})
-doc.text(item.price.toString(),140,y,{align:"right"})
-doc.text(item.qte.toString(),110,y,{align:"right"})
-doc.text(item.total.toString(),80,y,{align:"right"})
-
-total += item.total
-
-y += 10
+total+=i.total
+y+=10
 
 })
 
-y += 10
+y+=10
 
 doc.setFontSize(14)
-doc.text("الإجمالي: " + total, 180, y, {align:"right"})
+doc.text("الإجمالي : "+total,190,y,{align:"right"})
 
 doc.save("invoice.pdf")
 
