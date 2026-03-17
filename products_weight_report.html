@@ -7,6 +7,7 @@
 <title>تصنيف المنتجات حسب الوزن</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
@@ -19,10 +20,16 @@
 تصنيف المنتجات حسب الوزن
 </h1>
 
+<!-- زر الطباعة -->
+<div class="mb-4 text-left">
+<button onclick="printPDF()" 
+class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md">
+🖨️ طباعة PDF
+</button>
+</div>
+
 <!-- البحث -->
-
 <div class="flex gap-3 mb-6">
-
 <input id="search"
 placeholder="بحث باسم المنتج"
 class="border p-2 rounded w-full">
@@ -31,79 +38,52 @@ class="border p-2 rounded w-full">
 class="bg-green-600 text-white px-5 py-2 rounded">
 بحث
 </button>
-
 </div>
 
 <!-- منتجات بالكيلو -->
-
-<h2 class="text-xl font-bold text-green-700 mb-2">
-🟢 منتجات بالكيلو
-</h2>
+<h2 class="text-xl font-bold text-green-700 mb-2">🟢 منتجات بالكيلو</h2>
 
 <table class="w-full border text-center mb-6">
-
 <thead class="bg-green-600 text-white">
-
 <tr>
 <th class="p-2">اسم المنتج</th>
 <th class="p-2">رقم الطلبية</th>
 <th class="p-2">الوزن</th>
 </tr>
-
 </thead>
-
 <tbody id="kiloTable"></tbody>
-
 </table>
 
 <!-- منتجات بالرطل -->
-
-<h2 class="text-xl font-bold text-yellow-700 mb-2">
-🟡 منتجات بالرطل
-</h2>
+<h2 class="text-xl font-bold text-yellow-700 mb-2">🟡 منتجات بالرطل</h2>
 
 <table class="w-full border text-center mb-6">
-
 <thead class="bg-yellow-600 text-white">
-
 <tr>
 <th class="p-2">اسم المنتج</th>
 <th class="p-2">رقم الطلبية</th>
 <th class="p-2">الوزن</th>
 </tr>
-
 </thead>
-
 <tbody id="ratlTable"></tbody>
-
 </table>
 
 <!-- منتجات بدون وزن -->
-
-<h2 class="text-xl font-bold text-red-700 mb-2">
-🔴 منتجات بدون وزن
-</h2>
+<h2 class="text-xl font-bold text-red-700 mb-2">🔴 منتجات بدون وزن</h2>
 
 <table class="w-full border text-center mb-6">
-
 <thead class="bg-red-600 text-white">
-
 <tr>
 <th class="p-2">اسم المنتج</th>
 <th class="p-2">رقم الطلبية</th>
 <th class="p-2">الوزن</th>
 </tr>
-
 </thead>
-
 <tbody id="emptyTable"></tbody>
-
 </table>
 
-<!-- الأزرار -->
-
+<!-- أزرار -->
 <div class="flex gap-3 mt-6">
-
 <a href="products.html"
 class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">
 تعديل المنتجات
@@ -113,37 +93,38 @@ class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">
 class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">
 رجوع
 </a>
-
 </div>
 
 </div>
 
 <script>
 
+// ================== إعداد Supabase ==================
 const supabaseUrl="https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey="sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-
 const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
 
-let data=[];
+let reportData=[];
 
+// ================== تحميل البيانات ==================
 async function loadData(){
 
-const {data:rows,error}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("products_weight_report")
 .select("*");
 
 if(error){
+console.error(error);
 alert(error.message);
 return;
 }
 
-data=rows;
-
+reportData=data;
 renderTables();
 
 }
 
+// ================== عرض البيانات ==================
 function renderTables(){
 
 let search=document.getElementById("search").value.toLowerCase();
@@ -152,7 +133,7 @@ let kilo="";
 let ratl="";
 let empty="";
 
-data.forEach(row=>{
+reportData.forEach(row=>{
 
 let name=(row.product_name||"").toLowerCase();
 
@@ -167,9 +148,7 @@ let tr=`
 `;
 
 if(row.p_weight==="كيلو") kilo+=tr;
-
 else if(row.p_weight==="رطل") ratl+=tr;
-
 else empty+=tr;
 
 });
@@ -180,10 +159,107 @@ document.getElementById("emptyTable").innerHTML=empty;
 
 }
 
+// ================== تشغيل ==================
+document.getElementById("search")
+.addEventListener("input",renderTables);
+
 loadData();
+
+
+// ================== PDF ==================
+window.printPDF = async function () {
+
+const { data, error } = await supabaseClient
+.from('products_weight_report')
+.select('*');
+
+if (error) {
+alert("خطأ في تحميل البيانات");
+return;
+}
+
+// الحاوية
+const container = document.createElement("div");
+container.setAttribute("dir", "rtl");
+container.style.fontFamily = "Tahoma";
+container.style.padding = "10px";
+
+// العنوان
+const title = document.createElement("h2");
+title.innerText = "تقرير تصنيف المنتجات حسب الوزن";
+title.style.textAlign = "center";
+title.style.marginBottom = "15px";
+container.appendChild(title);
+
+// دالة إنشاء جدول
+function createTable(titleText, color, rows){
+
+if(rows.length === 0) return;
+
+const sectionTitle = document.createElement("h3");
+sectionTitle.innerText = titleText;
+sectionTitle.style.margin = "10px 0";
+sectionTitle.style.color = color;
+container.appendChild(sectionTitle);
+
+const table = document.createElement("table");
+table.style.width = "100%";
+table.style.borderCollapse = "collapse";
+table.style.textAlign = "center";
+
+let html = `
+<thead>
+<tr>
+<th style="border:1px solid #000;padding:6px;background:${color};color:#fff;">اسم المنتج</th>
+<th style="border:1px solid #000;padding:6px;background:${color};color:#fff;">رقم الطلبية</th>
+<th style="border:1px solid #000;padding:6px;background:${color};color:#fff;">الوزن</th>
+</tr>
+</thead>
+<tbody>
+`;
+
+rows.forEach(r=>{
+html+=`
+<tr>
+<td style="border:1px solid #000;padding:5px;">${r.product_name}</td>
+<td style="border:1px solid #000;padding:5px;">${r.req_id||""}</td>
+<td style="border:1px solid #000;padding:5px;">${r.p_weight||""}</td>
+</tr>
+`;
+});
+
+html+="</tbody>";
+
+table.innerHTML=html;
+container.appendChild(table);
+
+}
+
+// تقسيم البيانات
+const kilo = data.filter(r=>r.p_weight==="كيلو");
+const ratl = data.filter(r=>r.p_weight==="رطل");
+const empty = data.filter(r=>!r.p_weight);
+
+// إنشاء الجداول
+createTable("🟢 منتجات بالكيلو","#16a34a",kilo);
+createTable("🟡 منتجات بالرطل","#ca8a04",ratl);
+createTable("🔴 منتجات بدون وزن","#dc2626",empty);
+
+// إعداد PDF
+const opt = {
+margin: 0.5,
+filename: "تقرير_تصنيف_المنتجات.pdf",
+image: { type: "jpeg", quality: 1 },
+html2canvas: { scale: 3 },
+jsPDF: { unit: "cm", format: "a4", orientation: "portrait" }
+};
+
+// إنشاء PDF
+html2pdf().set(opt).from(container).save();
+
+};
 
 </script>
 
 </body>
-
 </html>
