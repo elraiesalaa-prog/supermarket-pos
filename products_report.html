@@ -6,6 +6,7 @@
 <title> تفاصيل المنتجات</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
@@ -125,7 +126,10 @@ table += `
 <td class="font-bold text-green-600">
 ${Number(row["ربح المنتج"]).toFixed(2)}
 </td>
-
+<button onclick="printPDF()" 
+  class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md">
+  🖨️ طباعة تقرير المنتجات PDF
+</button>
 </tr>
 `;
 
@@ -140,7 +144,127 @@ document
 .addEventListener("input",renderTable);
 
 loadReport();
+<script>
+window.printPDF = async function () {
 
+  // 🔹 جلب البيانات من View
+  const { data, error } = await supabase
+    .from('products_report')
+    .select('*');
+
+  if (error) {
+    console.error(error);
+    alert("خطأ في تحميل البيانات");
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    alert("لا توجد بيانات للطباعة");
+    return;
+  }
+
+  // 🔹 إنشاء جدول HTML ديناميكي
+  const container = document.createElement("div");
+  container.setAttribute("dir", "rtl");
+  container.style.fontFamily = "Tahoma, Arial, sans-serif";
+  container.style.padding = "10px";
+
+  // 🔹 عنوان
+  const title = document.createElement("h2");
+  title.innerText = "تقرير المنتجات";
+  title.style.textAlign = "center";
+  container.appendChild(title);
+
+  // 🔹 إنشاء الجدول
+  const table = document.createElement("table");
+  table.style.width = "100%";
+  table.style.borderCollapse = "collapse";
+  table.style.textAlign = "center";
+
+  // 🔹 رأس الجدول
+  const headers = [
+    "اسم المنتج",
+    "عدد القطع",
+    "كمية الشراء",
+    "تكلفة المنتج",
+    "تكلفة الوحدة",
+    "سعر بيع الوحدة",
+    "ربح الوحدة",
+    "ربح المنتج"
+  ];
+
+  const thead = document.createElement("thead");
+  const trHead = document.createElement("tr");
+
+  headers.forEach(h => {
+    const th = document.createElement("th");
+    th.innerText = h;
+    th.style.border = "1px solid #000";
+    th.style.padding = "5px";
+    th.style.background = "#eee";
+    trHead.appendChild(th);
+  });
+
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  // 🔹 جسم الجدول
+  const tbody = document.createElement("tbody");
+
+  let totalProfit = 0;
+
+  data.forEach(item => {
+    const tr = document.createElement("tr");
+
+    const row = [
+      item["اسم المنتج"],
+      item["عدد القطع"],
+      item["كمية الشراء"],
+      item["تكلفة المنتج"],
+      item["تكلفة الوحدة"],
+      item["سعر بيع الوحدة"],
+      item["ربح الوحدة"],
+      item["ربح المنتج"]
+    ];
+
+    totalProfit += Number(item["ربح المنتج"] || 0);
+
+    row.forEach(val => {
+      const td = document.createElement("td");
+      td.innerText = val;
+      td.style.border = "1px solid #000";
+      td.style.padding = "5px";
+      tr.appendChild(td);
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+
+  // 🔹 الإجمالي
+  const totalDiv = document.createElement("div");
+  totalDiv.innerText = "إجمالي الأرباح: " + totalProfit;
+  totalDiv.style.textAlign = "right";
+  totalDiv.style.marginTop = "15px";
+  totalDiv.style.fontWeight = "bold";
+
+  container.appendChild(totalDiv);
+
+  // 🔹 إعدادات PDF
+  const opt = {
+    margin: 0.5,
+    filename: "تقرير_المنتجات.pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: "cm", format: "a4", orientation: "landscape" } // أفضل للجدول
+  };
+
+  // 🔹 إنشاء PDF
+  html2pdf().set(opt).from(container).save();
+};
+</script>
 </script>
 
 </body>
