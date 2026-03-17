@@ -13,7 +13,7 @@
 
 <body class="bg-blue-50 p-6">
 
-<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<div class="max-w-6xl mx-auto bg-white shadow-xl rounded-xl p-6">
 
 <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
 تفاصيل المنتجات
@@ -41,10 +41,7 @@ class="w-full border px-3 py-2 rounded">
 <thead class="bg-blue-600 text-white">
 <tr>
 <th class="p-2">اسم المنتج</th>
-<th class="p-2">عدد القطع</th>
-<th class="p-2">كمية الشراء</th>
 <th class="p-2">تكلفة المنتج</th>
-<th class="p-2">تكلفة الوحدة</th>
 <th class="p-2">سعر البيع</th>
 <th class="p-2">ربح الوحدة</th>
 <th class="p-2">ربح المنتج</th>
@@ -71,7 +68,7 @@ let reportData = [];
 async function loadReport() {
 
 const { data, error } = await supabaseClient
-.from("products_report")
+.from("products_repo")
 .select("*");
 
 if (error) {
@@ -101,10 +98,7 @@ reportData
 table += `
 <tr class="border">
 <td>${row["اسم المنتج"]}</td>
-<td>${row["عدد القطع"]}</td>
-<td>${row["كمية الشراء"]}</td>
-<td>${row["تكلفة المنتج"]}</td>
-<td>${Number(row["تكلفة الوحدة"] || 0).toFixed(2)}</td>
+<td>${Number(row["تكلفة المنتج"] || 0).toFixed(2)}</td>
 <td>${row["سعر بيع الوحدة"]}</td>
 <td>${Number(row["ربح الوحدة"] || 0).toFixed(2)}</td>
 <td class="font-bold text-green-600">
@@ -131,7 +125,7 @@ loadReport();
 window.printPDF = async function () {
 
 const { data, error } = await supabaseClient
-.from('products_report')
+.from('products_repo')
 .select('*');
 
 if (error) {
@@ -161,8 +155,11 @@ table.style.fontSize = "12px";
 
 // الهيدر
 const headers = [
-"اسم المنتج","عدد القطع","كمية الشراء","تكلفة المنتج",
-"تكلفة الوحدة","سعر بيع الوحدة","ربح الوحدة","ربح المنتج"
+"اسم المنتج",
+"تكلفة المنتج",
+"سعر بيع الوحدة",
+"ربح الوحدة",
+"ربح المنتج"
 ];
 
 let html = "<thead><tr>";
@@ -186,10 +183,7 @@ data.forEach(r => {
 html += `
 <tr>
 <td style="border:1px solid #000;padding:5px;">${r["اسم المنتج"]}</td>
-<td style="border:1px solid #000;padding:5px;">${r["عدد القطع"]}</td>
-<td style="border:1px solid #000;padding:5px;">${r["كمية الشراء"]}</td>
-<td style="border:1px solid #000;padding:5px;">${r["تكلفة المنتج"]}</td>
-<td style="border:1px solid #000;padding:5px;">${Number(r["تكلفة الوحدة"] || 0).toFixed(2)}</td>
+<td style="border:1px solid #000;padding:5px;">${Number(r["تكلفة المنتج"] || 0).toFixed(2)}</td>
 <td style="border:1px solid #000;padding:5px;">${r["سعر بيع الوحدة"]}</td>
 <td style="border:1px solid #000;padding:5px;">${Number(r["ربح الوحدة"] || 0).toFixed(2)}</td>
 <td style="border:1px solid #000;padding:5px;color:green;font-weight:bold;">
