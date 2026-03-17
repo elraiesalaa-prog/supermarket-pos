@@ -19,7 +19,7 @@
 تفاصيل المنتجات
 </h1>
 
-<!-- 🔹 زر الطباعة -->
+<!-- زر الطباعة -->
 <div class="mb-4 text-left">
 <button onclick="printPDF()" 
 class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md">
@@ -27,14 +27,15 @@ class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md
 </button>
 </div>
 
+<!-- البحث -->
 <div class="mb-4">
 <input id="searchInput" type="text"
 placeholder="بحث باسم المنتج..."
 class="w-full border px-3 py-2 rounded">
 </div>
 
+<!-- الجدول -->
 <div class="overflow-auto">
-
 <table class="w-full border text-center">
 
 <thead class="bg-blue-600 text-white">
@@ -53,20 +54,20 @@ class="w-full border px-3 py-2 rounded">
 <tbody id="tableBody"></tbody>
 
 </table>
-
 </div>
 
 </div>
 
 <script>
 
+// ================== إعداد Supabase ==================
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let reportData = [];
 
+// ================== تحميل البيانات ==================
 async function loadReport() {
 
 const { data, error } = await supabaseClient
@@ -84,6 +85,7 @@ renderTable();
 
 }
 
+// ================== عرض البيانات ==================
 function renderTable() {
 
 const search = document.getElementById("searchInput").value.toLowerCase();
@@ -117,15 +119,15 @@ document.getElementById("tableBody").innerHTML = table;
 
 }
 
+// ================== البحث ==================
 document.getElementById("searchInput")
 .addEventListener("input", renderTable);
 
-// 🔹 تشغيل التحميل
+// تشغيل التحميل
 loadReport();
 
 
 // ================== PDF ==================
-<script>
 window.printPDF = async function () {
 
 const { data, error } = await supabaseClient
@@ -137,27 +139,27 @@ alert("خطأ في تحميل البيانات");
 return;
 }
 
-// 🔹 الحاوية
+// الحاوية
 const container = document.createElement("div");
 container.setAttribute("dir", "rtl");
 container.style.fontFamily = "Tahoma";
 container.style.padding = "10px";
 
-// 🔹 العنوان
+// العنوان
 const title = document.createElement("h2");
 title.innerText = "تقرير المنتجات";
 title.style.textAlign = "center";
 title.style.marginBottom = "15px";
 container.appendChild(title);
 
-// 🔹 الجدول
+// الجدول
 const table = document.createElement("table");
 table.style.width = "100%";
 table.style.borderCollapse = "collapse";
 table.style.textAlign = "center";
 table.style.fontSize = "12px";
 
-// 🔹 الهيدر
+// الهيدر
 const headers = [
 "اسم المنتج","عدد القطع","كمية الشراء","تكلفة المنتج",
 "تكلفة الوحدة","سعر بيع الوحدة","ربح الوحدة","ربح المنتج"
@@ -172,15 +174,14 @@ border:1px solid #000;
 padding:6px;
 background:#007bff;
 color:#fff;
-font-weight:bold;
-">
+font-weight:bold;">
 ${h}
 </th>`;
 });
 
 html += "</tr></thead><tbody>";
 
-// 🔹 البيانات
+// البيانات
 data.forEach(r => {
 html += `
 <tr>
@@ -203,7 +204,7 @@ html += "</tbody>";
 table.innerHTML = html;
 container.appendChild(table);
 
-// 🔹 إجمالي الأرباح
+// إجمالي الأرباح
 let total = data.reduce((sum, r) => sum + Number(r["ربح المنتج"] || 0), 0);
 
 const totalDiv = document.createElement("div");
@@ -214,7 +215,7 @@ totalDiv.style.fontWeight = "bold";
 
 container.appendChild(totalDiv);
 
-// 🔹 إعدادات PDF
+// إعدادات PDF
 const opt = {
 margin: 0.5,
 filename: "تقرير_المنتجات.pdf",
@@ -223,11 +224,10 @@ html2canvas: { scale: 3 },
 jsPDF: { unit: "cm", format: "a4", orientation: "landscape" }
 };
 
-// 🔹 إنشاء PDF
+// إنشاء PDF
 html2pdf().set(opt).from(container).save();
 
 };
-
 
 </script>
 
