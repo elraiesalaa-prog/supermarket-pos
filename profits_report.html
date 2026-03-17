@@ -7,6 +7,7 @@
 <title>أرباح الطلبيات</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
@@ -19,38 +20,39 @@
 تقرير أرباح الطلبيات
 </h1>
 
-<div class="mb-4">
+<!-- زر الطباعة -->
+<div class="mb-4 text-left">
+<button onclick="printPDF()" 
+class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md">
+🖨️ طباعة PDF
+</button>
+</div>
 
+<!-- البحث -->
+<div class="mb-4">
 <input id="searchReq"
 placeholder="بحث برقم الطلبية"
 class="border p-2 rounded w-full">
-
 </div>
 
+<!-- الجدول -->
 <div class="overflow-auto">
-
 <table class="w-full border text-center">
 
 <thead class="bg-blue-600 text-white">
-
 <tr>
-
 <th class="p-2">رقم الطلبية</th>
-
 <th class="p-2">ربح الطلبية</th>
-
 </tr>
-
 </thead>
 
 <tbody id="tableBody"></tbody>
 
 </table>
-
 </div>
 
+<!-- أزرار -->
 <div class="flex gap-3 mt-6">
-
 <a href="products.html"
 class="bg-yellow-500 text-white px-5 py-2 rounded">
 تعديل المنتجات
@@ -60,47 +62,48 @@ class="bg-yellow-500 text-white px-5 py-2 rounded">
 class="bg-blue-600 text-white px-5 py-2 rounded">
 رجوع
 </a>
-
 </div>
 
 </div>
 
 <script>
 
+// ================== إعداد Supabase ==================
 const supabaseUrl="https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey="sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-
 const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
 
-let data=[];
+let reportData=[];
 
+// ================== تحميل البيانات ==================
 async function loadData(){
 
-const {data:rows,error}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("orders_profit_reports")
 .select("*");
 
 if(error){
+console.error(error);
 alert(error.message);
 return;
 }
 
-data=rows;
-
+reportData=data;
 renderTable();
 
 }
 
+// ================== عرض البيانات ==================
 function renderTable(){
 
-let search=document.getElementById("searchReq").value;
+let search=document.getElementById("searchReq").value.toLowerCase();
 
-let filtered=data;
+let filtered=reportData;
 
 if(search){
-
-filtered=data.filter(r=>r.req_id.includes(search));
-
+filtered=reportData.filter(r=>
+(r.req_id || "").toLowerCase().includes(search)
+);
 }
 
 let table="";
@@ -109,11 +112,10 @@ filtered.forEach(row=>{
 
 table+=`
 <tr class="border">
-
 <td>${row.req_id}</td>
-
-<td>${row.order_profit}</td>
-
+<td class="font-bold text-green-600">
+${Number(row.order_profit || 0).toFixed(2)}
+</td>
 </tr>
 `;
 
@@ -123,12 +125,111 @@ document.getElementById("tableBody").innerHTML=table;
 
 }
 
-document.getElementById("searchReq").addEventListener("input",renderTable);
+// ================== البحث ==================
+document.getElementById("searchReq")
+.addEventListener("input",renderTable);
 
+// تشغيل التحميل
 loadData();
+
+
+// ================== PDF ==================
+window.printPDF = async function () {
+
+const { data, error } = await supabaseClient
+.from('orders_profit_reports')
+.select('*');
+
+if (error) {
+alert("خطأ في تحميل البيانات");
+return;
+}
+
+// الحاوية
+const container = document.createElement("div");
+container.setAttribute("dir", "rtl");
+container.style.fontFamily = "Tahoma";
+container.style.padding = "10px";
+
+// العنوان
+const title = document.createElement("h2");
+title.innerText = "تقرير أرباح الطلبيات";
+title.style.textAlign = "center";
+title.style.marginBottom = "15px";
+container.appendChild(title);
+
+// الجدول
+const table = document.createElement("table");
+table.style.width = "100%";
+table.style.borderCollapse = "collapse";
+table.style.textAlign = "center";
+table.style.fontSize = "14px";
+
+// الهيدر
+const headers = [
+"رقم الطلبية",
+"ربح الطلبية"
+];
+
+let html = "<thead><tr>";
+
+headers.forEach(h => {
+html += `
+<th style="
+border:1px solid #000;
+padding:8px;
+background:#007bff;
+color:#fff;
+font-weight:bold;">
+${h}
+</th>`;
+});
+
+html += "</tr></thead><tbody>";
+
+// البيانات
+data.forEach(r => {
+html += `
+<tr>
+<td style="border:1px solid #000;padding:6px;">${r.req_id}</td>
+<td style="border:1px solid #000;padding:6px;color:green;font-weight:bold;">
+${Number(r.order_profit || 0).toFixed(2)}
+</td>
+</tr>
+`;
+});
+
+html += "</tbody>";
+
+table.innerHTML = html;
+container.appendChild(table);
+
+// إجمالي الأرباح
+let total = data.reduce((sum, r) => sum + Number(r.order_profit || 0), 0);
+
+const totalDiv = document.createElement("div");
+totalDiv.innerText = "إجمالي أرباح الطلبيات: " + total.toFixed(2);
+totalDiv.style.textAlign = "right";
+totalDiv.style.marginTop = "15px";
+totalDiv.style.fontWeight = "bold";
+
+container.appendChild(totalDiv);
+
+// إعدادات PDF
+const opt = {
+margin: 0.5,
+filename: "تقرير_أرباح_الطلبيات.pdf",
+image: { type: "jpeg", quality: 1 },
+html2canvas: { scale: 3 },
+jsPDF: { unit: "cm", format: "a4", orientation: "portrait" }
+};
+
+// إنشاء PDF
+html2pdf().set(opt).from(container).save();
+
+};
 
 </script>
 
 </body>
-
 </html>
