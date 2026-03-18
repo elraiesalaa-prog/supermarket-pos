@@ -11,6 +11,12 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
+<style>
+body{
+font-family:Tahoma;
+}
+</style>
+
 </head>
 
 <body class="bg-gray-100 p-6">
@@ -35,12 +41,13 @@ class="border p-2 rounded w-full">
 طباعة التقرير
 </button>
 
-<a href="index.html" class="bg-gray-600 text-white px-5 py-2 rounded">
+<a href="admin.html" class="bg-gray-600 text-white px-5 py-2 rounded">
 رجوع
 </a>
 
 </div>
 
+<!-- الإحصائيات -->
 <div class="grid grid-cols-4 gap-4 mb-6 text-center text-lg font-bold">
 
 <div class="bg-blue-100 p-4 rounded">
@@ -65,6 +72,7 @@ class="border p-2 rounded w-full">
 
 </div>
 
+<!-- الجدول -->
 <div class="overflow-auto">
 
 <table class="w-full border text-center">
@@ -102,6 +110,7 @@ const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
 
 let data=[];
 
+// تحميل البيانات
 async function loadLoans(){
 
 const {data:rows,error}=await supabaseClient
@@ -124,11 +133,11 @@ return;
 data=rows;
 
 renderTable();
-
 calculateTotals();
 
 }
 
+// عرض الجدول
 function renderTable(){
 
 let search=document.getElementById("search").value.toLowerCase();
@@ -165,41 +174,45 @@ document.getElementById("tableBody").innerHTML=table;
 
 }
 
+// الحسابات
 function calculateTotals(){
 
 let totalLoans=0;
 let totalPaid=0;
-
 let customers=new Set();
 
 data.forEach(r=>{
 
-totalLoans+=r.loan_value||0;
+totalLoans+=Number(r.loan_value)||0;
+totalPaid+=Number(r.sadad)||0;
 
-totalPaid+=r.sadad||0;
-
-customers.add(r.customers?.first_name);
+if(r.customers?.first_name){
+customers.add(r.customers.first_name);
+}
 
 });
 
 document.getElementById("totalLoans").innerText=totalLoans;
-
 document.getElementById("totalPaid").innerText=totalPaid;
-
 document.getElementById("totalRemain").innerText=totalLoans-totalPaid;
-
 document.getElementById("totalCustomers").innerText=customers.size;
 
 }
 
+// ⭐ طباعة PDF احترافية
 function printPDF(){
 
 const { jsPDF } = window.jspdf;
 
-let doc=new jsPDF();
+let doc=new jsPDF({
+orientation:"landscape"
+});
 
-doc.text("Loans Report",14,15);
+// عنوان
+doc.setFontSize(14);
+doc.text("تقرير القروض",140,10,{align:"center"});
 
+// تجهيز البيانات
 let rows=[];
 
 data.forEach(r=>{
@@ -216,22 +229,51 @@ r.loan_date||""
 
 });
 
+// الجدول
 doc.autoTable({
 
-head:[["Loan ID","Customer","Description","Loan","Paid","Remain","Date"]],
+startY:20,
+
+head:[[
+"رقم القرض",
+"اسم العميل",
+"الوصف",
+"قيمة القرض",
+"المسدد",
+"المتبقي",
+"التاريخ"
+]],
 
 body:rows,
 
-startY:25
+styles:{
+halign:"center",
+fontSize:8
+},
+
+headStyles:{
+fillColor:[41,128,185]
+}
 
 });
 
+// الإجماليات
+let finalY=doc.lastAutoTable.finalY+10;
+
+doc.text("إجمالي القروض: "+document.getElementById("totalLoans").innerText,14,finalY);
+doc.text("إجمالي المسدد: "+document.getElementById("totalPaid").innerText,14,finalY+7);
+doc.text("المتبقي: "+document.getElementById("totalRemain").innerText,14,finalY+14);
+doc.text("عدد العملاء: "+document.getElementById("totalCustomers").innerText,14,finalY+21);
+
+// حفظ
 doc.save("loans_report.pdf");
 
 }
 
+// البحث المباشر
 document.getElementById("search").addEventListener("input",renderTable);
 
+// تحميل
 loadLoans();
 
 </script>
