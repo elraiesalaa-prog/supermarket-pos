@@ -5,8 +5,7 @@
 <meta charset="UTF-8">
 <title>تقرير القروض</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -18,7 +17,7 @@
 <div class="flex gap-3 mb-6">
 <input id="search" placeholder="بحث باسم العميل" class="border p-2 rounded w-full">
 <button onclick="renderTable()" class="bg-green-600 text-white px-5 py-2 rounded">بحث</button>
-<button onclick="printPDF()" class="bg-blue-600 text-white px-5 py-2 rounded">طباعة التقرير</button>
+<button onclick="printLoansPDF()" class="bg-blue-600 text-white px-5 py-2 rounded">طباعة التقرير</button>
 <a href="index.html" class="bg-gray-600 text-white px-5 py-2 rounded">رجوع</a>
 </div>
 
@@ -54,6 +53,7 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let data = [];
 
+// تحميل القروض
 async function loadLoans() {
     const { data: rows, error } = await supabaseClient
         .from("loans")
@@ -70,6 +70,7 @@ async function loadLoans() {
     calculateTotals();
 }
 
+// عرض القروض في الجدول
 function renderTable() {
     const search = document.getElementById("search").value.toLowerCase();
     const filtered = data.filter(r => (r.c_name || "").toLowerCase().includes(search));
@@ -92,6 +93,7 @@ function renderTable() {
     document.getElementById("tableBody").innerHTML = table;
 }
 
+// حساب المجموعات
 function calculateTotals() {
     let totalLoans = 0;
     let totalPaid = 0;
@@ -109,31 +111,50 @@ function calculateTotals() {
     document.getElementById("totalCustomers").innerText = customers.size;
 }
 
-function printPDF() {
+// طباعة تقرير القروض بنفس أسلوب العملاء والموردين
+function printLoansPDF() {
     if (data.length === 0) { alert("لا توجد بيانات للطباعة"); return; }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    let element = document.createElement("div");
+    let html = `
+    <div style="direction:rtl;font-family:Arial;padding:10px">
+    <h2 style="text-align:center;margin-bottom:20px;">كشف القروض</h2>
+    <table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">
+    <tr style="background:#2c3e50;color:white">
+    <th style="border:1px solid #000;padding:6px;">رقم القرض</th>
+    <th style="border:1px solid #000;padding:6px;">اسم العميل</th>
+    <th style="border:1px solid #000;padding:6px;">الوصف</th>
+    <th style="border:1px solid #000;padding:6px;">قيمة القرض</th>
+    <th style="border:1px solid #000;padding:6px;">المسدد</th>
+    <th style="border:1px solid #000;padding:6px;">المتبقي</th>
+    <th style="border:1px solid #000;padding:6px;">التاريخ</th>
+    </tr>
+    `;
 
-    doc.text("تقرير القروض", 14, 15);
-
-    const rows = data.map(r => [
-        r.loan_id,
-        r.c_name || "",
-        r.loan_discripton || "",
-        r.loan_value || 0,
-        r.sadad || 0,
-        (r.loan_value || 0) - (r.sadad || 0),
-        r.loan_date ? new Date(r.loan_date).toLocaleDateString() : ""
-    ]);
-
-    doc.autoTable({
-        head: [["رقم القرض","اسم العميل","الوصف","قيمة القرض","المسدد","المتبقي","التاريخ"]],
-        body: rows,
-        startY: 25
+    data.forEach(r => {
+        const remain = (r.loan_value || 0) - (r.sadad || 0);
+        html += `
+        <tr>
+            <td style="border:1px solid #000;padding:5px;">${r.loan_id}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.c_name || ""}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.loan_discripton || ""}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.loan_value || 0}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.sadad || 0}</td>
+            <td style="border:1px solid #000;padding:5px;color:red;font-weight:bold">${remain}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.loan_date ? new Date(r.loan_date).toLocaleDateString() : ""}</td>
+        </tr>
+        `;
     });
 
-    doc.save("loans_report.pdf");
+    html += `</table></div>`;
+    element.innerHTML = html;
+
+    html2pdf().set({
+        margin: 5,
+        filename: "loans_report.pdf",
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    }).from(element).save();
 }
 
 document.getElementById("search").addEventListener("input", renderTable);
