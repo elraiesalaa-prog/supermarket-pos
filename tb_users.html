@@ -138,8 +138,13 @@ table+=`
 ${user.username || ""}
 </td>
 
-<td>
-<input type="text" id="p${user.id}" value="${user.pwd}" style="border:none;text-align:center;width:100%;">
+<td style="display:flex;gap:5px;justify-content:center;align-items:center;">
+
+<input type="password" id="p${user.id}" value="${user.pwd}" 
+style="border:none;text-align:center;width:80%;">
+
+<button onclick="togglePassword('p${user.id}')">👁️</button>
+
 </td>
 
 <td>
@@ -169,6 +174,18 @@ ${user.fullname || ""}
 });
 
 document.getElementById("usersTable").innerHTML=table;
+
+}
+
+function togglePassword(id){
+
+let input=document.getElementById(id);
+
+if(input.type==="password"){
+input.type="text";
+}else{
+input.type="password";
+}
 
 }
 
@@ -253,7 +270,7 @@ XLSX.writeFile(wb,"users.xlsx");
 
 }
 
-// ✅ طباعة PDF بالعربية بدون مشاكل
+// ✅ PDF عربي بدون أعمدة تعديل/حذف
 function printUsersPDF(){
 
 let element=document.createElement("div");
@@ -277,7 +294,7 @@ html+=`
 <tr>
 <td>${u.id}</td>
 <td>${u.username || ""}</td>
-<td>${u.pwd}</td>
+<td>******</td>
 <td>${u.usertype}</td>
 <td>${u.fullname || ""}</td>
 </tr>
