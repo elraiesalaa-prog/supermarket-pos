@@ -8,6 +8,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 </head>
 
@@ -20,7 +21,6 @@
 </h1>
 
 <!-- البحث -->
-
 <div class="flex gap-2 mb-6">
 
 <input id="search"
@@ -32,54 +32,43 @@ class="bg-green-600 text-white px-5 py-2 rounded">
 بحث
 </button>
 
+<button onclick="printCustomersPDF()"
+class="bg-red-600 text-white px-5 py-2 rounded">
+PDF
+</button>
+
 </div>
 
 <!-- نموذج الإدخال -->
-
 <div class="grid grid-cols-2 gap-4 mb-6">
 
 <input id="first_name" placeholder="اسم العميل" class="border p-2 rounded">
-
 <input id="balance" placeholder="الرصيد" class="border p-2 rounded">
-
 <input id="tel" placeholder="الهاتف" class="border p-2 rounded">
-
 <input id="whatsapp" placeholder="واتساب" class="border p-2 rounded">
-
 <input id="email" placeholder="البريد الإلكتروني" class="border p-2 rounded">
-
 <input type="file" id="image" class="border p-2 rounded">
 
 </div>
 
 <!-- الأزرار -->
-
 <div class="flex gap-3 mb-6">
 
 <button onclick="addCustomer()"
-class="bg-green-600 text-white px-5 py-2 rounded">
-إضافة
-</button>
+class="bg-green-600 text-white px-5 py-2 rounded">إضافة</button>
 
 <button onclick="updateCustomer()"
-class="bg-yellow-500 text-white px-5 py-2 rounded">
-حفظ التعديل
-</button>
+class="bg-yellow-500 text-white px-5 py-2 rounded">حفظ التعديل</button>
 
 <button onclick="clearForm()"
-class="bg-gray-500 text-white px-5 py-2 rounded">
-جديد
-</button>
+class="bg-gray-500 text-white px-5 py-2 rounded">جديد</button>
 
 <a href="index.html"
-class="bg-blue-600 text-white px-5 py-2 rounded">
-رجوع
-</a>
+class="bg-blue-600 text-white px-5 py-2 rounded">رجوع</a>
 
 </div>
 
 <!-- جدول العملاء -->
-
 <div class="overflow-auto">
 
 <table class="w-full border text-center">
@@ -87,7 +76,6 @@ class="bg-blue-600 text-white px-5 py-2 rounded">
 <thead class="bg-blue-600 text-white">
 
 <tr>
-
 <th>الصورة</th>
 <th>رقم العميل</th>
 <th>الاسم</th>
@@ -99,7 +87,6 @@ class="bg-blue-600 text-white px-5 py-2 rounded">
 <th>واتساب</th>
 <th>تعديل</th>
 <th>حذف</th>
-
 </tr>
 
 </thead>
@@ -122,6 +109,8 @@ const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
 let data=[];
 let editID=null;
 
+loadCustomers();
+
 async function loadCustomers(){
 
 const {data:rows,error}=await supabaseClient
@@ -135,7 +124,6 @@ return;
 }
 
 data=rows;
-
 renderTable();
 
 }
@@ -155,13 +143,10 @@ filtered.forEach(row=>{
 let img="";
 
 if(row.customer_image){
-
 img=`<img src="data:image/png;base64,${row.customer_image}" class="w-12 h-12 rounded-full mx-auto">`;
-
 }
 
 table+=`
-
 <tr class="border">
 
 <td>${img}</td>
@@ -172,39 +157,14 @@ table+=`
 <td>${row.whatsapp||""}</td>
 <td>${row.email||""}</td>
 
-<td>
-<a href="tel:${row.tel}"
-class="bg-green-500 text-white px-2 py-1 rounded">
-📞
-</a>
-</td>
+<td><a href="tel:${row.tel}" class="bg-green-500 text-white px-2 py-1 rounded">📞</a></td>
+<td><a href="https://wa.me/${row.whatsapp}" target="_blank" class="bg-green-600 text-white px-2 py-1 rounded">💬</a></td>
 
-<td>
-<a href="https://wa.me/${row.whatsapp}"
-target="_blank"
-class="bg-green-600 text-white px-2 py-1 rounded">
-💬
-</a>
-</td>
-
-<td>
-<button onclick="editRow(${row.id_customer})"
-class="bg-yellow-400 px-3 py-1 rounded">
-تعديل
-</button>
-</td>
-
-<td>
-<button onclick="deleteRow(${row.id_customer})"
-class="bg-red-600 text-white px-3 py-1 rounded">
-حذف
-</button>
-</td>
+<td><button onclick="editRow(${row.id_customer})" class="bg-yellow-400 px-3 py-1 rounded">تعديل</button></td>
+<td><button onclick="deleteRow(${row.id_customer})" class="bg-red-600 text-white px-3 py-1 rounded">حذف</button></td>
 
 </tr>
-
 `;
-
 });
 
 document.getElementById("tableBody").innerHTML=table;
@@ -216,11 +176,8 @@ async function imageToBase64(file){
 return new Promise((resolve,reject)=>{
 
 const reader=new FileReader();
-
 reader.onload=()=>resolve(reader.result.split(',')[1]);
-
 reader.onerror=error=>reject(error);
-
 reader.readAsDataURL(file);
 
 });
@@ -239,9 +196,7 @@ let imageFile=document.getElementById("image").files[0];
 let base64=null;
 
 if(imageFile){
-
 base64=await imageToBase64(imageFile);
-
 }
 
 const {error}=await supabaseClient
@@ -293,9 +248,7 @@ let imageFile=document.getElementById("image").files[0];
 let base64=null;
 
 if(imageFile){
-
 base64=await imageToBase64(imageFile);
-
 }
 
 const {error}=await supabaseClient
@@ -344,9 +297,66 @@ document.getElementById("image").value="";
 
 }
 
-document.getElementById("search").addEventListener("input",renderTable);
+// ✅ طباعة PDF منظمة
+function printCustomersPDF(){
 
-loadCustomers();
+let element=document.createElement("div");
+
+let html=`
+<div style="direction:rtl;font-family:Arial;padding:10px">
+
+<h2 style="text-align:center;margin-bottom:20px;">
+كشف العملاء
+</h2>
+
+<table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">
+
+<tr style="background:#2c3e50;color:white">
+<th style="border:1px solid #000;padding:6px;">الصورة</th>
+<th style="border:1px solid #000;padding:6px;">رقم العميل</th>
+<th style="border:1px solid #000;padding:6px;">الاسم</th>
+<th style="border:1px solid #000;padding:6px;">الرصيد</th>
+<th style="border:1px solid #000;padding:6px;">الهاتف</th>
+<th style="border:1px solid #000;padding:6px;">واتساب</th>
+<th style="border:1px solid #000;padding:6px;">البريد</th>
+</tr>
+`;
+
+data.forEach(r=>{
+
+let img="";
+
+if(r.customer_image){
+img=`<img src="data:image/png;base64,${r.customer_image}" style="width:35px;height:35px;border-radius:50%">`;
+}
+
+html+=`
+<tr>
+<td style="border:1px solid #000;padding:5px;">${img}</td>
+<td style="border:1px solid #000;padding:5px;">${r.id_customer}</td>
+<td style="border:1px solid #000;padding:5px;">${r.first_name||""}</td>
+<td style="border:1px solid #000;padding:5px;">${r.balance||0}</td>
+<td style="border:1px solid #000;padding:5px;">${r.tel||""}</td>
+<td style="border:1px solid #000;padding:5px;">${r.whatsapp||""}</td>
+<td style="border:1px solid #000;padding:5px;">${r.email||""}</td>
+</tr>
+`;
+});
+
+html+=`</table></div>`;
+
+element.innerHTML=html;
+
+html2pdf().set({
+margin:5,
+filename:"customers.pdf",
+html2canvas:{scale:2},
+jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
+}).from(element).save();
+
+}
+
+document.getElementById("search").addEventListener("input",renderTable);
 
 </script>
 
