@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 
 <head>
 
@@ -8,8 +8,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
 
@@ -61,13 +60,10 @@ background:#eee;
 <input id="fullname" placeholder="الاسم الكامل">
 
 <select id="usertype">
-
 <option value="مدير">مدير</option>
 <option value="تقني حاسوب">تقني حاسوب</option>
 <option value="مشرف">مشرف</option>
 <option value="بائع">بائع</option>
-
-
 </select>
 
 <button onclick="addUser()">إضافة</button>
@@ -79,14 +75,12 @@ background:#eee;
 <input id="search" placeholder="بحث..." onkeyup="searchUsers()">
 
 <button onclick="exportExcel()">Excel</button>
-<button onclick="exportPDF()">PDF</button>
+<button onclick="printUsersPDF()">PDF</button>
 
 <table>
 
 <thead>
-
 <tr>
-
 <th>ID</th>
 <th>اسم المستخدم</th>
 <th>كلمة المرور</th>
@@ -94,9 +88,7 @@ background:#eee;
 <th>الاسم الكامل</th>
 <th>تعديل</th>
 <th>حذف</th>
-
 </tr>
-
 </thead>
 
 <tbody id="usersTable"></tbody>
@@ -116,13 +108,17 @@ loadUsers();
 
 async function loadUsers(){
 
-const {data}=await client
+const {data,error}=await client
 .from("tb_users")
 .select("*")
 .order("id",{ascending:true});
 
-users=data;
+if(error){
+console.log(error);
+return;
+}
 
+users=data;
 drawTable(users);
 
 }
@@ -134,46 +130,40 @@ let table="";
 data.forEach(user=>{
 
 table+=`
-
 <tr>
 
 <td>${user.id}</td>
 
-<td contenteditable="true" id="u${user.id}">${user.username}</td>
-
-<td>
-<input type="password" id="p${user.id}" value="${user.pwd}" style="border:none;text-align:center;width:100%;">
+<td contenteditable="true" id="u${user.id}">
+${user.username || ""}
 </td>
 
-
-
-</select>
 <td>
+<input type="text" id="p${user.id}" value="${user.pwd}" style="border:none;text-align:center;width:100%;">
+</td>
 
+<td>
 <select id="t${user.id}">
-
 <option ${user.usertype=="مدير"?"selected":""}>مدير</option>
-<option ${user.usertype==" تقني حاسوب"?"selected":""}> تقني حاسوب</option>
+<option ${user.usertype=="تقني حاسوب"?"selected":""}>تقني حاسوب</option>
 <option ${user.usertype=="مشرف"?"selected":""}>مشرف</option>
 <option ${user.usertype=="بائع"?"selected":""}>بائع</option>
+</select>
 </td>
 
-<td contenteditable="true" id="f${user.id}">${user.fullname}</td>
-
-<td>
-
-<button onclick="updateUser(${user.id})">حفظ</button>
-
+<td contenteditable="true" id="f${user.id}">
+${user.fullname || ""}
 </td>
 
 <td>
+<button onclick="updateUser('${user.id}')">حفظ</button>
+</td>
 
-<button onclick="deleteUser(${user.id})">حذف</button>
-
+<td>
+<button onclick="deleteUser('${user.id}')">حذف</button>
 </td>
 
 </tr>
-
 `;
 
 });
@@ -199,15 +189,10 @@ usertype
 }]);
 
 if(error){
-
 document.getElementById("msg").innerHTML=error.message;
-
 }else{
-
 document.getElementById("msg").innerHTML="تمت إضافة المستخدم";
-
 loadUsers();
-
 }
 
 }
@@ -215,7 +200,7 @@ loadUsers();
 async function updateUser(id){
 
 let username=document.getElementById("u"+id).innerText;
-let pwd=document.getElementById("p"+id).innerText;
+let pwd=document.getElementById("p"+id).value;
 let fullname=document.getElementById("f"+id).innerText;
 let usertype=document.getElementById("t"+id).value;
 
@@ -249,10 +234,8 @@ function searchUsers(){
 let key=document.getElementById("search").value.toLowerCase();
 
 let filtered=users.filter(u=>
-
-u.username.toLowerCase().includes(key) ||
-u.fullname.toLowerCase().includes(key)
-
+(u.username || "").toLowerCase().includes(key) ||
+(u.fullname || "").toLowerCase().includes(key)
 );
 
 drawTable(filtered);
@@ -262,7 +245,6 @@ drawTable(filtered);
 function exportExcel(){
 
 let ws=XLSX.utils.json_to_sheet(users);
-
 let wb=XLSX.utils.book_new();
 
 XLSX.utils.book_append_sheet(wb,ws,"Users");
@@ -271,21 +253,42 @@ XLSX.writeFile(wb,"users.xlsx");
 
 }
 
-function exportPDF(){
+// ✅ طباعة PDF بالعربية بدون مشاكل
+function printUsersPDF(){
 
-let doc=new jspdf.jsPDF();
+let element=document.createElement("div");
 
-let rows=users.map(u=>[u.id,u.username,u.pwd,u.usertype,u.fullname]);
+let html=`
+<h2 style="text-align:center;">كشف المستخدمين</h2>
 
-doc.autoTable({
+<table border="1" style="width:100%;border-collapse:collapse;text-align:center;direction:rtl">
 
-head:[["ID","Username","Password","Type","Fullname"]],
+<tr>
+<th>ID</th>
+<th>اسم المستخدم</th>
+<th>كلمة المرور</th>
+<th>نوع المستخدم</th>
+<th>الاسم الكامل</th>
+</tr>
+`;
 
-body:rows
-
+users.forEach(u=>{
+html+=`
+<tr>
+<td>${u.id}</td>
+<td>${u.username || ""}</td>
+<td>${u.pwd}</td>
+<td>${u.usertype}</td>
+<td>${u.fullname || ""}</td>
+</tr>
+`;
 });
 
-doc.save("users.pdf");
+html+=`</table>`;
+
+element.innerHTML=html;
+
+html2pdf().from(element).save("users.pdf");
 
 }
 
@@ -294,17 +297,3 @@ doc.save("users.pdf");
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
