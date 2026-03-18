@@ -40,6 +40,11 @@ const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+// 🔹 تشغيل بعد تحميل الصفحة
+document.addEventListener("DOMContentLoaded", () => {
+  loadReport();
+});
+
 // 🔹 جلب البيانات من VIEW
 async function loadReport() {
 
@@ -56,9 +61,19 @@ async function loadReport() {
   const table = document.getElementById("reportTable");
   table.innerHTML = "";
 
-  data.forEach(row => {
+  if (!data || data.length === 0) {
+    table.innerHTML = `
+      <tr>
+        <td colspan="5" class="p-4 text-gray-500">لا توجد بيانات</td>
+      </tr>
+    `;
+    return;
+  }
 
-    table.innerHTML += `
+  let rows = "";
+
+  data.forEach(row => {
+    rows += `
       <tr class="hover:bg-gray-50">
         <td class="border p-2">${row["اسم المنتج"] ?? ""}</td>
         <td class="border p-2">${formatNumber(row["تكلفة المنتج"])}</td>
@@ -67,16 +82,16 @@ async function loadReport() {
         <td class="border p-2 text-blue-600">${formatNumber(row["ربح المنتج"])}</td>
       </tr>
     `;
-
   });
 
+  table.innerHTML = rows;
 }
 
-// 🔹 تنسيق الأرقام
+// 🔹 تنسيق الأرقام (آمن 100%)
 function formatNumber(value) {
   if (value === null || value === undefined || value === "") return "0";
 
-  // إذا كانت القيمة رقم أصلاً
+  // رقم جاهز
   if (typeof value === "number") {
     return value.toLocaleString('ar-EG', {
       minimumFractionDigits: 2,
@@ -84,17 +99,19 @@ function formatNumber(value) {
     });
   }
 
-  // إذا كانت نص رقم
-  if (!isNaN(value)) {
-    return parseFloat(value).toLocaleString('ar-EG', {
+  // نص رقمي
+  const parsed = parseFloat(value);
+  if (!isNaN(parsed)) {
+    return parsed.toLocaleString('ar-EG', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
   }
 
-  // في حالة غير متوقعة (اعرضها كما هي)
+  // قيمة غير رقمية
   return value;
 }
+
 </script>
 
 </body>
