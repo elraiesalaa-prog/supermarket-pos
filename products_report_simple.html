@@ -35,18 +35,15 @@
 
 <script>
 
-// 🔹 بيانات Supabase (ضع بياناتك هنا)
+// ✅ بيانات Supabase
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-"
-);
-
 // 🔹 جلب البيانات من VIEW
 async function loadReport() {
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from("products_repo")
     .select('*');
 
@@ -75,7 +72,7 @@ async function loadReport() {
 
 }
 
-// 🔹 دالة تنسيق الأرقام (بدون تحويل خاطئ)
+// 🔹 تنسيق الأرقام
 function formatNumber(value) {
   if (value === null || value === undefined) return "0";
   return Number(value).toLocaleString('ar-EG', {
