@@ -1,180 +1,90 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
 <meta charset="UTF-8">
-<title>تفاصيل المنتجات</title>
+<title>تقرير المنتجات</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
 
-<body class="bg-blue-50 p-6">
+<body class="bg-gray-100 p-4">
 
-<div class="max-w-6xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<div class="max-w-6xl mx-auto bg-white p-4 rounded shadow">
 
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
-تفاصيل المنتجات
-</h1>
+<h2 class="text-xl font-bold mb-4 text-center">تقرير المنتجات</h2>
 
-<!-- زر الطباعة -->
-<div class="mb-4 text-left">
-<button onclick="printPDF()" 
-class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md">
-🖨️ طباعة PDF
-</button>
-</div>
-
-<!-- البحث -->
-<div class="mb-4">
-<input id="searchInput" type="text"
-placeholder="بحث باسم المنتج..."
-class="w-full border px-3 py-2 rounded">
-</div>
-
-<!-- الجدول -->
-<div class="overflow-auto">
 <table class="w-full border text-center">
-<thead class="bg-blue-600 text-white">
+<thead class="bg-gray-200">
 <tr>
-<th class="p-2">اسم المنتج</th>
-<th class="p-2">تكلفة المنتج</th>
-<th class="p-2">سعر البيع</th>
-<th class="p-2">ربح الوحدة</th>
-<th class="p-2">ربح المنتج</th>
+<th class="border p-2">اسم المنتج</th>
+<th class="border p-2">تكلفة المنتج</th>
+<th class="border p-2">سعر بيع الوحدة</th>
+<th class="border p-2">ربح الوحدة</th>
+<th class="border p-2">ربح المنتج</th>
 </tr>
 </thead>
 
-<tbody id="tableBody"></tbody>
+<tbody id="reportTable"></tbody>
+
 </table>
-</div>
 
 </div>
 
 <script>
-// ================== إعداد Supabase ==================
-const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
-const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-let reportData = [];
+// 🔹 بيانات Supabase (ضع بياناتك هنا)
+const supabase = window.supabase.createClient(
+  "https://YOUR_PROJECT.supabase.co",
+  "YOUR_ANON_KEY"
+);
 
-// ================== تحميل البيانات ==================
+// 🔹 جلب البيانات من VIEW
 async function loadReport() {
-    const { data, error } = await supabaseClient
-        .from("products_repo")
-        .select("*");
 
-    if (error) {
-        console.error(error);
-        alert("خطأ: " + error.message);
-        return;
-    }
+  const { data, error } = await supabase
+    .from("products_repo")
+    .select('*');
 
-    // تحويل القيم الرقمية لضمان عرض صحيح
-    reportData = data.map(row => ({
-        ...row,
-        "تكلفة المنتج": parseFloat(row["تكلفة المنتج"]) || 0,
-        "سعر بيع الوحدة": parseFloat(row["سعر بيع الوحدة"]) || 0,
-        "ربح الوحدة": parseFloat(row["ربح الوحدة"]) || 0,
-        "ربح المنتج": parseFloat(row["ربح المنتج"]) || 0
-    }));
+  if (error) {
+    alert("خطأ في جلب البيانات");
+    console.error(error);
+    return;
+  }
 
-    renderTable();
+  const table = document.getElementById("reportTable");
+  table.innerHTML = "";
+
+  data.forEach(row => {
+
+    table.innerHTML += `
+      <tr class="hover:bg-gray-50">
+        <td class="border p-2">${row["اسم المنتج"] ?? ""}</td>
+        <td class="border p-2">${formatNumber(row["تكلفة المنتج"])}</td>
+        <td class="border p-2">${formatNumber(row["سعر بيع الوحدة"])}</td>
+        <td class="border p-2 text-green-600">${formatNumber(row["ربح الوحدة"])}</td>
+        <td class="border p-2 text-blue-600">${formatNumber(row["ربح المنتج"])}</td>
+      </tr>
+    `;
+
+  });
+
 }
 
-// ================== عرض البيانات ==================
-function renderTable() {
-    const search = document.getElementById("searchInput").value.toLowerCase();
-    let table = "";
-
-    reportData
-        .filter(row => (row["اسم المنتج"] || "").toLowerCase().includes(search))
-        .forEach(row => {
-            table += `
-<tr class="border">
-<td>${row["اسم المنتج"]}</td>
-<td>${row["تكلفة المنتج"].toFixed(2)}</td>
-<td>${row["سعر بيع الوحدة"].toFixed(2)}</td>
-<td>${row["ربح الوحدة"].toFixed(2)}</td>
-<td class="font-bold text-green-600">${row["ربح المنتج"].toFixed(2)}</td>
-</tr>`;
-        });
-
-    document.getElementById("tableBody").innerHTML = table;
+// 🔹 دالة تنسيق الأرقام (بدون تحويل خاطئ)
+function formatNumber(value) {
+  if (value === null || value === undefined) return "0";
+  return Number(value).toLocaleString('ar-EG', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
-// ================== البحث ==================
-document.getElementById("searchInput")
-    .addEventListener("input", renderTable);
-
-// تشغيل التحميل
+// تشغيل
 loadReport();
 
-// ================== PDF ==================
-window.printPDF = async function () {
-    if (!reportData.length) { alert("لا توجد بيانات للطباعة"); return; }
-
-    const container = document.createElement("div");
-    container.setAttribute("dir", "rtl");
-    container.style.fontFamily = "Tahoma";
-    container.style.padding = "10px";
-
-    const title = document.createElement("h2");
-    title.innerText = "تقرير المنتجات";
-    title.style.textAlign = "center";
-    title.style.marginBottom = "15px";
-    container.appendChild(title);
-
-    const table = document.createElement("table");
-    table.style.width = "100%";
-    table.style.borderCollapse = "collapse";
-    table.style.textAlign = "center";
-    table.style.fontSize = "12px";
-
-    const headers = ["اسم المنتج","تكلفة المنتج","سعر بيع الوحدة","ربح الوحدة","ربح المنتج"];
-    let html = "<thead><tr>";
-    headers.forEach(h => {
-        html += `<th style="
-border:1px solid #000;
-padding:6px;
-background:#007bff;
-color:#fff;
-font-weight:bold;">${h}</th>`;
-    });
-    html += "</tr></thead><tbody>";
-
-    reportData.forEach(r => {
-        html += `
-<tr>
-<td style="border:1px solid #000;padding:5px;">${r["اسم المنتج"]}</td>
-<td style="border:1px solid #000;padding:5px;">${r["تكلفة المنتج"].toFixed(2)}</td>
-<td style="border:1px solid #000;padding:5px;">${r["سعر بيع الوحدة"].toFixed(2)}</td>
-<td style="border:1px solid #000;padding:5px;">${r["ربح الوحدة"].toFixed(2)}</td>
-<td style="border:1px solid #000;padding:5px;color:green;font-weight:bold;">${r["ربح المنتج"].toFixed(2)}</td>
-</tr>`;
-    });
-
-    html += "</tbody>";
-    table.innerHTML = html;
-    container.appendChild(table);
-
-    const total = reportData.reduce((sum,r)=>sum+r["ربح المنتج"],0);
-    const totalDiv = document.createElement("div");
-    totalDiv.innerText = "إجمالي الأرباح: " + total.toFixed(2);
-    totalDiv.style.textAlign = "right";
-    totalDiv.style.marginTop = "15px";
-    totalDiv.style.fontWeight = "bold";
-    container.appendChild(totalDiv);
-
-    html2pdf().set({
-        margin: 0.5,
-        filename: "تقرير_المنتجات.pdf",
-        image: { type: "jpeg", quality: 1 },
-        html2canvas: { scale: 3 },
-        jsPDF: { unit: "cm", format: "a4", orientation: "landscape" }
-    }).from(container).save();
-};
 </script>
 
 </body>
