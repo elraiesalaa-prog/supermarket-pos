@@ -66,23 +66,34 @@ align-items:center;
 
 </div>
 
+<!-- الأزرار العلوية -->
 <div class="bg-blue-500 text-white flex gap-4 p-2 justify-center">
-<button class="px-4 py-1 bg-blue-600 rounded">تفاصيل المنتجات</button>
 
-<button class="px-4 py-1 bg-blue-600 rounded">فواتير مبدئية</button>
+<button onclick="go('products_report.html')" class="px-4 py-1 bg-blue-600 rounded">
+تفاصيل المنتجات
+</button>
 
-<button class="px-4 py-1 bg-blue-600 rounded">فواتير نهائية</button>
+<button onclick="go('proforma_invoice.html')" class="px-4 py-1 bg-blue-600 rounded">
+فواتير مبدئية
+</button>
 
-<button class="px-4 py-1 bg-blue-600 rounded">إنشاء نسخة احتياطية</button>
-    <button class="px-4 py-1 bg-blue-600 rounded">استعادة نسخة احتياطية</button>
-    
-    <div class="menu" onclick="openSettings()">⚙ إعدادات المتجر</div>
+<button onclick="go('final_invoice.html')" class="px-4 py-1 bg-blue-600 rounded">
+فواتير نهائية
+</button>
 
+<button onclick="go('backup.html')" class="px-4 py-1 bg-blue-600 rounded">
+إنشاء نسخة احتياطية
+</button>
+
+<button onclick="go('restore.html')" class="px-4 py-1 bg-blue-600 rounded">
+استعادة نسخة احتياطية
+</button>
+
+<div class="menu" onclick="openSettings()">⚙ إعدادات المتجر</div>
 
 </div>
 
 <!-- الشريط العلوي -->
-
 <div class="topbar">
 
 <div>
@@ -99,7 +110,6 @@ align-items:center;
 <div class="flex h-[calc(100vh-50px)]">
 
 <!-- القائمة اليمنى -->
-
 <div class="w-64 p-4 overflow-y-auto text-white"
 style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
@@ -107,27 +117,23 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 القائمة الرئيسية
 </h2>
 
-<div class="menu">الأصناف</div>
-<div class="menu">المنتجات</div>
-
-<div class="menu">العملاء</div>
-<div class="menu">الموردين</div>
-
-<hr>
-
-<div class="menu">القروض</div>
-<div class="menu">سداد القروض</div>
+<div class="menu" onclick="go('categories.html')">الأصناف</div>
+<div class="menu" onclick="go('products.html')">المنتجات</div>
+<div class="menu" onclick="go('customers.html')">العملاء</div>
+<div class="menu" onclick="go('suppliers.html')">الموردين</div>
 
 <hr>
 
-<div class="menu">المصروفات</div>
+<div class="menu" onclick="go('loans.html')">القروض</div>
+<div class="menu" onclick="go('loan_payments.html')">سداد القروض</div>
 
 <hr>
+
+<div class="menu" onclick="go('expenses.html')">المصروفات</div>
 
 </div>
 
 <!-- الوسط -->
-
 <div class="flex-1 flex items-center justify-center p-6">
 
 <div class="bg-white rounded-xl shadow-2xl p-10 w-5/6 h-5/6 flex items-center justify-center">
@@ -141,7 +147,6 @@ style="max-width:120%; max-height:120%; object-fit:contain;">
 </div>
 
 <!-- القائمة اليسرى -->
-
 <div class="w-64 p-4 overflow-y-auto text-white"
 style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
@@ -149,24 +154,25 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 العمليات
 </h2>
 
-<div class="menu">المبيعات</div>
-<div class="menu">الطلبيات</div>
-<div class="menu">أرباح الطلبيات</div>
+<div class="menu" onclick="go('sales.html')">المبيعات</div>
+<div class="menu" onclick="go('orders.html')">الطلبيات</div>
+<div class="menu" onclick="go('order_profits.html')">أرباح الطلبيات</div>
 
 <hr>
 
-<div class="menu">قائمة الأسعار</div>
-<div class="menu">أوزان بالكيلو</div>
-<div class="menu">أوزان بالرطل</div>
+<div class="menu" onclick="go('price_list.html')">قائمة الأسعار</div>
+<div class="menu" onclick="go('weight_kg.html')">أوزان بالكيلو</div>
+<div class="menu" onclick="go('weight_lb.html')">أوزان بالرطل</div>
 
-<div class="menu" style="background-color:#ef4444; text-align:center;" onclick="logout()">خروج</div>
+<div class="menu" style="background-color:#ef4444; text-align:center;" onclick="logout()">
+خروج
+</div>
 
 </div>
 
 </div>
 
 <!-- نافذة تغيير كلمة المرور -->
-
 <div id="passwordBox" style="display:none;
 position:fixed;
 top:50%;
@@ -192,11 +198,18 @@ width:300px">
 
 <script>
 
+// ⭐ دالة التنقل (سهلة التعديل)
+function go(page){
+window.location.href = page;
+}
+
+// إعداد Supabase
 const supabaseClient = supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
 
+// تحميل بيانات المتجر
 function loadStore(){
 
 let name = localStorage.getItem("storeName")
@@ -219,6 +232,7 @@ document.getElementById("storeHeader").innerText=header
 
 loadStore()
 
+// الساعة
 function updateClock(){
 
 let now = new Date()
@@ -234,6 +248,7 @@ document.getElementById("clock").innerHTML =
 setInterval(updateClock,1000)
 updateClock()
 
+// المستخدم
 document.addEventListener("DOMContentLoaded", function(){
 
 let user = localStorage.getItem("user")
@@ -247,6 +262,7 @@ document.getElementById("usernameDisplay").textContent = user
 
 })
 
+// تسجيل خروج
 function logout(){
 
 localStorage.removeItem("user")
@@ -256,6 +272,7 @@ window.location="index.html"
 
 }
 
+// كلمة المرور
 function editPassword(){
 document.getElementById("passwordBox").style.display="block"
 }
@@ -301,6 +318,11 @@ alert("تم تغيير كلمة المرور بنجاح")
 
 closePassword()
 
+}
+
+// إعدادات (اختياري)
+function openSettings(){
+alert("صفحة الإعدادات غير مضافة بعد")
 }
 
 </script>
