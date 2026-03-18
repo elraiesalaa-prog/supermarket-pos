@@ -196,47 +196,54 @@ document.getElementById("totalRemain").innerText=totalLoans-totalPaid;
 
 }
 
-function printPDF(){
+function printLoansPDF() {
+    if (data.length === 0) { alert("لا توجد بيانات للطباعة"); return; }
 
-const { jsPDF } = window.jspdf;
+    let element = document.createElement("div");
+    let html = `
+    <div style="direction:rtl;font-family:Arial;padding:10px">
+    <h2 style="text-align:center;margin-bottom:20px;">كشف القروض</h2>
+    <table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">
+    <tr style="background:#2c3e50;color:white">
+    <th style="border:1px solid #000;padding:6px;">رقم القرض</th>
+    <th style="border:1px solid #000;padding:6px;">اسم العميل</th>
+    <th style="border:1px solid #000;padding:6px;">الوصف</th>
+    <th style="border:1px solid #000;padding:6px;">قيمة القرض</th>
+    <th style="border:1px solid #000;padding:6px;">المسدد</th>
+    <th style="border:1px solid #000;padding:6px;">المتبقي</th>
+    <th style="border:1px solid #000;padding:6px;">التاريخ</th>
+    </tr>
+    `;
 
-let doc=new jsPDF();
+    data.forEach(r => {
+        const remain = (r.loan_value || 0) - (r.sadad || 0);
+        html += `
+        <tr>
+            <td style="border:1px solid #000;padding:5px;">${r.loan_id}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.c_name || ""}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.loan_discripton || ""}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.loan_value || 0}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.sadad || 0}</td>
+            <td style="border:1px solid #000;padding:5px;color:red;font-weight:bold">${remain}</td>
+            <td style="border:1px solid #000;padding:5px;">${r.loan_date ? new Date(r.loan_date).toLocaleDateString() : ""}</td>
+        </tr>
+        `;
+    });
 
-doc.text("Loan Statement",14,15);
+    html += `</table></div>`;
+    element.innerHTML = html;
 
-doc.text("Customer: "+customerName,14,25);
-
-let rows=[];
-
-loans.forEach(r=>{
-
-rows.push([
-r.loan_id,
-r.loan_discripton||"",
-r.loan_value||0,
-r.sadad||0,
-(r.loan_value||0)-(r.sadad||0),
-r.loan_date||""
-]);
-
-});
-
-doc.autoTable({
-
-head:[["Loan ID","Description","Loan","Paid","Remain","Date"]],
-
-body:rows,
-
-startY:35
-
-});
-
-doc.save("loan_statement.pdf");
-
+    html2pdf().set({
+        margin: 5,
+        filename: "loans_report.pdf",
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+    }).from(element).save();
 }
 
-loadCustomers();
+document.getElementById("search").addEventListener("input", renderTable);
 
+loadLoans();
 </script>
 
 </body>
