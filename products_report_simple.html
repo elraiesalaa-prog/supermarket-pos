@@ -36,9 +36,10 @@
 <script>
 
 // 🔹 بيانات Supabase (ضع بياناتك هنا)
-const supabase = window.supabase.createClient(
-  "https://YOUR_PROJECT.supabase.co",
-  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU
+const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
+const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
 "
 );
 
