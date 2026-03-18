@@ -3,148 +3,142 @@
 
 <head>
 <meta charset="UTF-8">
-<title>كشف العملاء</title>
-
-<!-- مكتبات -->
+<title>تقرير القروض</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
 <script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-body{
-    font-family:Arial;
-    padding:20px;
-    background:#f4f4f4;
-}
-
-table{
-    border-collapse:collapse;
-    width:100%;
-    background:white;
-    margin-top:20px;
-}
-
-th, td{
-    border:1px solid #ccc;
-    padding:8px;
-    text-align:center;
-}
-
-th{
-    background:#2c3e50;
-    color:white;
-}
-</style>
-
 </head>
 
-<body>
+<body class="bg-gray-100 p-6">
 
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">إدارة العملاء</h1>
+<div class="max-w-7xl mx-auto bg-white shadow-lg rounded-lg p-6">
+<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">تقرير القروض</h1>
 
 <div class="flex gap-3 mb-6">
 <input id="search" placeholder="بحث باسم العميل" class="border p-2 rounded w-full">
-<button onclick="printCustomersPDF()" class="bg-blue-600 text-white px-5 py-2 rounded">طباعة PDF</button>
+<button onclick="renderTable()" class="bg-green-600 text-white px-5 py-2 rounded">بحث</button>
+<button onclick="printPDF()" class="bg-blue-600 text-white px-5 py-2 rounded">طباعة التقرير</button>
+<a href="index.html" class="bg-gray-600 text-white px-5 py-2 rounded">رجوع</a>
 </div>
 
-<table>
-<thead>
+<div class="grid grid-cols-4 gap-4 mb-6 text-center text-lg font-bold">
+<div class="bg-blue-100 p-4 rounded">إجمالي القروض<div id="totalLoans">0</div></div>
+<div class="bg-green-100 p-4 rounded">إجمالي المسدد<div id="totalPaid">0</div></div>
+<div class="bg-red-100 p-4 rounded">المتبقي<div id="totalRemain">0</div></div>
+<div class="bg-yellow-100 p-4 rounded">عدد العملاء<div id="totalCustomers">0</div></div>
+</div>
+
+<div class="overflow-auto">
+<table class="w-full border text-center">
+<thead class="bg-blue-600 text-white">
 <tr>
-<th>الصورة</th>
-<th>رقم العميل</th>
-<th>الاسم</th>
-<th>الرصيد</th>
-<th>الهاتف</th>
-<th>واتساب</th>
-<th>البريد</th>
+<th>رقم القرض</th>
+<th>اسم العميل</th>
+<th>الوصف</th>
+<th>قيمة القرض</th>
+<th>المسدد</th>
+<th>المتبقي</th>
+<th>التاريخ</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
 </table>
+</div>
+</div>
 
 <script>
-const supabaseUrl="https://vmxbedovoahuggfpcmyk.supabase.co";
-const supabaseKey="sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
+const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
+const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-let data=[];
+let data = [];
 
-// تحميل العملاء
-async function loadCustomers(){
-    const {data:rows,error}=await supabaseClient.from("customers").select("*").order("id_customer",{ascending:true});
-    if(error){ alert(error.message); return; }
-    data=rows || [];
+async function loadLoans() {
+    const { data: rows, error } = await supabaseClient
+        .from("loans")
+        .select("*")
+        .order("loan_id", { ascending: false });
+
+    if (error) {
+        alert(error.message);
+        return;
+    }
+
+    data = rows || [];
     renderTable();
+    calculateTotals();
 }
 
-// رسم الجدول
-function renderTable(){
-    const search=document.getElementById("search").value.toLowerCase();
-    const filtered=data.filter(r => (r.first_name||"").toLowerCase().includes(search));
-    let table="";
-    filtered.forEach(r=>{
-        let img=r.customer_image?`<img src="data:image/png;base64,${r.customer_image}" style="width:35px;height:35px;border-radius:50%">`:"";
-        table+=`
-        <tr>
-            <td>${img}</td>
-            <td>${r.id_customer}</td>
-            <td>${r.first_name||""}</td>
-            <td>${r.balance||0}</td>
-            <td>${r.tel||""}</td>
-            <td>${r.whatsapp||""}</td>
-            <td>${r.email||""}</td>
-        </tr>
-        `;
-    });
-    document.getElementById("tableBody").innerHTML=table;
-}
+function renderTable() {
+    const search = document.getElementById("search").value.toLowerCase();
+    const filtered = data.filter(r => (r.c_name || "").toLowerCase().includes(search));
+    let table = "";
 
-// دالة طباعة PDF
-function printCustomersPDF(){
-    if(data.length===0){ alert("لا توجد بيانات للطباعة"); return; }
-
-    let element=document.createElement("div");
-    let html=`<div style="direction:rtl;font-family:Arial;padding:10px">
-    <h2 style="text-align:center;margin-bottom:20px;">كشف العملاء</h2>
-    <table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">
-    <tr style="background:#2c3e50;color:white">
-        <th style="border:1px solid #000;padding:6px;">الصورة</th>
-        <th style="border:1px solid #000;padding:6px;">رقم العميل</th>
-        <th style="border:1px solid #000;padding:6px;">الاسم</th>
-        <th style="border:1px solid #000;padding:6px;">الرصيد</th>
-        <th style="border:1px solid #000;padding:6px;">الهاتف</th>
-        <th style="border:1px solid #000;padding:6px;">واتساب</th>
-        <th style="border:1px solid #000;padding:6px;">البريد</th>
-    </tr>`;
-    
-    data.forEach(r=>{
-        let img=r.customer_image?`<img src="data:image/png;base64,${r.customer_image}" style="width:35px;height:35px;border-radius:50%">`:"";
-        html+=`
-        <tr>
-            <td style="border:1px solid #000;padding:5px;">${img}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.id_customer}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.first_name||""}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.balance||0}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.tel||""}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.whatsapp||""}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.email||""}</td>
+    filtered.forEach(row => {
+        const remain = (row.loan_value || 0) - (row.sadad || 0);
+        table += `
+        <tr class="border">
+            <td>${row.loan_id}</td>
+            <td>${row.c_name || ""}</td>
+            <td>${row.loan_discripton || ""}</td>
+            <td>${row.loan_value || 0}</td>
+            <td>${row.sadad || 0}</td>
+            <td class="text-red-600 font-bold">${remain}</td>
+            <td>${row.loan_date ? new Date(row.loan_date).toLocaleDateString() : ""}</td>
         </tr>`;
     });
-    
-    html+="</table></div>";
-    element.innerHTML=html;
 
-    html2pdf().set({
-        margin:5,
-        filename:"customers.pdf",
-        html2canvas:{scale:2},
-        jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
-    }).from(element).save();
+    document.getElementById("tableBody").innerHTML = table;
 }
 
-document.getElementById("search").addEventListener("input",renderTable);
+function calculateTotals() {
+    let totalLoans = 0;
+    let totalPaid = 0;
+    const customers = new Set();
 
-loadCustomers();
+    data.forEach(r => {
+        totalLoans += r.loan_value || 0;
+        totalPaid += r.sadad || 0;
+        if (r.c_name) customers.add(r.c_name);
+    });
+
+    document.getElementById("totalLoans").innerText = totalLoans;
+    document.getElementById("totalPaid").innerText = totalPaid;
+    document.getElementById("totalRemain").innerText = totalLoans - totalPaid;
+    document.getElementById("totalCustomers").innerText = customers.size;
+}
+
+function printPDF() {
+    if (data.length === 0) { alert("لا توجد بيانات للطباعة"); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.text("تقرير القروض", 14, 15);
+
+    const rows = data.map(r => [
+        r.loan_id,
+        r.c_name || "",
+        r.loan_discripton || "",
+        r.loan_value || 0,
+        r.sadad || 0,
+        (r.loan_value || 0) - (r.sadad || 0),
+        r.loan_date ? new Date(r.loan_date).toLocaleDateString() : ""
+    ]);
+
+    doc.autoTable({
+        head: [["رقم القرض","اسم العميل","الوصف","قيمة القرض","المسدد","المتبقي","التاريخ"]],
+        body: rows,
+        startY: 25
+    });
+
+    doc.save("loans_report.pdf");
+}
+
+document.getElementById("search").addEventListener("input", renderTable);
+
+loadLoans();
 </script>
 
 </body>
