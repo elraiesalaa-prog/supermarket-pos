@@ -55,24 +55,16 @@ PDF
 <div class="flex gap-3 mb-6">
 
 <button onclick="addImporter()"
-class="bg-green-600 text-white px-5 py-2 rounded">
-إضافة
-</button>
+class="bg-green-600 text-white px-5 py-2 rounded">إضافة</button>
 
 <button onclick="updateImporter()"
-class="bg-yellow-500 text-white px-5 py-2 rounded">
-حفظ التعديل
-</button>
+class="bg-yellow-500 text-white px-5 py-2 rounded">حفظ التعديل</button>
 
 <button onclick="clearForm()"
-class="bg-gray-500 text-white px-5 py-2 rounded">
-جديد
-</button>
+class="bg-gray-500 text-white px-5 py-2 rounded">جديد</button>
 
 <a href="index.html"
-class="bg-blue-600 text-white px-5 py-2 rounded">
-رجوع
-</a>
+class="bg-blue-600 text-white px-5 py-2 rounded">رجوع</a>
 
 </div>
 
@@ -156,9 +148,7 @@ img=`<img src="data:image/png;base64,${row.import_image}" class="w-12 h-12 round
 }
 
 table+=`
-
 <tr class="border">
-
 <td>${img}</td>
 <td>${row.import_id}</td>
 <td>${row.name||""}</td>
@@ -167,179 +157,41 @@ table+=`
 <td>${row.whatsapp||""}</td>
 <td>${row.email||""}</td>
 
-<td>
-<a href="tel:${row.tel}" class="bg-green-500 text-white px-2 py-1 rounded">📞</a>
-</td>
+<td><a href="tel:${row.tel}" class="bg-green-500 text-white px-2 py-1 rounded">📞</a></td>
+<td><a href="https://wa.me/${row.whatsapp}" target="_blank" class="bg-green-600 text-white px-2 py-1 rounded">💬</a></td>
 
-<td>
-<a href="https://wa.me/${row.whatsapp}" target="_blank"
-class="bg-green-600 text-white px-2 py-1 rounded">💬</a>
-</td>
-
-<td>
-<button onclick="editRow(${row.import_id})"
-class="bg-yellow-400 px-3 py-1 rounded">تعديل</button>
-</td>
-
-<td>
-<button onclick="deleteRow(${row.import_id})"
-class="bg-red-600 text-white px-3 py-1 rounded">حذف</button>
-</td>
-
+<td><button onclick="editRow(${row.import_id})" class="bg-yellow-400 px-3 py-1 rounded">تعديل</button></td>
+<td><button onclick="deleteRow(${row.import_id})" class="bg-red-600 text-white px-3 py-1 rounded">حذف</button></td>
 </tr>
-
 `;
-
 });
 
 document.getElementById("tableBody").innerHTML=table;
 
 }
 
-async function imageToBase64(file){
-
-return new Promise((resolve,reject)=>{
-
-const reader=new FileReader();
-reader.onload=()=>resolve(reader.result.split(',')[1]);
-reader.onerror=error=>reject(error);
-reader.readAsDataURL(file);
-
-});
-
-}
-
-async function addImporter(){
-
-const name=document.getElementById("name").value;
-const comp=document.getElementById("comp").value;
-const tel=document.getElementById("tel").value;
-const whatsapp=document.getElementById("whatsapp").value;
-const email=document.getElementById("email").value;
-
-let imageFile=document.getElementById("image").files[0];
-let base64=null;
-
-if(imageFile){
-base64=await imageToBase64(imageFile);
-}
-
-const {error}=await supabaseClient
-.from("importer")
-.insert([{name,comp,tel,whatsapp,email,import_image:base64}]);
-
-if(error){
-alert(error.message);
-return;
-}
-
-clearForm();
-loadImporters();
-
-}
-
-async function editRow(id){
-
-editID=id;
-
-const {data}=await supabaseClient
-.from("importer")
-.select("*")
-.eq("import_id",id)
-.single();
-
-document.getElementById("name").value=data.name;
-document.getElementById("comp").value=data.comp;
-document.getElementById("tel").value=data.tel;
-document.getElementById("whatsapp").value=data.whatsapp;
-document.getElementById("email").value=data.email;
-
-}
-
-async function updateImporter(){
-
-if(!editID){
-alert("اختر مورد للتعديل");
-return;
-}
-
-const name=document.getElementById("name").value;
-const comp=document.getElementById("comp").value;
-const tel=document.getElementById("tel").value;
-const whatsapp=document.getElementById("whatsapp").value;
-const email=document.getElementById("email").value;
-
-let imageFile=document.getElementById("image").files[0];
-let base64=null;
-
-if(imageFile){
-base64=await imageToBase64(imageFile);
-}
-
-const {error}=await supabaseClient
-.from("importer")
-.update({name,comp,tel,whatsapp,email,import_image:base64})
-.eq("import_id",editID);
-
-if(error){
-alert(error.message);
-return;
-}
-
-clearForm();
-loadImporters();
-
-}
-
-async function deleteRow(id){
-
-if(!confirm("هل تريد حذف المورد؟")) return;
-
-const {error}=await supabaseClient
-.from("importer")
-.delete()
-.eq("import_id",id);
-
-if(error){
-alert(error.message);
-return;
-}
-
-loadImporters();
-
-}
-
-function clearForm(){
-
-editID=null;
-
-document.getElementById("name").value="";
-document.getElementById("comp").value="";
-document.getElementById("tel").value="";
-document.getElementById("whatsapp").value="";
-document.getElementById("email").value="";
-document.getElementById("image").value="";
-
-}
-
-// ✅ طباعة PDF احترافية
+// ✅ طباعة PDF منظمة داخل جدول
 function printImportersPDF(){
 
 let element=document.createElement("div");
 
 let html=`
-<h2 style="text-align:center;">كشف الموردين</h2>
+<div style="direction:rtl;font-family:Arial;padding:10px">
 
-<table border="1" style="width:100%;border-collapse:collapse;text-align:center;direction:rtl">
+<h2 style="text-align:center;margin-bottom:20px;">
+كشف الموردين
+</h2>
 
-<tr>
-<th>الصورة</th>
-<th>رقم المورد</th>
-<th>الاسم</th>
-<th>الشركة</th>
-<th>الهاتف</th>
-<th>واتساب</th>
-<th>البريد</th>
+<table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">
+
+<tr style="background:#2c3e50;color:white">
+<th style="border:1px solid #000;padding:6px;">الصورة</th>
+<th style="border:1px solid #000;padding:6px;">رقم المورد</th>
+<th style="border:1px solid #000;padding:6px;">الاسم</th>
+<th style="border:1px solid #000;padding:6px;">الشركة</th>
+<th style="border:1px solid #000;padding:6px;">الهاتف</th>
+<th style="border:1px solid #000;padding:6px;">واتساب</th>
+<th style="border:1px solid #000;padding:6px;">البريد</th>
 </tr>
 `;
 
@@ -348,28 +200,32 @@ data.forEach(r=>{
 let img="";
 
 if(r.import_image){
-img=`<img src="data:image/png;base64,${r.import_image}" width="40">`;
+img=`<img src="data:image/png;base64,${r.import_image}" style="width:35px;height:35px;border-radius:50%">`;
 }
 
 html+=`
 <tr>
-<td>${img}</td>
-<td>${r.import_id}</td>
-<td>${r.name||""}</td>
-<td>${r.comp||""}</td>
-<td>${r.tel||""}</td>
-<td>${r.whatsapp||""}</td>
-<td>${r.email||""}</td>
+<td style="border:1px solid #000;padding:5px;">${img}</td>
+<td style="border:1px solid #000;padding:5px;">${r.import_id}</td>
+<td style="border:1px solid #000;padding:5px;">${r.name||""}</td>
+<td style="border:1px solid #000;padding:5px;">${r.comp||""}</td>
+<td style="border:1px solid #000;padding:5px;">${r.tel||""}</td>
+<td style="border:1px solid #000;padding:5px;">${r.whatsapp||""}</td>
+<td style="border:1px solid #000;padding:5px;">${r.email||""}</td>
 </tr>
 `;
-
 });
 
-html+=`</table>`;
+html+=`</table></div>`;
 
 element.innerHTML=html;
 
-html2pdf().from(element).save("importers.pdf");
+html2pdf().set({
+margin:5,
+filename:"importers.pdf",
+html2canvas:{scale:2},
+jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
+}).from(element).save();
 
 }
 
