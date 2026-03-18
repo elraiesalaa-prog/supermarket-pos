@@ -74,16 +74,27 @@ async function loadReport() {
 
 // 🔹 تنسيق الأرقام
 function formatNumber(value) {
-  if (value === null || value === undefined) return "0";
-  return Number(value).toLocaleString('ar-EG', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+  if (value === null || value === undefined || value === "") return "0";
+
+  // إذا كانت القيمة رقم أصلاً
+  if (typeof value === "number") {
+    return value.toLocaleString('ar-EG', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  // إذا كانت نص رقم
+  if (!isNaN(value)) {
+    return parseFloat(value).toLocaleString('ar-EG', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  // في حالة غير متوقعة (اعرضها كما هي)
+  return value;
 }
-
-// تشغيل
-loadReport();
-
 </script>
 
 </body>
