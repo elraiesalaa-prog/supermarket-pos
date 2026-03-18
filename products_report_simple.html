@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
 <meta charset="UTF-8">
 <title>تفاصيل المنتجات</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
@@ -13,7 +13,9 @@
 
 <div class="max-w-6xl mx-auto bg-white shadow-xl rounded-xl p-6">
 
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">تفاصيل المنتجات</h1>
+<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
+تفاصيل المنتجات
+</h1>
 
 <!-- زر الطباعة -->
 <div class="mb-4 text-left">
@@ -42,6 +44,7 @@ class="w-full border px-3 py-2 rounded">
 <th class="p-2">ربح المنتج</th>
 </tr>
 </thead>
+
 <tbody id="tableBody"></tbody>
 </table>
 </div>
@@ -68,89 +71,95 @@ async function loadReport() {
         return;
     }
 
-    reportData = data;
+    // تحويل القيم الرقمية لضمان عرض صحيح
+    reportData = data.map(row => ({
+        ...row,
+        "تكلفة المنتج": parseFloat(row["تكلفة المنتج"]) || 0,
+        "سعر بيع الوحدة": parseFloat(row["سعر بيع الوحدة"]) || 0,
+        "ربح الوحدة": parseFloat(row["ربح الوحدة"]) || 0,
+        "ربح المنتج": parseFloat(row["ربح المنتج"]) || 0
+    }));
+
     renderTable();
 }
 
 // ================== عرض البيانات ==================
 function renderTable() {
     const search = document.getElementById("searchInput").value.toLowerCase();
-
-    const filtered = reportData.filter(row =>
-        (row["اسم المنتج"] || "").toLowerCase().includes(search)
-    );
-
     let table = "";
-    filtered.forEach(row => {
-        table += `
-        <tr class="border">
-            <td>${row["اسم المنتج"]}</td>
-            <td>${Number(row["تكلفة المنتج"] || 0).toFixed(2)}</td>
-            <td>${row["سعر بيع الوحدة"]}</td>
-            <td>${Number(row["ربح الوحدة"] || 0).toFixed(2)}</td>
-            <td class="font-bold text-green-600">${Number(row["ربح المنتج"] || 0).toFixed(2)}</td>
-        </tr>
-        `;
-    });
+
+    reportData
+        .filter(row => (row["اسم المنتج"] || "").toLowerCase().includes(search))
+        .forEach(row => {
+            table += `
+<tr class="border">
+<td>${row["اسم المنتج"]}</td>
+<td>${row["تكلفة المنتج"].toFixed(2)}</td>
+<td>${row["سعر بيع الوحدة"].toFixed(2)}</td>
+<td>${row["ربح الوحدة"].toFixed(2)}</td>
+<td class="font-bold text-green-600">${row["ربح المنتج"].toFixed(2)}</td>
+</tr>`;
+        });
 
     document.getElementById("tableBody").innerHTML = table;
 }
 
 // ================== البحث ==================
-document.getElementById("searchInput").addEventListener("input", renderTable);
+document.getElementById("searchInput")
+    .addEventListener("input", renderTable);
+
+// تشغيل التحميل
+loadReport();
 
 // ================== PDF ==================
-async function printPDF() {
-    if(reportData.length === 0) {
-        alert("لا توجد بيانات للطباعة");
-        return;
-    }
+window.printPDF = async function () {
+    if (!reportData.length) { alert("لا توجد بيانات للطباعة"); return; }
 
-    // الحاوية
     const container = document.createElement("div");
     container.setAttribute("dir", "rtl");
     container.style.fontFamily = "Tahoma";
     container.style.padding = "10px";
 
-    // العنوان
     const title = document.createElement("h2");
     title.innerText = "تقرير المنتجات";
     title.style.textAlign = "center";
     title.style.marginBottom = "15px";
     container.appendChild(title);
 
-    // الجدول
     const table = document.createElement("table");
     table.style.width = "100%";
     table.style.borderCollapse = "collapse";
     table.style.textAlign = "center";
     table.style.fontSize = "12px";
 
-    // الهيدر
-    const headers = ["اسم المنتج", "تكلفة المنتج", "سعر البيع", "ربح الوحدة", "ربح المنتج"];
+    const headers = ["اسم المنتج","تكلفة المنتج","سعر بيع الوحدة","ربح الوحدة","ربح المنتج"];
     let html = "<thead><tr>";
     headers.forEach(h => {
-        html += `<th style="border:1px solid #000;padding:6px;background:#007bff;color:#fff;font-weight:bold;">${h}</th>`;
+        html += `<th style="
+border:1px solid #000;
+padding:6px;
+background:#007bff;
+color:#fff;
+font-weight:bold;">${h}</th>`;
     });
     html += "</tr></thead><tbody>";
 
-    // البيانات
     reportData.forEach(r => {
-        html += `<tr>
-        <td style="border:1px solid #000;padding:5px;">${r["اسم المنتج"]}</td>
-        <td style="border:1px solid #000;padding:5px;">${Number(r["تكلفة المنتج"] || 0).toFixed(2)}</td>
-        <td style="border:1px solid #000;padding:5px;">${r["سعر بيع الوحدة"]}</td>
-        <td style="border:1px solid #000;padding:5px;">${Number(r["ربح الوحدة"] || 0).toFixed(2)}</td>
-        <td style="border:1px solid #000;padding:5px;color:green;font-weight:bold;">${Number(r["ربح المنتج"] || 0).toFixed(2)}</td>
-        </tr>`;
+        html += `
+<tr>
+<td style="border:1px solid #000;padding:5px;">${r["اسم المنتج"]}</td>
+<td style="border:1px solid #000;padding:5px;">${r["تكلفة المنتج"].toFixed(2)}</td>
+<td style="border:1px solid #000;padding:5px;">${r["سعر بيع الوحدة"].toFixed(2)}</td>
+<td style="border:1px solid #000;padding:5px;">${r["ربح الوحدة"].toFixed(2)}</td>
+<td style="border:1px solid #000;padding:5px;color:green;font-weight:bold;">${r["ربح المنتج"].toFixed(2)}</td>
+</tr>`;
     });
-    html += "</tbody>";
 
+    html += "</tbody>";
     table.innerHTML = html;
     container.appendChild(table);
 
-    // إجمالي الأرباح
-    const total = reportData.reduce((sum, r) => sum + Number(r["ربح المنتج"] || 0), 0);
+    const total = reportData.reduce((sum,r)=>sum+r["ربح المنتج"],0);
     const totalDiv = document.createElement("div");
     totalDiv.innerText = "إجمالي الأرباح: " + total.toFixed(2);
     totalDiv.style.textAlign = "right";
@@ -158,21 +167,14 @@ async function printPDF() {
     totalDiv.style.fontWeight = "bold";
     container.appendChild(totalDiv);
 
-    // إعدادات PDF
-    const opt = {
+    html2pdf().set({
         margin: 0.5,
         filename: "تقرير_المنتجات.pdf",
         image: { type: "jpeg", quality: 1 },
         html2canvas: { scale: 3 },
         jsPDF: { unit: "cm", format: "a4", orientation: "landscape" }
-    };
-
-    html2pdf().set(opt).from(container).save();
-}
-
-// ================== تشغيل التحميل ==================
-loadReport();
-
+    }).from(container).save();
+};
 </script>
 
 </body>
