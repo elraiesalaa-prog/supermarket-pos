@@ -68,8 +68,13 @@ align-items:center;
 
 <div class="bg-blue-500 text-white flex gap-4 p-2 justify-center">
 
-<button class="px-4 py-1 bg-blue-600 rounded">فواتير مبدئية</button>
-<button class="px-4 py-1 bg-blue-600 rounded">فواتير نهائية</button>
+<button onclick="go('sales_advanced.html')" class="px-4 py-1 bg-blue-600 rounded">
+فواتير مبدئية
+</button>
+
+<button onclick="go('sales_advanced.html')" class="px-4 py-1 bg-blue-600 rounded">
+فواتير نهائية
+</button>
 
 </div>
 
@@ -99,19 +104,19 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 القائمة الرئيسية
 </h2>
 
-<div class="menu">الأصناف</div>
-<div class="menu">المنتجات</div>
-<div class="menu">العملاء</div>
-<div class="menu">الموردين</div>
+<div class="menu" onclick="go('categories.html')">الأصناف</div>
+<div class="menu" onclick="go('products.html')">المنتجات</div>
+<div class="menu" onclick="go('customers.html')">العملاء</div>
+<div class="menu" onclick="go('importer.html')">الموردين</div>
 
 <hr>
 
-<div class="menu">القروض</div>
-<div class="menu">سداد القروض</div>
-
+<div class="menu" onclick="go('loans.html')">القروض</div>
+<hr>
+<div class="menu" onclick="go('loan_statement.html')">سداد القروض</div>
 <hr>
 
-<div class="menu">المصروفات</div>
+<div class="menu" onclick="go('coast_value.html')">المصروفات</div>
 
 </div>
 
@@ -138,15 +143,15 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 العمليات
 </h2>
 
-<div class="menu">المبيعات</div>
-<div class="menu">الطلبيات</div>
+<div class="menu" onclick="go('sales_advanced.html')">المبيعات</div>
+
+<div class="menu" onclick="go('profits_report.html')">أرباح الطلبيات</div>
 
 <hr>
 
-<div class="menu">قائمة الأسعار</div>
-<div class="menu">أوزان بالكيلو</div>
-<div class="menu">أوزان بالرطل</div>
-
+<div class="menu" onclick="go('products_weight_report.html')">اوزان المنتجات</div>
+<div class="menu" onclick="go('weight_kg.html')"> </div>
+<div class="menu" onclick="go('weight_lb.html')"> </div>
 <hr>
 
 <div class="menu" style="background-color:#ef4444; text-align:center;" onclick="logout()">خروج</div>
