@@ -68,7 +68,6 @@ align-items:center;
 
 <div class="bg-blue-500 text-white flex gap-4 p-2 justify-center">
 
-
 <button onclick="go('backup.html')" class="px-4 py-1 bg-blue-600 rounded">
 إنشاء نسخة احتياطية
 </button>
@@ -77,14 +76,11 @@ align-items:center;
 استعادة نسخة احتياطية
 </button>
 
-<div class="menu" onclick="go('settings.html')()">⚙ إعدادات المتجر</div>
-
+<div class="menu" onclick="go('settings.html')">⚙ إعدادات المتجر</div>
 
 </div>
 
-
 <!-- الشريط العلوي -->
-
 <div class="topbar">
 
 <div>
@@ -101,7 +97,6 @@ align-items:center;
 <div class="flex h-[calc(100vh-50px)]">
 
 <!-- القائمة اليمنى -->
-
 <div class="w-64 p-4 overflow-y-auto text-white"
 style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
@@ -109,27 +104,13 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 القائمة الرئيسية
 </h2>
 
-<div class="menu" onclick="go('tb_users.html')">  إدارة المستخدمين</div>
-<div class="menu"></div>
-
-<div class="menu"></div>
-<div class="menu"></div>
-
-<hr>
-
-<div class="menu"></div>
-<div class="menu"> </div>
-
-<hr>
-
-<div class="menu"></div>
+<div class="menu" onclick="go('tb_users.html')">إدارة المستخدمين</div>
 
 <hr>
 
 </div>
 
 <!-- الوسط -->
-
 <div class="flex-1 flex items-center justify-center p-6">
 
 <div class="bg-white rounded-xl shadow-2xl p-10 w-5/6 h-5/6 flex items-center justify-center">
@@ -143,7 +124,6 @@ style="max-width:120%; max-height:120%; object-fit:contain;">
 </div>
 
 <!-- القائمة اليسرى -->
-
 <div class="w-64 p-4 overflow-y-auto text-white"
 style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
@@ -151,15 +131,7 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 العمليات
 </h2>
 
-<div class="menu"></div>
-<div class="menu"></div>
-<div class="menu"> </div>
-
 <hr>
-
-<div class="menu"> </div>
-<div class="menu">  </div>
-<div class="menu">  </div>
 
 <div class="menu" style="background-color:#ef4444; text-align:center;" onclick="logout()">خروج</div>
 
@@ -168,7 +140,6 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 </div>
 
 <!-- نافذة تغيير كلمة المرور -->
-
 <div id="passwordBox" style="display:none;
 position:fixed;
 top:50%;
@@ -198,6 +169,11 @@ const supabaseClient = supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
+
+/* ✅ تم إضافة الدالة الناقصة */
+function go(page){
+window.location.href = page
+}
 
 function loadStore(){
 
