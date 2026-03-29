@@ -6,6 +6,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+
 body{
 margin:0;
 font-family:Tahoma;
@@ -14,34 +15,52 @@ height:100vh;
 display:flex;
 align-items:center;
 justify-content:center;
+overflow:auto; /* ✅ شريط تمرير عند الحاجة */
 }
+
 .container{
 width:900px;
+max-width:95%; /* ✅ تحسين للموبايل */
 background:white;
 display:flex;
 border-radius:15px;
 overflow:hidden;
 box-shadow:0 15px 40px rgba(0,0,0,0.4);
 }
+
 .left{
 width:50%;
 background:url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d") center/cover;
 }
+
 .right{
 width:50%;
 padding:40px;
+display:flex;
+flex-direction:column;
+justify-content:center;
 }
+
 h1{
 text-align:center;
 margin-bottom:30px;
 }
+
 input{
 width:100%;
 padding:12px;
 margin:10px 0;
 border-radius:8px;
 border:1px solid #ccc;
+font-size:15px;
 }
+
+input:focus{
+outline:none;
+border-color:#1d4350;
+box-shadow:0 0 5px rgba(29,67,80,0.3);
+}
+
 button{
 width:100%;
 padding:12px;
@@ -51,10 +70,29 @@ border:none;
 border-radius:8px;
 font-size:16px;
 cursor:pointer;
+transition:0.3s;
 }
+
 button:hover{
 background:#a43931;
 }
+
+/* ✅ تحسين للموبايل */
+@media(max-width:768px){
+.container{
+flex-direction:column;
+}
+
+.left{
+height:150px;
+width:100%;
+}
+
+.right{
+width:100%;
+}
+}
+
 </style>
 </head>
 
@@ -77,14 +115,22 @@ background:#a43931;
 
 </div>
 
-
 <script>
+
 const supabaseClient = window.supabase.createClient(
   "https://vmxbedovoahuggfpcmyk.supabase.co",
   "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
+
+// ✅ دعم زر Enter
+document.addEventListener("keydown", function(e){
+  if(e.key === "Enter"){
+    login();
+  }
+});
+
 async function login() {
-  // قراءة بيانات المستخدم من المدخلات مع إزالة الفراغات
+
   const username = document.getElementById("username").value.trim()
   const password = document.getElementById("password").value.trim()
 
@@ -94,28 +140,24 @@ async function login() {
   }
 
   try {
-    // البحث في Supabase حسب العمود username و pwd
+
     const { data, error } = await supabaseClient
       .from("tb_users")
       .select("*")
-      .ilike("username", username) // ilike لتجاهل حساسية الأحرف
+      .ilike("username", username)
       .eq("pwd", password)
       .single()
-
-    console.log("Data:", data)
-    console.log("Error:", error)
 
     if (error || !data) {
       alert("بيانات الدخول غير صحيحة")
       return
     }
 
-    // حفظ بيانات المستخدم
-    localStorage.setItem("user", data.fullname)
-    localStorage.setItem("role", data.usertype)
+    // ✅ تخزين آمن
+    localStorage.setItem("user", data.fullname || "")
+    localStorage.setItem("role", data.usertype || "")
 
-    // تحويل المستخدم حسب نوعه مع تجاهل حساسية الأحرف
-    const type = data.usertype.toLowerCase()
+    const type = (data.usertype || "").toLowerCase()
 
     switch (type) {
       case "مشرف":
@@ -144,12 +186,3 @@ async function login() {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
