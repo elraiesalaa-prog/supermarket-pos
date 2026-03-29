@@ -4,6 +4,8 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>لوحة المدير</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -26,6 +28,7 @@ transition:0.3s;
 background:#3b82f6;
 color:white;
 font-weight:bold;
+text-align:center;
 }
 
 .menu:hover{
@@ -33,16 +36,13 @@ background:#2563eb;
 transform:translateX(-4px);
 }
 
-.panel{
-background:white;
-box-shadow:0 10px 25px rgba(0,0,0,0.2);
-}
-
 .topbar{
 background:#0f172a;
 color:white;
-padding:10px 20px;
+padding:10px;
 display:flex;
+flex-wrap:wrap;
+gap:10px;
 justify-content:space-between;
 align-items:center;
 }
@@ -54,9 +54,9 @@ align-items:center;
 <body>
 
 <!-- رأس الصفحة -->
-<div class="bg-blue-700 text-white p-3 flex justify-between items-center">
+<div class="bg-blue-700 text-white p-3 flex flex-wrap justify-between items-center gap-2">
 
-<div class="text-xl font-bold">
+<div class="text-lg md:text-xl font-bold">
 <span id="storeHeader">نظام إدارة المبيعات</span>
 </div>
 
@@ -67,55 +67,55 @@ align-items:center;
 </div>
 
 <!-- الأزرار العلوية -->
-<div class="bg-blue-500 text-white flex gap-4 p-2 justify-center">
+<div class="bg-blue-500 text-white flex flex-wrap gap-2 p-2 justify-center">
 
-<button onclick="go('products_report.html')" class="px-4 py-1 bg-blue-600 rounded">
+<button onclick="go('products_report.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
 تفاصيل المنتجات
 </button>
 
-<button onclick="go('sales_advanced.html')" class="px-4 py-1 bg-blue-600 rounded">
+<button onclick="go('sales_advanced.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
 فواتير مبدئية
 </button>
 
-<button onclick="go('sales_advanced.html')" class="px-4 py-1 bg-blue-600 rounded">
+<button onclick="go('sales_advanced.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
 فواتير نهائية
 </button>
 
-<button onclick="go('backup.html')" class="px-4 py-1 bg-blue-600 rounded">
-إنشاء نسخة احتياطية
+<button onclick="go('backup.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
+نسخة احتياطية
 </button>
 
-<button onclick="go('restore.html')" class="px-4 py-1 bg-blue-600 rounded">
-استعادة نسخة احتياطية
+<button onclick="go('restore.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
+استعادة
 </button>
-<button onclick="go('dashboard.html')" class="px-4 py-1 bg-blue-600 rounded">
-  لوحة التحكم
+
+<button onclick="go('dashboard.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
+لوحة التحكم
 </button>
-<div class="menu" onclick="go('settings.html')()">⚙ إعدادات المتجر</div>
+
+<div class="menu text-sm md:text-base" onclick="go('settings.html')">⚙ إعدادات</div>
 
 </div>
 
 <!-- الشريط العلوي -->
 <div class="topbar">
 
-<div>
-👤 مرحبا :
-<span id="usernameDisplay"></span>
-</div>
+<div>👤 <span id="usernameDisplay"></span></div>
 
 <div id="clock"></div>
 
-<div class="menu" onclick="editPassword()">تعديل كلمة المرور</div>
+<div class="menu text-sm" onclick="editPassword()">كلمة المرور</div>
 
 </div>
 
-<div class="flex h-[calc(100vh-50px)]">
+<!-- المحتوى -->
+<div class="flex flex-col md:flex-row h-auto md:h-[calc(100vh-50px)]">
 
 <!-- القائمة اليمنى -->
-<div class="w-64 p-4 overflow-y-auto text-white"
+<div class="w-full md:w-64 p-4 overflow-y-auto text-white"
 style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
-<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
+<h2 class="text-lg md:text-xl font-bold text-center mb-4 text-blue-700">
 القائمة الرئيسية
 </h2>
 
@@ -127,8 +127,8 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 <hr>
 
 <div class="menu" onclick="go('loans.html')">القروض</div>
-<hr>
 <div class="menu" onclick="go('loan_statement.html')">سداد القروض</div>
+
 <hr>
 
 <div class="menu" onclick="go('coast_value.html')">المصروفات</div>
@@ -136,37 +136,35 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 </div>
 
 <!-- الوسط -->
-<div class="flex-1 flex items-center justify-center p-6">
+<div class="flex-1 flex items-center justify-center p-4">
 
-<div class="bg-white rounded-xl shadow-2xl p-10 w-5/6 h-5/6 flex items-center justify-center">
+<div class="bg-white rounded-xl shadow-2xl p-4 w-full h-full flex items-center justify-center">
 
 <img src="pic14.webp"
 loading="lazy"
-style="max-width:120%; max-height:120%; object-fit:contain;">
+class="max-w-full max-h-[400px] object-contain">
 
 </div>
 
 </div>
 
 <!-- القائمة اليسرى -->
-<div class="w-64 p-4 overflow-y-auto text-white"
+<div class="w-full md:w-64 p-4 overflow-y-auto text-white"
 style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
-<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
+<h2 class="text-lg md:text-xl font-bold text-center mb-4 text-blue-700">
 العمليات
 </h2>
 
 <div class="menu" onclick="go('sales_advanced.html')">المبيعات</div>
-<div class="menu" onclick="go('products_report_simple.html')">تحليل الممنتجات</div>
-<div class="menu" onclick="go('profits_report.html')">أرباح الطلبيات</div>
+<div class="menu" onclick="go('products_report_simple.html')">تحليل المنتجات</div>
+<div class="menu" onclick="go('profits_report.html')">الأرباح</div>
 
 <hr>
 
-<div class="menu" onclick="go('products_weight_report.html')">اوزان المنتجات</div>
-<div class="menu" onclick="go('weight_kg.html')"> </div>
-<div class="menu" onclick="go('weight_lb.html')"> </div>
+<div class="menu" onclick="go('products_weight_report.html')">الأوزان</div>
 
-<div class="menu" style="background-color:#ef4444; text-align:center;" onclick="logout()">
+<div class="menu" style="background-color:#ef4444;" onclick="logout()">
 خروج
 </div>
 
@@ -181,100 +179,62 @@ top:50%;
 left:50%;
 transform:translate(-50%,-50%);
 background:white;
-padding:25px;
+padding:20px;
 border-radius:10px;
 box-shadow:0 0 20px rgba(0,0,0,0.3);
-width:300px">
+width:90%;
+max-width:300px">
 
 <h3>تغيير كلمة المرور</h3>
 
-<input type="password" id="oldPass" placeholder="كلمة المرور القديمة">
-<input type="password" id="newPass" placeholder="كلمة المرور الجديدة">
+<input type="password" id="oldPass" placeholder="القديمة" class="w-full border p-2 mb-2">
+<input type="password" id="newPass" placeholder="الجديدة" class="w-full border p-2">
 
 <br><br>
 
-<button onclick="savePassword()">حفظ</button>
-<button onclick="closePassword()">إلغاء</button>
+<button onclick="savePassword()" class="bg-blue-600 text-white px-3 py-1 rounded">حفظ</button>
+<button onclick="closePassword()" class="bg-gray-400 px-3 py-1 rounded">إلغاء</button>
 
 </div>
 
 <script>
 
-// ⭐ دالة التنقل (سهلة التعديل)
 function go(page){
 window.location.href = page;
 }
 
-// إعداد Supabase
 const supabaseClient = supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
 
-// تحميل بيانات المتجر
 function loadStore(){
-
-let name = localStorage.getItem("storeName")
-let header = localStorage.getItem("storeHeader")
-
-if(!name){
-name="ABM للتجارة والاستثمار"
-localStorage.setItem("storeName",name)
-}
-
-if(!header){
-header="نظام إدارة المبيعات"
-localStorage.setItem("storeHeader",header)
-}
+let name = localStorage.getItem("storeName") || "ABM للتجارة والاستثمار"
+let header = localStorage.getItem("storeHeader") || "نظام إدارة المبيعات"
 
 document.getElementById("storeName").innerText=name
 document.getElementById("storeHeader").innerText=header
-
 }
-
 loadStore()
 
-// الساعة
 function updateClock(){
-
 let now = new Date()
-
-let time = now.toLocaleTimeString()
-let date = now.toLocaleDateString()
-
 document.getElementById("clock").innerHTML =
-"🕒 " + time + " | " + date
-
+"🕒 " + now.toLocaleTimeString() + " | " + now.toLocaleDateString()
 }
-
 setInterval(updateClock,1000)
-updateClock()
 
-// المستخدم
 document.addEventListener("DOMContentLoaded", function(){
-
 let user = localStorage.getItem("user")
-
-if(!user){
-window.location="index.html"
-return
-}
-
+if(!user){ window.location="index.html"; return }
 document.getElementById("usernameDisplay").textContent = user
-
 })
 
-// تسجيل خروج
 function logout(){
-
-localStorage.removeItem("user")
-localStorage.removeItem("role")
-
+localStorage.clear()
 window.location="index.html"
-
 }
 
-// كلمة المرور
 function editPassword(){
 document.getElementById("passwordBox").style.display="block"
 }
@@ -302,7 +262,7 @@ const {data,error}=await supabaseClient
 .single()
 
 if(error || !data){
-alert("كلمة المرور القديمة غير صحيحة")
+alert("كلمة المرور غير صحيحة")
 return
 }
 
@@ -312,19 +272,12 @@ const {error:updateError}=await supabaseClient
 .eq("fullname",username)
 
 if(updateError){
-alert("حدث خطأ أثناء التحديث")
+alert("خطأ في التحديث")
 return
 }
 
-alert("تم تغيير كلمة المرور بنجاح")
-
+alert("تم التغيير بنجاح")
 closePassword()
-
-}
-
-// إعدادات (اختياري)
-function openSettings(){
-alert("صفحة الإعدادات غير مضافة بعد")
 }
 
 </script>
