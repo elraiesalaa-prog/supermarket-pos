@@ -4,6 +4,8 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>إدارة الأصناف</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,19 +13,21 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
 <script src="https://cdn.jsdelivr.net/npm/arabic-persian-reshaper/js/arabic-persian-reshaper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bidi-js/dist/bidi.min.js"></script>
+
 <style>
 
 body{
 font-family:Tahoma;
 background:#f4f6f9;
-padding:20px;
+padding:10px;
+margin:0;
 }
 
 .container{
 max-width:700px;
 margin:auto;
 background:white;
-padding:20px;
+padding:15px;
 border-radius:10px;
 box-shadow:0 0 10px rgba(0,0,0,0.1);
 }
@@ -31,14 +35,16 @@ box-shadow:0 0 10px rgba(0,0,0,0.1);
 h2{
 text-align:center;
 margin-bottom:15px;
+font-size:20px;
 }
 
 input{
 width:100%;
-padding:10px;
+padding:12px;
 margin-top:5px;
 border:1px solid #ccc;
 border-radius:5px;
+font-size:16px;
 }
 
 .search{
@@ -47,28 +53,42 @@ background:#fafafa;
 }
 
 button{
-padding:8px 15px;
+padding:10px;
 border:none;
 border-radius:5px;
 cursor:pointer;
 margin-top:10px;
+font-size:14px;
 }
 
 .save{background:#28a745;color:white;}
 .edit{background:#ffc107;}
 .delete{background:#dc3545;color:white;}
-.logout{background:#333;color:white;float:left}
+.logout{background:#333;color:white;}
+
+.top-buttons{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+justify-content:space-between;
+}
+
+.table-wrapper{
+overflow-x:auto;
+margin-top:10px;
+}
 
 table{
 width:100%;
-margin-top:15px;
 border-collapse:collapse;
+min-width:400px;
 }
 
 th,td{
 border:1px solid #ddd;
 padding:8px;
 text-align:center;
+font-size:14px;
 }
 
 th{
@@ -94,10 +114,11 @@ font-weight:bold;
 <body>
 
 <div class="container">
-<button onclick="history.back()" class="bg-gray-600 text-white p-4 rounded shadow">
-رجوع
-</button>
+
+<div class="top-buttons">
+<button onclick="history.back()">رجوع</button>
 <button class="logout" onclick="logout()">خروج</button>
+</div>
 
 <h2>إدارة الأصناف</h2>
 
@@ -105,10 +126,12 @@ font-weight:bold;
 
 <button class="save" onclick="saveCategory()">حفظ</button>
 <button onclick="exportPDF()">تصدير PDF</button>
-<input type="text" id="searchBox" class="search" placeholder="بحث عن صنف..." onkeyup="searchCategory()">
+
+<input type="text" id="searchBox" class="search" placeholder="بحث..." onkeyup="searchCategory()">
 
 <div class="message" id="msg"></div>
 
+<div class="table-wrapper">
 <table>
 
 <thead>
@@ -123,6 +146,7 @@ font-weight:bold;
 <tbody id="tableBody"></tbody>
 
 </table>
+</div>
 
 </div>
 
@@ -136,7 +160,6 @@ const supabaseClient = window.supabase.createClient(
 let edit_id=null
 let categories=[]
 
-
 // تحميل الأصناف
 async function loadCategories(){
 
@@ -145,12 +168,11 @@ const {data,error}=await supabaseClient
 .select("*")
 .order("id_cat",{ascending:true})
 
-categories=data
+categories=data || []
 
 renderTable(categories)
 
 }
-
 
 // عرض الجدول
 function renderTable(list){
@@ -160,29 +182,22 @@ let html=""
 list.forEach(function(row){
 
 html+=`
-
 <tr>
-
 <td>${row.id_cat}</td>
-
 <td>${row.description_cat}</td>
-
 <td>
 <button class="edit"
 onclick="editCategory(${row.id_cat},'${row.description_cat}')">
 تعديل
 </button>
 </td>
-
 <td>
 <button class="delete"
 onclick="deleteCategory(${row.id_cat})">
 حذف
 </button>
 </td>
-
 </tr>
-
 `
 
 })
@@ -190,7 +205,6 @@ onclick="deleteCategory(${row.id_cat})">
 document.getElementById("tableBody").innerHTML=html
 
 }
-
 
 // حفظ
 async function saveCategory(){
@@ -229,16 +243,11 @@ loadCategories()
 
 }
 
-
 // تعديل
 function editCategory(id,name){
-
 document.getElementById("description_cat").value=name
-
 edit_id=id
-
 }
-
 
 // حذف
 async function deleteCategory(id){
@@ -251,11 +260,9 @@ await supabaseClient
 .eq("id_cat",id)
 
 showMsg("تم حذف الصنف")
-
 loadCategories()
 
 }
-
 
 // بحث
 function searchCategory(){
@@ -270,34 +277,28 @@ renderTable(filtered)
 
 }
 
-
 // رسالة
 function showMsg(text){
 
 document.getElementById("msg").innerText=text
 
 setTimeout(()=>{
-
 document.getElementById("msg").innerText=""
-
 },2000)
 
 }
 
-
 // خروج
 function logout(){
-
 window.location.href="index.html"
-
 }
 
-
 loadCategories()
+
+// تصدير PDF
 function exportPDF(){
 
 const { jsPDF } = window.jspdf
-
 let doc = new jsPDF()
 
 let rows=[]
@@ -305,19 +306,14 @@ let rows=[]
 categories.forEach(function(cat){
 
 let name = cat.description_cat
-
 name = ArabicPersianReshaper.reshape(name)
 name = bidi_js(name)
 
-rows.push([
-cat.id_cat,
-name
-])
+rows.push([cat.id_cat, name])
 
 })
 
 let title="كشف الأصناف"
-
 title = ArabicPersianReshaper.reshape(title)
 title = bidi_js(title)
 
@@ -332,10 +328,8 @@ startY:20
 doc.save("categories.pdf")
 
 }
+
 </script>
 
 </body>
 </html>
-
-
-
