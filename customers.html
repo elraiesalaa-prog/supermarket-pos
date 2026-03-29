@@ -4,6 +4,8 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>إدارة العملاء</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -12,41 +14,41 @@
 
 </head>
 
-<body class="bg-gradient-to-r from-blue-50 to-blue-100 min-h-screen p-6">
+<body class="bg-gradient-to-r from-blue-50 to-blue-100 min-h-screen p-3 md:p-6">
 
-<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-4 md:p-6">
 
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
+<h1 class="text-xl md:text-3xl font-bold text-center text-blue-700 mb-6">
 إدارة العملاء
 </h1>
-<div class="container">
-<button onclick="history.back()" class="bg-gray-600 text-white p-4 rounded shadow">
-رجوع
-</button>
-    <button onclick="logout()" class="bg-gray-600 text-white p-4 rounded shadow">
-خروج
-</button>
+
+<!-- أزرار -->
+<div class="flex flex-wrap gap-2 justify-between mb-4">
+<button onclick="history.back()" class="bg-gray-600 text-white px-3 py-2 rounded w-full md:w-auto">رجوع</button>
+<button onclick="logout()" class="bg-gray-600 text-white px-3 py-2 rounded w-full md:w-auto">خروج</button>
+</div>
+
 <!-- البحث -->
-<div class="flex gap-2 mb-6">
+<div class="flex flex-col md:flex-row gap-2 mb-6">
 
 <input id="search"
 placeholder="بحث باسم العميل"
 class="border p-2 rounded w-full">
 
 <button onclick="renderTable()"
-class="bg-green-600 text-white px-5 py-2 rounded">
+class="bg-green-600 text-white px-4 py-2 rounded w-full md:w-auto">
 بحث
 </button>
 
 <button onclick="printCustomersPDF()"
-class="bg-red-600 text-white px-5 py-2 rounded">
+class="bg-red-600 text-white px-4 py-2 rounded w-full md:w-auto">
 PDF
 </button>
 
 </div>
 
-<!-- نموذج الإدخال -->
-<div class="grid grid-cols-2 gap-4 mb-6">
+<!-- النموذج -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
 
 <input id="first_name" placeholder="اسم العميل" class="border p-2 rounded">
 <input id="balance" placeholder="الرصيد" class="border p-2 rounded">
@@ -58,32 +60,40 @@ PDF
 </div>
 
 <!-- الأزرار -->
-<div class="flex gap-3 mb-6">
+<div class="flex flex-wrap gap-2 mb-6">
 
 <button onclick="addCustomer()"
-class="bg-green-600 text-white px-5 py-2 rounded">إضافة</button>
+class="bg-green-600 text-white px-4 py-2 rounded w-full md:w-auto">
+إضافة
+</button>
 
 <button onclick="updateCustomer()"
-class="bg-yellow-500 text-white px-5 py-2 rounded">حفظ التعديل</button>
+class="bg-yellow-500 text-white px-4 py-2 rounded w-full md:w-auto">
+حفظ
+</button>
 
 <button onclick="clearForm()"
-class="bg-gray-500 text-white px-5 py-2 rounded">جديد</button>
+class="bg-gray-500 text-white px-4 py-2 rounded w-full md:w-auto">
+جديد
+</button>
 
 <a href="index.html"
-class="bg-blue-600 text-white px-5 py-2 rounded">رجوع</a>
+class="bg-blue-600 text-white px-4 py-2 rounded text-center w-full md:w-auto">
+الرئيسية
+</a>
 
 </div>
 
-<!-- جدول العملاء -->
-<div class="overflow-auto">
+<!-- الجدول -->
+<div class="overflow-x-auto">
 
-<table class="w-full border text-center">
+<table class="w-full border text-center min-w-[900px]">
 
 <thead class="bg-blue-600 text-white">
 
 <tr>
 <th>الصورة</th>
-<th>رقم العميل</th>
+<th>رقم</th>
 <th>الاسم</th>
 <th>الرصيد</th>
 <th>الهاتف</th>
@@ -129,7 +139,7 @@ alert(error.message);
 return;
 }
 
-data=rows;
+data=rows || [];
 renderTable();
 
 }
@@ -149,12 +159,11 @@ filtered.forEach(row=>{
 let img="";
 
 if(row.customer_image){
-img=`<img src="data:image/png;base64,${row.customer_image}" class="w-12 h-12 rounded-full mx-auto">`;
+img=`<img src="data:image/png;base64,${row.customer_image}" class="w-10 h-10 rounded-full mx-auto">`;
 }
 
 table+=`
-<tr class="border">
-
+<tr>
 <td>${img}</td>
 <td>${row.id_customer}</td>
 <td>${row.first_name||""}</td>
@@ -166,8 +175,8 @@ table+=`
 <td><a href="tel:${row.tel}" class="bg-green-500 text-white px-2 py-1 rounded">📞</a></td>
 <td><a href="https://wa.me/${row.whatsapp}" target="_blank" class="bg-green-600 text-white px-2 py-1 rounded">💬</a></td>
 
-<td><button onclick="editRow(${row.id_customer})" class="bg-yellow-400 px-3 py-1 rounded">تعديل</button></td>
-<td><button onclick="deleteRow(${row.id_customer})" class="bg-red-600 text-white px-3 py-1 rounded">حذف</button></td>
+<td><button onclick="editRow(${row.id_customer})" class="bg-yellow-400 px-2 py-1 rounded">تعديل</button></td>
+<td><button onclick="deleteRow(${row.id_customer})" class="bg-red-600 text-white px-2 py-1 rounded">حذف</button></td>
 
 </tr>
 `;
@@ -178,16 +187,12 @@ document.getElementById("tableBody").innerHTML=table;
 }
 
 async function imageToBase64(file){
-
 return new Promise((resolve,reject)=>{
-
 const reader=new FileReader();
 reader.onload=()=>resolve(reader.result.split(',')[1]);
 reader.onerror=error=>reject(error);
 reader.readAsDataURL(file);
-
 });
-
 }
 
 async function addCustomer(){
@@ -240,7 +245,7 @@ document.getElementById("email").value=data.email;
 async function updateCustomer(){
 
 if(!editID){
-alert("اختر عميل للتعديل");
+alert("اختر عميل");
 return;
 }
 
@@ -257,15 +262,10 @@ if(imageFile){
 base64=await imageToBase64(imageFile);
 }
 
-const {error}=await supabaseClient
+await supabaseClient
 .from("customers")
 .update({first_name,balance,tel,whatsapp,email,customer_image:base64})
 .eq("id_customer",editID);
-
-if(error){
-alert(error.message);
-return;
-}
 
 clearForm();
 loadCustomers();
@@ -274,17 +274,12 @@ loadCustomers();
 
 async function deleteRow(id){
 
-if(!confirm("هل تريد حذف العميل؟")) return;
+if(!confirm("حذف العميل؟")) return;
 
-const {error}=await supabaseClient
+await supabaseClient
 .from("customers")
 .delete()
 .eq("id_customer",id);
-
-if(error){
-alert(error.message);
-return;
-}
 
 loadCustomers();
 
@@ -303,66 +298,43 @@ document.getElementById("image").value="";
 
 }
 
-// ✅ طباعة PDF منظمة
+// PDF (بدون تعديل)
 function printCustomersPDF(){
 
 let element=document.createElement("div");
 
-let html=`
-<div style="direction:rtl;font-family:Arial;padding:10px">
-
-<h2 style="text-align:center;margin-bottom:20px;">
-كشف العملاء
-</h2>
-
+let html=`<div style="direction:rtl;font-family:Arial;padding:10px">
+<h2 style="text-align:center;">كشف العملاء</h2>
 <table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">
-
 <tr style="background:#2c3e50;color:white">
-<th style="border:1px solid #000;padding:6px;">الصورة</th>
-<th style="border:1px solid #000;padding:6px;">رقم العميل</th>
-<th style="border:1px solid #000;padding:6px;">الاسم</th>
-<th style="border:1px solid #000;padding:6px;">الرصيد</th>
-<th style="border:1px solid #000;padding:6px;">الهاتف</th>
-<th style="border:1px solid #000;padding:6px;">واتساب</th>
-<th style="border:1px solid #000;padding:6px;">البريد</th>
-</tr>
-`;
+<th>الصورة</th><th>رقم</th><th>الاسم</th><th>الرصيد</th><th>الهاتف</th><th>واتساب</th><th>البريد</th>
+</tr>`;
 
 data.forEach(r=>{
-
-let img="";
-
-if(r.customer_image){
-img=`<img src="data:image/png;base64,${r.customer_image}" style="width:35px;height:35px;border-radius:50%">`;
-}
-
-html+=`
-<tr>
-<td style="border:1px solid #000;padding:5px;">${img}</td>
-<td style="border:1px solid #000;padding:5px;">${r.id_customer}</td>
-<td style="border:1px solid #000;padding:5px;">${r.first_name||""}</td>
-<td style="border:1px solid #000;padding:5px;">${r.balance||0}</td>
-<td style="border:1px solid #000;padding:5px;">${r.tel||""}</td>
-<td style="border:1px solid #000;padding:5px;">${r.whatsapp||""}</td>
-<td style="border:1px solid #000;padding:5px;">${r.email||""}</td>
-</tr>
-`;
+let img=r.customer_image?`<img src="data:image/png;base64,${r.customer_image}" style="width:35px;height:35px;border-radius:50%">`:"";
+html+=`<tr>
+<td>${img}</td>
+<td>${r.id_customer}</td>
+<td>${r.first_name||""}</td>
+<td>${r.balance||0}</td>
+<td>${r.tel||""}</td>
+<td>${r.whatsapp||""}</td>
+<td>${r.email||""}</td>
+</tr>`;
 });
 
 html+=`</table></div>`;
-
 element.innerHTML=html;
 
-html2pdf().set({
-margin:5,
-filename:"customers.pdf",
-html2canvas:{scale:2},
-jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
-}).from(element).save();
+html2pdf().from(element).save("customers.pdf");
 
 }
 
 document.getElementById("search").addEventListener("input",renderTable);
+
+function logout(){
+window.location.href="index.html";
+}
 
 </script>
 
