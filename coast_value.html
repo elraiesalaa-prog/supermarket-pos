@@ -1,30 +1,41 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>توزيع التكاليف على المنتجات</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
-<body class="bg-gradient-to-r from-blue-50 to-blue-100 min-h-screen p-6">
 
-<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<body class="bg-gradient-to-r from-blue-50 to-blue-100 min-h-screen p-3 md:p-6">
 
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
-تقرير توزيع التكاليف على المنتجات
+<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-4 md:p-6">
+
+<h1 class="text-xl md:text-3xl font-bold text-center text-blue-700 mb-6">
+تقرير توزيع التكاليف
 </h1>
-<div class="container">
-<button onclick="history.back()" class="bg-gray-600 text-white p-4 rounded shadow">
-رجوع
-</button>
-    <button onclick="logout()" class="bg-gray-600 text-white p-4 rounded shadow">
-خروج
-</button>
-<div class="mb-4">
-<input id="searchInput" type="text" placeholder="ابحث بالرقم، البيان، أو النوع..." class="w-full border px-3 py-2 rounded">
+
+<!-- أزرار -->
+<div class="flex flex-wrap gap-2 justify-between mb-4">
+<button onclick="history.back()" class="bg-gray-600 text-white px-3 py-2 rounded w-full md:w-auto">رجوع</button>
+<button onclick="logout()" class="bg-gray-600 text-white px-3 py-2 rounded w-full md:w-auto">خروج</button>
 </div>
 
-<div class="grid grid-cols-2 gap-4 mb-6">
+<!-- بحث -->
+<div class="mb-4">
+<input id="searchInput" type="text"
+placeholder="بحث..."
+class="w-full border px-3 py-2 rounded">
+</div>
+
+<!-- النموذج -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+
 <div>
 <label class="font-bold">رقم الطلبية</label>
 <input id="req_id" type="text" class="w-full border rounded p-2">
@@ -54,28 +65,31 @@
 <input id="co_date" type="date" class="w-full border rounded p-2">
 </div>
 
-<div class="col-span-2">
+<div class="md:col-span-2">
 <label class="font-bold">البيان</label>
 <input id="coast_discription" type="text" class="w-full border rounded p-2">
 </div>
+
 </div>
 
-<div class="flex gap-3 mb-6 flex-wrap">
-<button id="addBtn" onclick="addCoast()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded">إضافة</button>
-<button id="updateBtn" onclick="updateCoast()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">تعديل</button>
-<button onclick="clearForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded">جديد</button>
-<a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">تراجع</a>
+<!-- الأزرار -->
+<div class="flex flex-wrap gap-2 mb-6">
+<button id="addBtn" onclick="addCoast()" class="bg-green-600 text-white px-4 py-2 rounded w-full md:w-auto">إضافة</button>
+<button id="updateBtn" onclick="updateCoast()" class="bg-yellow-500 text-white px-4 py-2 rounded w-full md:w-auto">تعديل</button>
+<button onclick="clearForm()" class="bg-gray-500 text-white px-4 py-2 rounded w-full md:w-auto">جديد</button>
+<a href="index.html" class="bg-blue-600 text-white px-4 py-2 rounded text-center w-full md:w-auto">الرئيسية</a>
 </div>
 
-<div class="overflow-auto">
-<table class="w-full border text-center">
+<!-- الجدول -->
+<div class="overflow-x-auto">
+<table class="w-full border text-center min-w-[900px]">
 <thead class="bg-blue-600 text-white">
 <tr>
-<th class="p-2">رقم المنصرف</th>
-<th class="p-2">رقم الطلبية</th>
-<th class="p-2">إجمالي المصروف</th>
-<th class="p-2">عدد المنتجات</th>
-<th class="p-2">تكلفة المنتج</th>
+<th class="p-2">رقم</th>
+<th class="p-2">طلبية</th>
+<th class="p-2">الإجمالي</th>
+<th class="p-2">عدد</th>
+<th class="p-2">تكلفة</th>
 <th class="p-2">النوع</th>
 <th class="p-2">البيان</th>
 <th class="p-2">التاريخ</th>
@@ -87,14 +101,18 @@
 </table>
 </div>
 
-</div>
- 
-
-<button onclick="distributeCosts()" 
-class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded">
-توزيع التكلفة على المنتجات
+<!-- زر التوزيع -->
+<div class="mt-6 text-center">
+<button onclick="distributeCosts()"
+class="bg-purple-600 text-white px-5 py-3 rounded w-full md:w-auto">
+توزيع التكاليف
 </button>
+</div>
+
+</div>
+
 <script>
+
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
@@ -103,42 +121,34 @@ let editID = null;
 let coastsData = [];
 const updateBtn = document.getElementById("updateBtn");
 
-// تحميل بيانات المصروفات
+// تحميل
 async function loadCoasts(){
-  const { data, error } = await supabaseClient.from("coasts").select("*").order("coast_id",{ascending:false});
-  if(error) return alert(error.message);
-  coastsData = data;
+  const { data } = await supabaseClient.from("coasts").select("*").order("coast_id",{ascending:false});
+  coastsData = data || [];
   renderTable();
 }
 
-// دالة لحساب عدد المنتجات المرتبطة بنفس req_id
+// عدد المنتجات
 async function getProductCount(req_id){
-
-  const { count, error } = await supabaseClient
+  const { count } = await supabaseClient
     .from("products")
     .select("*", { count: "exact", head: true })
     .eq("req_id", req_id);
-
-  if(error){
-    console.log(error.message);
-    return 0;
-  }
-
   return count || 0;
 }
-// عرض الجدول مع حساب عدد المنتجات وتكلفة المنتج لكل طلبية
+
+// عرض الجدول
 async function renderTable(){
+
   const searchTerm = document.getElementById("searchInput").value.toLowerCase();
   let table = "";
 
-  // احصل على كل req_id فريدة
   const reqIDs = [...new Set(coastsData.map(c => c.req_id))];
 
   for(const req_id of reqIDs){
-    // عدد المنتجات المرتبطة فعليًا بهذه الطلبية
+
     const productCount = await getProductCount(req_id);
 
-    // إجمالي المصروفات للطلبية
     const group = coastsData.filter(c => c.req_id===req_id);
     const totalCost = group.reduce((sum,c)=>sum+Number(c.coast_value),0);
     const perProductCost = productCount>0 ? (totalCost/productCount).toFixed(2) : 0;
@@ -150,7 +160,7 @@ async function renderTable(){
         (row.c_type || "").toLowerCase().includes(searchTerm)
       ){
         table += `
-        <tr class="border">
+        <tr>
           <td>${row.coast_id}</td>
           <td>${row.req_id}</td>
           <td>${totalCost}</td>
@@ -159,12 +169,8 @@ async function renderTable(){
           <td>${row.c_type}</td>
           <td>${row.coast_discription || ""}</td>
           <td>${row.co_date}</td>
-          <td>
-            <button onclick="editRow(${row.coast_id})" class="bg-yellow-400 px-3 py-1 rounded">تعديل</button>
-          </td>
-          <td>
-            <button onclick="deleteRow(${row.coast_id})" class="bg-red-600 text-white px-3 py-1 rounded">حذف</button>
-          </td>
+          <td><button onclick="editRow(${row.coast_id})" class="bg-yellow-400 px-2 py-1 rounded">تعديل</button></td>
+          <td><button onclick="deleteRow(${row.coast_id})" class="bg-red-600 text-white px-2 py-1 rounded">حذف</button></td>
         </tr>`;
       }
     });
@@ -175,8 +181,9 @@ async function renderTable(){
 
 document.getElementById("searchInput").addEventListener("input", renderTable);
 
-// إضافة مصروف
+// إضافة
 async function addCoast(){
+
   const value = document.getElementById("coast_value").value;
   const type = document.getElementById("c_type").value;
   const desc = document.getElementById("coast_discription").value;
@@ -184,29 +191,33 @@ async function addCoast(){
   const req = document.getElementById("req_id").value;
   const product_num = document.getElementById("product_num").value;
 
-  const { error } = await supabaseClient.from("coasts")
+  await supabaseClient.from("coasts")
     .insert([{ coast_value:value, c_type:type, coast_discription:desc, co_date:date, req_id:req, product_num }]);
-  if(error) return alert(error.message);
+
   clearForm();
   loadCoasts();
 }
 
-// تعديل سجل
+// تعديل
 async function editRow(id){
   editID = id;
   const { data } = await supabaseClient.from("coasts").select("*").eq("coast_id", id).single();
+
   document.getElementById("coast_value").value = data.coast_value;
   document.getElementById("c_type").value = data.c_type;
   document.getElementById("coast_discription").value = data.coast_discription;
   document.getElementById("co_date").value = data.co_date;
   document.getElementById("req_id").value = data.req_id;
   document.getElementById("product_num").value = data.product_num;
+
   updateBtn.textContent = "حفظ";
 }
 
 // حفظ التعديل
 async function updateCoast(){
-  if(!editID) return alert("اختر سجل للتعديل");
+
+  if(!editID) return alert("اختر سجل");
+
   const value = document.getElementById("coast_value").value;
   const type = document.getElementById("c_type").value;
   const desc = document.getElementById("coast_discription").value;
@@ -214,25 +225,23 @@ async function updateCoast(){
   const req = document.getElementById("req_id").value;
   const product_num = document.getElementById("product_num").value;
 
-  const { error } = await supabaseClient.from("coasts")
+  await supabaseClient.from("coasts")
     .update({ coast_value:value, c_type:type, coast_discription:desc, co_date:date, req_id:req, product_num })
     .eq("coast_id", editID);
-  if(error) return alert(error.message);
 
   updateBtn.textContent = "تعديل";
   clearForm();
   loadCoasts();
 }
 
-// حذف سجل
+// حذف
 async function deleteRow(id){
-  if(!confirm("هل تريد حذف هذا السجل؟")) return;
-  const { error } = await supabaseClient.from("coasts").delete().eq("coast_id", id);
-  if(error) return alert(error.message);
+  if(!confirm("حذف؟")) return;
+  await supabaseClient.from("coasts").delete().eq("coast_id", id);
   loadCoasts();
 }
 
-// إعادة النموذج جديد
+// تنظيف
 function clearForm(){
   editID = null;
   document.getElementById("coast_value").value = "";
@@ -243,60 +252,47 @@ function clearForm(){
   updateBtn.textContent = "تعديل";
 }
 
-// تحميل البيانات عند البداية
-loadCoasts();
-  async function distributeCosts(){
+// توزيع التكاليف (بدون تعديل)
+async function distributeCosts(){
 
-  // الحصول على الطلبات الموجودة في جدول المصروفات
-  const { data: coasts, error } = await supabaseClient
+  const { data: coasts } = await supabaseClient
     .from("coasts")
     .select("req_id, coast_value");
 
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  // استخراج الطلبات الفريدة
   const reqIDs = [...new Set(coasts.map(c => c.req_id))];
 
   for(const req of reqIDs){
 
-    // حساب اجمالي التكلفة للطلبية
     const totalCost = coasts
       .filter(c => c.req_id === req)
       .reduce((sum,c)=> sum + Number(c.coast_value),0);
 
-    // حساب عدد المنتجات
     const { count } = await supabaseClient
       .from("products")
       .select("*",{count:"exact",head:true})
       .eq("req_id",req);
 
     const productCount = count || 0;
-
     if(productCount === 0) continue;
 
     const costPerProduct = totalCost / productCount;
 
-    // تحديث المنتجات
-    const { error:updateError } = await supabaseClient
+    await supabaseClient
       .from("products")
       .update({ coasts_value: costPerProduct })
       .eq("req_id",req);
-
-    if(updateError){
-      console.log(updateError.message);
-    }
-
   }
 
-  alert("تم توزيع التكاليف على المنتجات بنجاح");
-
+  alert("تم التوزيع بنجاح");
 }
+
+loadCoasts();
+
+function logout(){
+window.location.href="index.html";
+}
+
 </script>
 
 </body>
 </html>
-
-
