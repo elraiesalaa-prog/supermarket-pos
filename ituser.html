@@ -1,295 +1,128 @@
-امكانية عرض الصفحة على الجوال
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>لوحة المشرف التقني</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/feather-icons"></script>
-
-<style>
-
-body{
-background:linear-gradient(135deg,#1e3a8a,#0f172a);
-font-family:tahoma;
-margin:0;
-overflow:hidden; /* ✅ منع كسر التصميم */
-}
-
-.menu{
-padding:10px;
-margin-bottom:6px;
-border-radius:8px;
-cursor:pointer;
-transition:0.3s;
-background:#3b82f6;
-color:white;
-font-weight:bold;
-text-align:center;
-}
-
-.menu:hover{
-background:#2563eb;
-transform:translateX(-4px);
-}
-
-.panel{
-background:white;
-box-shadow:0 10px 25px rgba(0,0,0,0.2);
-}
-
-.topbar{
-background:#0f172a;
-color:white;
-padding:10px 20px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.scroll{
-overflow:auto;
-}
-
-</style>
-
 </head>
 
-<body>
+<body class="bg-gradient-to-br from-blue-900 to-blue-950 font-tahoma overflow-hidden">
 
-<!-- ✅ هيدر ثابت -->
-<div class="bg-blue-700 text-white p-3 flex justify-between items-center sticky top-0 z-50">
-
-<div class="text-xl font-bold">
-<span id="storeHeader">نظام إدارة المبيعات</span>
+<!-- هيدر ثابت -->
+<div class="sticky top-0 z-50 bg-blue-700 text-white p-3 flex flex-col md:flex-row justify-between items-center">
+  <div class="text-xl font-bold mb-1 md:mb-0" id="storeHeader">نظام إدارة المبيعات</div>
+  <div>🏪 <span id="storeName">ABM للتجارة والاستثمار</span></div>
 </div>
 
-<div>
-🏪 <span id="storeName">ABM للتجارة والاستثمار</span>
+<!-- شريط الإجراءات العلوي -->
+<div class="bg-blue-500 text-white flex flex-wrap justify-center gap-2 p-2">
+  <button onclick="go('backup.html')" class="px-4 py-1 bg-blue-600 rounded">إنشاء نسخة احتياطية</button>
+  <button onclick="go('restore.html')" class="px-4 py-1 bg-blue-600 rounded">استعادة نسخة احتياطية</button>
+  <div class="menu cursor-pointer px-4 py-1 bg-blue-600 rounded" onclick="go('settings.html')">⚙ إعدادات المتجر</div>
 </div>
 
+<!-- الشريط العلوي الثاني -->
+<div class="topbar bg-gray-900 text-white flex flex-wrap justify-between items-center p-3 gap-2">
+  <div>👤 مرحبا: <span id="usernameDisplay"></span></div>
+  <div id="clock"></div>
+  <div class="menu cursor-pointer bg-blue-600 px-3 py-1 rounded" onclick="editPassword()">تعديل كلمة المرور</div>
 </div>
 
-<div class="bg-blue-500 text-white flex gap-4 p-2 justify-center flex-wrap">
+<!-- المحتوى الرئيسي -->
+<div class="flex flex-col md:flex-row h-[calc(100vh-160px)]">
 
-<button onclick="go('backup.html')" class="px-4 py-1 bg-blue-600 rounded">
-إنشاء نسخة احتياطية
-</button>
+  <!-- القائمة اليمنى -->
+  <div class="w-full md:w-64 p-4 overflow-auto text-white bg-gradient-to-b from-blue-400 to-blue-600">
+    <h2 class="text-xl font-bold text-center mb-4 text-blue-700">القائمة الرئيسية</h2>
+    <div class="menu cursor-pointer mb-2 bg-blue-600 px-3 py-1 rounded" onclick="go('tb_users.html')">إدارة المستخدمين</div>
+    <hr class="my-2 border-blue-200">
+  </div>
 
-<button onclick="go('restore.html')" class="px-4 py-1 bg-blue-600 rounded">
-استعادة نسخة احتياطية
-</button>
+  <!-- الوسط -->
+  <div class="flex-1 flex items-center justify-center p-2 overflow-auto">
+    <div class="bg-white rounded-xl shadow-2xl p-4 w-full h-full flex items-center justify-center">
+      <img src="pic.png" loading="lazy" class="max-w-full max-h-full object-contain">
+    </div>
+  </div>
 
-<div class="menu" onclick="go('settings.html')">⚙ إعدادات المتجر</div>
-
-</div>
-
-<!-- الشريط العلوي -->
-<div class="topbar">
-
-<div>
-👤 مرحبا :
-<span id="usernameDisplay"></span>
-</div>
-
-<div id="clock"></div>
-
-<div class="menu" onclick="editPassword()">تعديل كلمة المرور</div>
-
-</div>
-
-<!-- ✅ محتوى رئيسي مع Scroll -->
-<div class="flex h-[calc(100vh-120px)]">
-
-<!-- القائمة اليمنى -->
-<div class="w-64 p-4 scroll text-white"
-style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
-
-<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
-القائمة الرئيسية
-</h2>
-
-<div class="menu" onclick="go('tb_users.html')">إدارة المستخدمين</div>
-
-<hr>
+  <!-- القائمة اليسرى -->
+  <div class="w-full md:w-64 p-4 overflow-auto text-white bg-gradient-to-b from-blue-400 to-blue-600">
+    <h2 class="text-xl font-bold text-center mb-4 text-blue-700">العمليات</h2>
+    <div class="menu cursor-pointer bg-red-500 px-3 py-1 rounded" onclick="logout()">خروج</div>
+  </div>
 
 </div>
 
-<!-- الوسط -->
-<div class="flex-1 flex items-center justify-center p-6 scroll">
-
-<div class="bg-white rounded-xl shadow-2xl p-6 w-full h-full flex items-center justify-center">
-
-<img src="pic.png"
-loading="lazy"
-style="max-width:100%; max-height:100%; object-fit:contain;">
-
-</div>
-
-</div>
-
-<!-- القائمة اليسرى -->
-<div class="w-64 p-4 scroll text-white"
-style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
-
-<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
-العمليات
-</h2>
-
-<hr>
-
-<div class="menu" style="background-color:#ef4444;" onclick="logout()">خروج</div>
-
-</div>
-
-</div>
-
-<!-- ✅ نافذة تغيير كلمة المرور محسنة -->
-<div id="passwordBox" style="display:none;
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:white;
-padding:25px;
-border-radius:10px;
-box-shadow:0 0 20px rgba(0,0,0,0.3);
-width:320px;
-z-index:999">
-
-<h3 style="text-align:center;margin-bottom:10px;">تغيير كلمة المرور</h3>
-
-<input type="password" id="oldPass" placeholder="كلمة المرور القديمة" style="width:100%;padding:8px;margin:5px 0">
-<input type="password" id="newPass" placeholder="كلمة المرور الجديدة" style="width:100%;padding:8px;margin:5px 0">
-
-<div style="display:flex;gap:5px;margin-top:10px;">
-<button onclick="savePassword()" style="flex:1;background:#16a34a;color:white;padding:8px;border:none;border-radius:6px">حفظ</button>
-<button onclick="closePassword()" style="flex:1;background:#6b7280;color:white;padding:8px;border:none;border-radius:6px">إلغاء</button>
-</div>
-
+<!-- نافذة تغيير كلمة المرور -->
+<div id="passwordBox" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-sm z-50">
+  <h3 class="text-center mb-3 font-bold">تغيير كلمة المرور</h3>
+  <input type="password" id="oldPass" placeholder="كلمة المرور القديمة" class="w-full p-2 mb-2 border rounded">
+  <input type="password" id="newPass" placeholder="كلمة المرور الجديدة" class="w-full p-2 mb-2 border rounded">
+  <div class="flex gap-2 mt-3">
+    <button onclick="savePassword()" class="flex-1 bg-green-600 text-white rounded p-2">حفظ</button>
+    <button onclick="closePassword()" class="flex-1 bg-gray-500 text-white rounded p-2">إلغاء</button>
+  </div>
 </div>
 
 <script>
-
 const supabaseClient = supabase.createClient(
-"https://vmxbedovoahuggfpcmyk.supabase.co",
-"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-)
+  "https://vmxbedovoahuggfpcmyk.supabase.co",
+  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+);
 
-function go(page){
-window.location.href = page
-}
+function go(page){ window.location.href = page }
 
 function loadStore(){
-
-let name = localStorage.getItem("storeName")
-let header = localStorage.getItem("storeHeader")
-
-if(!name){
-name="ABM للتجارة والاستثمار"
-localStorage.setItem("storeName",name)
+  let name = localStorage.getItem("storeName") || "ABM للتجارة والاستثمار";
+  let header = localStorage.getItem("storeHeader") || "نظام إدارة المبيعات";
+  localStorage.setItem("storeName", name);
+  localStorage.setItem("storeHeader", header);
+  document.getElementById("storeName").innerText = name;
+  document.getElementById("storeHeader").innerText = header;
 }
 
-if(!header){
-header="نظام إدارة المبيعات"
-localStorage.setItem("storeHeader",header)
-}
-
-document.getElementById("storeName").innerText=name
-document.getElementById("storeHeader").innerText=header
-
-}
-
-loadStore()
+loadStore();
 
 function updateClock(){
-
-let now = new Date()
-
-let time = now.toLocaleTimeString()
-let date = now.toLocaleDateString()
-
-document.getElementById("clock").innerHTML =
-"🕒 " + time + " | " + date
-
+  let now = new Date();
+  document.getElementById("clock").innerHTML = "🕒 " + now.toLocaleTimeString() + " | " + now.toLocaleDateString();
 }
-
-setInterval(updateClock,1000)
-updateClock()
+setInterval(updateClock,1000);
+updateClock();
 
 document.addEventListener("DOMContentLoaded", function(){
-
-let user = localStorage.getItem("user")
-
-if(!user){
-window.location="index.html"
-return
-}
-
-document.getElementById("usernameDisplay").textContent = user
-
-})
+  let user = localStorage.getItem("user");
+  if(!user){ window.location="index.html"; return; }
+  document.getElementById("usernameDisplay").textContent = user;
+});
 
 function logout(){
-
-localStorage.removeItem("user")
-localStorage.removeItem("role")
-
-window.location="index.html"
-
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
+  window.location="index.html";
 }
 
-function editPassword(){
-document.getElementById("passwordBox").style.display="block"
-}
-
-function closePassword(){
-document.getElementById("passwordBox").style.display="none"
-}
+function editPassword(){ document.getElementById("passwordBox").classList.remove("hidden") }
+function closePassword(){ document.getElementById("passwordBox").classList.add("hidden") }
 
 async function savePassword(){
+  let username = localStorage.getItem("user");
+  let oldPass = document.getElementById("oldPass").value;
+  let newPass = document.getElementById("newPass").value;
+  if(!oldPass || !newPass){ alert("أدخل جميع البيانات"); return; }
 
-let username = localStorage.getItem("user")
-let oldPass = document.getElementById("oldPass").value
-let newPass = document.getElementById("newPass").value
+  const {data,error} = await supabaseClient.from("tb_users").select("*").eq("fullname",username).eq("pwd",oldPass).single();
+  if(error || !data){ alert("كلمة المرور القديمة غير صحيحة"); return; }
 
-if(!oldPass || !newPass){
-alert("أدخل جميع البيانات")
-return
+  const {error:updateError} = await supabaseClient.from("tb_users").update({pwd:newPass}).eq("fullname",username);
+  if(updateError){ alert("حدث خطأ أثناء التحديث"); return; }
+
+  alert("تم تغيير كلمة المرور بنجاح");
+  closePassword();
 }
-
-const {data,error}=await supabaseClient
-.from("tb_users")
-.select("*")
-.eq("fullname",username)
-.eq("pwd",oldPass)
-.single()
-
-if(error || !data){
-alert("كلمة المرور القديمة غير صحيحة")
-return
-}
-
-const {error:updateError}=await supabaseClient
-.from("tb_users")
-.update({pwd:newPass})
-.eq("fullname",username)
-
-if(updateError){
-alert("حدث خطأ أثناء التحديث")
-return
-}
-
-alert("تم تغيير كلمة المرور بنجاح")
-
-closePassword()
-
-}
-
 </script>
 
 </body>
