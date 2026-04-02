@@ -3,27 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إنشاء نسخة احتياطية</title>
+<title>إنشاء نسخة احتياطية متقدمة</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-  h1 { margin-bottom: 20px; }
-  button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; }
-  #status { margin-top: 10px; font-weight: bold; }
-  #progressContainer { width: 100%; background: #ddd; border-radius: 5px; margin-top: 15px; }
-  #progressBar { width: 0%; height: 20px; background: #4CAF50; border-radius: 5px; text-align: center; color: white; line-height: 20px; }
+  body { font-family: Arial, sans-serif; padding: 20px; margin:0; background: #f5f5f5; display:flex; flex-direction:column; align-items:center; }
+  h1 { margin-bottom: 20px; text-align:center; }
+  button { padding: 12px 24px; font-size: 18px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 8px; width: 90%; max-width: 400px; margin-bottom:10px; }
+  #status { margin-top: 10px; font-weight: bold; text-align:center; }
+  #progressContainer { width: 90%; max-width: 400px; background: #ddd; border-radius: 8px; margin-top: 15px; height: 25px; overflow: hidden; }
+  #progressBar { width: 0%; height: 25px; background: #4CAF50; text-align: center; color: white; line-height: 25px; font-weight:bold; }
 </style>
 </head>
 <body>
 
-<h1>إنشاء نسخة احتياطية لقاعدة البيانات</h1>
+<h1>إنشاء نسخة احتياطية متقدمة</h1>
 <button id="backupBtn">إنشاء النسخة الاحتياطية</button>
-<div id="status"></div>
+<div id="status">اضغط الزر لبدء النسخ الاحتياطي</div>
 <div id="progressContainer">
   <div id="progressBar">0%</div>
 </div>
 
 <script>
+  // إعداد Supabase Storage (اختياري للتخزين الدائم)
+  const supabaseUrl = "https://YOUR_SUPABASE_PROJECT.supabase.co";
+  const supabaseKey = "YOUR_SUPABASE_ANON_KEY";
+  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  const storageBucket = "backups"; // تأكد من إنشاء Bucket بنفس الاسم
+
   const backupBtn = document.getElementById('backupBtn');
   const status = document.getElementById('status');
   const progressBar = document.getElementById('progressBar');
@@ -51,24 +57,34 @@
         chunks.push(value);
         receivedLength += value.length;
 
+        // تحديث شريط التقدم
         if (contentLength) {
           let percent = Math.floor((receivedLength / contentLength) * 100);
+          let mb = (receivedLength / (1024*1024)).toFixed(2);
           progressBar.style.width = percent + '%';
-          progressBar.textContent = percent + '%';
+          progressBar.textContent = `${percent}% (${mb} MB)`;
         }
       }
 
       const blob = new Blob(chunks, { type: 'application/gzip' });
+      const filename = `backup_${new Date().toISOString().replace(/[:.]/g,'_')}.backup.gz`;
+
+      // تحميل النسخة مباشرة
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `backup_${new Date().toISOString().split('T')[0]}.backup.gz`;
+      a.download = filename;
       a.click();
       window.URL.revokeObjectURL(url);
+
+      // تخزين النسخة على Supabase Storage
+      const { data, error } = await supabase.storage.from(storageBucket).upload(filename, blob, { upsert: true });
+      if (error) console.error("خطأ في التخزين على Supabase Storage:", error);
 
       progressBar.style.width = '100%';
       progressBar.textContent = '100%';
       status.textContent = "تم إنشاء النسخة الاحتياطية بنجاح!";
+
     } catch (error) {
       status.textContent = "حدث خطأ: " + error.message;
       progressBar.style.width = '0%';
