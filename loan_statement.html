@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>كشف حساب القروض</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,99 +11,69 @@
 
 <style>
 body{
-margin:0;
-overflow:hidden;
+  margin:0;
+  background:#f3f4f6;
+  font-family:Arial, sans-serif;
 }
 .scroll{
-overflow:auto;
+  overflow:auto;
+}
+table th, table td{
+  white-space:nowrap;
 }
 </style>
-
 </head>
 
-<body class="bg-gray-100">
+<body>
 
-<!-- ✅ هيدر ثابت -->
+<!-- هيدر ثابت -->
 <div class="bg-blue-700 text-white p-4 text-center text-xl font-bold sticky top-0 z-50">
 كشف حساب القروض
 </div>
 
-<!-- ✅ المحتوى -->
-<div class="h-[calc(100vh-70px)] flex justify-center p-4">
+<!-- المحتوى -->
+<div class="flex justify-center p-4">
 
-<div class="w-full max-w-7xl bg-white shadow-lg rounded-lg p-4 flex flex-col scroll">
+<div class="w-full max-w-7xl bg-white shadow-lg rounded-lg p-4 flex flex-col space-y-4">
 
-<!-- ✅ الأدوات -->
-<div class="flex flex-wrap gap-3 mb-4 items-center">
+  <!-- الأدوات -->
+  <div class="flex flex-wrap gap-2 items-center">
+    <select id="customer_id" class="border p-2 rounded flex-1 min-w-[150px]"></select>
+    <button onclick="loadLoans()" class="bg-blue-600 text-white px-4 py-2 rounded">عرض الكشف</button>
+    <button onclick="printLoansPDF()" class="bg-green-600 text-white px-4 py-2 rounded">طباعة PDF</button>
+    <button onclick="history.back()" class="bg-gray-600 text-white px-4 py-2 rounded">رجوع</button>
+    <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded">خروج</button>
+  </div>
 
-<select id="customer_id" class="border p-2 rounded flex-1 min-w-[200px]"></select>
+  <!-- جدول Scroll -->
+  <div class="scroll border rounded overflow-x-auto">
+    <table class="w-full border text-center min-w-[700px]">
+      <thead class="bg-blue-600 text-white sticky top-0">
+        <tr>
+          <th>رقم القرض</th>
+          <th>الوصف</th>
+          <th>قيمة القرض</th>
+          <th>المسدد</th>
+          <th>المتبقي</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
 
-<button onclick="loadLoans()" class="bg-blue-600 text-white px-5 py-2 rounded">
-عرض الكشف
-</button>
-
-<button onclick="printLoansPDF()" class="bg-green-600 text-white px-5 py-2 rounded">
-طباعة PDF
-</button>
-
-<button onclick="history.back()" class="bg-gray-600 text-white px-4 py-2 rounded">
-رجوع
-</button>
-
-<button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded">
-خروج
-</button>
-
-</div>
-
-<!-- ✅ جدول Scroll -->
-<div class="scroll border rounded">
-
-<table class="w-full border text-center min-w-[900px]">
-
-<thead class="bg-blue-600 text-white sticky top-0">
-<tr>
-<th>رقم القرض</th>
-<th>الوصف</th>
-<th>قيمة القرض</th>
-<th>المسدد</th>
-<th>المتبقي</th>
-<th>التاريخ</th>
-</tr>
-</thead>
-
-<tbody id="tableBody"></tbody>
-
-</table>
-
-</div>
-
-<!-- ✅ الإحصائيات -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 text-center text-lg font-bold">
-
-<div class="bg-blue-100 p-4 rounded shadow">
-إجمالي القروض
-<div id="totalLoans">0</div>
-</div>
-
-<div class="bg-green-100 p-4 rounded shadow">
-إجمالي المسدد
-<div id="totalPaid">0</div>
-</div>
-
-<div class="bg-red-100 p-4 rounded shadow">
-المتبقي
-<div id="totalRemain">0</div>
-</div>
-
-</div>
+  <!-- الإحصائيات -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center text-lg font-bold">
+    <div class="bg-blue-100 p-4 rounded shadow">إجمالي القروض<div id="totalLoans">0</div></div>
+    <div class="bg-green-100 p-4 rounded shadow">إجمالي المسدد<div id="totalPaid">0</div></div>
+    <div class="bg-red-100 p-4 rounded shadow">المتبقي<div id="totalRemain">0</div></div>
+  </div>
 
 </div>
 
 </div>
 
 <script>
-
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
@@ -111,92 +81,46 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 let loans = [];
 let customerName = "";
 
-/* ✅ حماية بسيطة */
+// حماية بسيطة
 document.addEventListener("DOMContentLoaded", function(){
-let user = localStorage.getItem("user");
-if(!user){
-window.location="index.html";
-}
+  let user = localStorage.getItem("user");
+  if(!user) window.location="index.html";
 });
 
 // تحميل العملاء
 async function loadCustomers() {
-
-const { data, error } = await supabaseClient
-.from("customers")
-.select("id_customer,first_name")
-.order("first_name");
-
-if (error) {
-alert(error.message);
-return;
-}
-
-let options = "<option value=''>اختر العميل</option>";
-
-data.forEach(c => {
-options += `<option value="${c.id_customer}">${c.first_name}</option>`;
-});
-
-document.getElementById("customer_id").innerHTML = options;
-
+  const { data, error } = await supabaseClient.from("customers").select("id_customer,first_name").order("first_name");
+  if (error) return alert(error.message);
+  let options = "<option value=''>اختر العميل</option>";
+  data.forEach(c => options += `<option value="${c.id_customer}">${c.first_name}</option>`);
+  document.getElementById("customer_id").innerHTML = options;
 }
 
 // تحميل القروض
 async function loadLoans() {
+  const customer_id = document.getElementById("customer_id").value;
+  if (!customer_id) return alert("اختر العميل");
 
-const customer_id = document.getElementById("customer_id").value;
+  const { data: customer, error: custErr } = await supabaseClient.from("customers").select("first_name").eq("id_customer", customer_id).single();
+  if(custErr || !customer) return alert("حدث خطأ عند جلب بيانات العميل");
+  customerName = customer.first_name;
 
-if (!customer_id) {
-alert("اختر العميل");
-return;
-}
-
-const { data: customer, error: custErr } = await supabaseClient
-.from("customers")
-.select("first_name")
-.eq("id_customer", customer_id)
-.single();
-
-if (custErr || !customer) {
-alert("حدث خطأ عند جلب بيانات العميل");
-return;
-}
-
-customerName = customer.first_name;
-
-const { data, error } = await supabaseClient
-.from("loans")
-.select("*")
-.eq("customer_id", customer_id)
-.order("loan_id");
-
-if (error) {
-alert(error.message);
-return;
-}
-
-loans = data || [];
-
-renderTable();
-
+  const { data, error } = await supabaseClient.from("loans").select("*").eq("customer_id", customer_id).order("loan_id");
+  if (error) return alert(error.message);
+  loans = data || [];
+  renderTable();
 }
 
 // عرض البيانات
 function renderTable() {
-
-let table = "";
-let totalLoans = 0;
-let totalPaid = 0;
-
-loans.forEach(row => {
-
-const remain = (row.loan_value || 0) - (row.sadad || 0);
-
-totalLoans += row.loan_value || 0;
-totalPaid += row.sadad || 0;
-
-table += `
+  let table = "";
+  let totalLoans = 0;
+  let totalPaid = 0;
+  loans.forEach(row => {
+    const remain = (row.loan_value || 0) - (row.sadad || 0);
+    totalLoans += row.loan_value || 0;
+    totalPaid += row.sadad || 0;
+    table += `
 <tr class="border hover:bg-gray-50">
 <td>${row.loan_id}</td>
 <td>${row.loan_discripton || ""}</td>
@@ -204,37 +128,21 @@ table += `
 <td>${row.sadad || 0}</td>
 <td class="text-red-600 font-bold">${remain}</td>
 <td>${row.loan_date ? new Date(row.loan_date).toLocaleDateString() : ""}</td>
-</tr>
-`;
-
-});
-
-document.getElementById("tableBody").innerHTML = table;
-
-document.getElementById("totalLoans").innerText = totalLoans;
-document.getElementById("totalPaid").innerText = totalPaid;
-document.getElementById("totalRemain").innerText = totalLoans - totalPaid;
-
+</tr>`;
+  });
+  document.getElementById("tableBody").innerHTML = table;
+  document.getElementById("totalLoans").innerText = totalLoans;
+  document.getElementById("totalPaid").innerText = totalPaid;
+  document.getElementById("totalRemain").innerText = totalLoans - totalPaid;
 }
 
 // طباعة PDF
 function printLoansPDF() {
-
-if (loans.length === 0) {
-alert("لا توجد بيانات للطباعة");
-return;
-}
-
-let element = document.createElement("div");
-
-let html = `
-<div style="direction:rtl;font-family:Arial;padding:10px">
-<h2 style="text-align:center;margin-bottom:20px;">
-كشف القروض للعميل: ${customerName}
-</h2>
-
+  if(loans.length===0) return alert("لا توجد بيانات للطباعة");
+  let element = document.createElement("div");
+  let html = `<div style="direction:rtl;font-family:Arial;padding:10px">
+<h2 style="text-align:center;margin-bottom:20px;">كشف القروض للعميل: ${customerName}</h2>
 <table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">
-
 <tr style="background:#2c3e50;color:white">
 <th style="border:1px solid #000;padding:6px;">رقم القرض</th>
 <th style="border:1px solid #000;padding:6px;">الوصف</th>
@@ -242,50 +150,31 @@ let html = `
 <th style="border:1px solid #000;padding:6px;">المسدد</th>
 <th style="border:1px solid #000;padding:6px;">المتبقي</th>
 <th style="border:1px solid #000;padding:6px;">التاريخ</th>
-</tr>
-`;
-
-loans.forEach(r => {
-
-const remain = (r.loan_value || 0) - (r.sadad || 0);
-
-html += `
-<tr>
+</tr>`;
+  loans.forEach(r=>{
+    const remain = (r.loan_value || 0) - (r.sadad || 0);
+    html += `<tr>
 <td style="border:1px solid #000;padding:5px;">${r.loan_id}</td>
-<td style="border:1px solid #000;padding:5px;">${r.loan_discripton || ""}</td>
-<td style="border:1px solid #000;padding:5px;">${r.loan_value || 0}</td>
-<td style="border:1px solid #000;padding:5px;">${r.sadad || 0}</td>
+<td style="border:1px solid #000;padding:5px;">${r.loan_discripton||""}</td>
+<td style="border:1px solid #000;padding:5px;">${r.loan_value||0}</td>
+<td style="border:1px solid #000;padding:5px;">${r.sadad||0}</td>
 <td style="border:1px solid #000;padding:5px;color:red;font-weight:bold">${remain}</td>
-<td style="border:1px solid #000;padding:5px;">
-${r.loan_date ? new Date(r.loan_date).toLocaleDateString() : ""}
-</td>
-</tr>
-`;
-
-});
-
-html += `</table></div>`;
-
-element.innerHTML = html;
-
-html2pdf().set({
-margin: 5,
-filename: "loans_report.pdf",
-html2canvas: { scale: 2 },
-jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-}).from(element).save();
-
+<td style="border:1px solid #000;padding:5px;">${r.loan_date ? new Date(r.loan_date).toLocaleDateString():""}</td>
+</tr>`;
+  });
+  html += `</table></div>`;
+  element.innerHTML = html;
+  html2pdf().set({margin:5,filename:"loans_report.pdf",html2canvas:{scale:2},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}}).from(element).save();
 }
 
-/* ✅ إضافة logout */
+// logout
 function logout(){
-localStorage.removeItem("user");
-localStorage.removeItem("role");
-window.location="index.html";
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
+  window.location="index.html";
 }
 
 loadCustomers();
-
 </script>
 
 </body>
