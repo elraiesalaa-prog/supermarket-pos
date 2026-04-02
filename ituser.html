@@ -15,6 +15,8 @@
 body{
 background:linear-gradient(135deg,#1e3a8a,#0f172a);
 font-family:tahoma;
+margin:0;
+overflow:hidden; /* ✅ منع كسر التصميم */
 }
 
 .menu{
@@ -26,6 +28,7 @@ transition:0.3s;
 background:#3b82f6;
 color:white;
 font-weight:bold;
+text-align:center;
 }
 
 .menu:hover{
@@ -47,14 +50,18 @@ justify-content:space-between;
 align-items:center;
 }
 
+.scroll{
+overflow:auto;
+}
+
 </style>
 
 </head>
 
 <body>
 
-<!-- رأس الصفحة -->
-<div class="bg-blue-700 text-white p-3 flex justify-between items-center">
+<!-- ✅ هيدر ثابت -->
+<div class="bg-blue-700 text-white p-3 flex justify-between items-center sticky top-0 z-50">
 
 <div class="text-xl font-bold">
 <span id="storeHeader">نظام إدارة المبيعات</span>
@@ -66,7 +73,7 @@ align-items:center;
 
 </div>
 
-<div class="bg-blue-500 text-white flex gap-4 p-2 justify-center">
+<div class="bg-blue-500 text-white flex gap-4 p-2 justify-center flex-wrap">
 
 <button onclick="go('backup.html')" class="px-4 py-1 bg-blue-600 rounded">
 إنشاء نسخة احتياطية
@@ -94,10 +101,11 @@ align-items:center;
 
 </div>
 
-<div class="flex h-[calc(100vh-50px)]">
+<!-- ✅ محتوى رئيسي مع Scroll -->
+<div class="flex h-[calc(100vh-120px)]">
 
 <!-- القائمة اليمنى -->
-<div class="w-64 p-4 overflow-y-auto text-white"
+<div class="w-64 p-4 scroll text-white"
 style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
 <h2 class="text-xl font-bold text-center mb-4 text-blue-700">
@@ -111,20 +119,20 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 </div>
 
 <!-- الوسط -->
-<div class="flex-1 flex items-center justify-center p-6">
+<div class="flex-1 flex items-center justify-center p-6 scroll">
 
-<div class="bg-white rounded-xl shadow-2xl p-10 w-5/6 h-5/6 flex items-center justify-center">
+<div class="bg-white rounded-xl shadow-2xl p-6 w-full h-full flex items-center justify-center">
 
 <img src="pic.png"
 loading="lazy"
-style="max-width:120%; max-height:120%; object-fit:contain;">
+style="max-width:100%; max-height:100%; object-fit:contain;">
 
 </div>
 
 </div>
 
 <!-- القائمة اليسرى -->
-<div class="w-64 p-4 overflow-y-auto text-white"
+<div class="w-64 p-4 scroll text-white"
 style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
 <h2 class="text-xl font-bold text-center mb-4 text-blue-700">
@@ -133,13 +141,13 @@ style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
 <hr>
 
-<div class="menu" style="background-color:#ef4444; text-align:center;" onclick="logout()">خروج</div>
+<div class="menu" style="background-color:#ef4444;" onclick="logout()">خروج</div>
 
 </div>
 
 </div>
 
-<!-- نافذة تغيير كلمة المرور -->
+<!-- ✅ نافذة تغيير كلمة المرور محسنة -->
 <div id="passwordBox" style="display:none;
 position:fixed;
 top:50%;
@@ -149,17 +157,18 @@ background:white;
 padding:25px;
 border-radius:10px;
 box-shadow:0 0 20px rgba(0,0,0,0.3);
-width:300px">
+width:320px;
+z-index:999">
 
-<h3>تغيير كلمة المرور</h3>
+<h3 style="text-align:center;margin-bottom:10px;">تغيير كلمة المرور</h3>
 
-<input type="password" id="oldPass" placeholder="كلمة المرور القديمة">
-<input type="password" id="newPass" placeholder="كلمة المرور الجديدة">
+<input type="password" id="oldPass" placeholder="كلمة المرور القديمة" style="width:100%;padding:8px;margin:5px 0">
+<input type="password" id="newPass" placeholder="كلمة المرور الجديدة" style="width:100%;padding:8px;margin:5px 0">
 
-<br><br>
-
-<button onclick="savePassword()">حفظ</button>
-<button onclick="closePassword()">إلغاء</button>
+<div style="display:flex;gap:5px;margin-top:10px;">
+<button onclick="savePassword()" style="flex:1;background:#16a34a;color:white;padding:8px;border:none;border-radius:6px">حفظ</button>
+<button onclick="closePassword()" style="flex:1;background:#6b7280;color:white;padding:8px;border:none;border-radius:6px">إلغاء</button>
+</div>
 
 </div>
 
@@ -170,7 +179,6 @@ const supabaseClient = supabase.createClient(
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
 
-/* ✅ تم إضافة الدالة الناقصة */
 function go(page){
 window.location.href = page
 }
