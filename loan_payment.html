@@ -9,43 +9,60 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
+<style>
+body{
+margin:0;
+overflow:hidden; /* ✅ منع كسر التصميم */
+}
+.scroll{
+overflow:auto;
+}
+</style>
+
 </head>
 
-<body class="bg-gray-100 p-6">
+<body class="bg-gray-100">
 
-<div class="max-w-6xl mx-auto bg-white shadow-lg rounded-lg p-6">
-
-<h1 class="text-2xl font-bold text-center text-blue-700 mb-6">
+<!-- ✅ هيدر ثابت -->
+<div class="bg-blue-700 text-white p-4 text-center font-bold text-xl sticky top-0 z-50">
 سداد القروض
-</h1>
+</div>
 
-<div class="flex gap-3 mb-6">
+<!-- ✅ محتوى رئيسي -->
+<div class="h-[calc(100vh-70px)] flex justify-center items-start p-4">
 
-<select id="customer_id" class="border p-2 rounded w-full"></select>
+<div class="w-full max-w-6xl bg-white shadow-lg rounded-lg p-4 flex flex-col scroll">
+
+<!-- الأدوات -->
+<div class="flex flex-wrap gap-3 mb-4 items-center">
+
+<select id="customer_id" class="border p-2 rounded flex-1 min-w-[200px]"></select>
 
 <button onclick="loadLoans()"
 class="bg-blue-600 text-white px-5 py-2 rounded">
 عرض القروض
 </button>
 
-<div class="container">
-<button onclick="history.back()" class="bg-gray-600 text-white p-4 rounded shadow">
+<button onclick="history.back()"
+class="bg-gray-600 text-white px-4 py-2 rounded">
 رجوع
 </button>
-    <button onclick="logout()" class="bg-gray-600 text-white p-4 rounded shadow">
+
+<button onclick="logout()"
+class="bg-red-600 text-white px-4 py-2 rounded">
 خروج
 </button>
 
 </div>
 
-<div class="overflow-auto">
+<!-- ✅ جدول مع Scroll -->
+<div class="scroll border rounded">
 
-<table class="w-full border text-center">
+<table class="w-full border text-center min-w-[800px]">
 
-<thead class="bg-blue-600 text-white">
+<thead class="bg-blue-600 text-white sticky top-0">
 
 <tr>
-
 <th>رقم القرض</th>
 <th>الوصف</th>
 <th>قيمة القرض</th>
@@ -53,7 +70,6 @@ class="bg-blue-600 text-white px-5 py-2 rounded">
 <th>المتبقي</th>
 <th>مبلغ السداد</th>
 <th>تنفيذ</th>
-
 </tr>
 
 </thead>
@@ -61,6 +77,8 @@ class="bg-blue-600 text-white px-5 py-2 rounded">
 <tbody id="tableBody"></tbody>
 
 </table>
+
+</div>
 
 </div>
 
@@ -74,6 +92,14 @@ const supabaseKey="sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
 
 let loans=[];
+
+/* ✅ إضافة أمان بسيط بدون تأثير */
+document.addEventListener("DOMContentLoaded", function(){
+let user=localStorage.getItem("user");
+if(!user){
+window.location="index.html";
+}
+});
 
 async function loadCustomers(){
 
@@ -99,11 +125,8 @@ async function loadLoans(){
 const customer_id=document.getElementById("customer_id").value;
 
 if(!customer_id){
-
 alert("اختر العميل");
-
 return;
-
 }
 
 const {data,error}=await supabaseClient
@@ -129,7 +152,7 @@ let remain=(row.loan_value||0)-(row.sadad||0);
 
 table+=`
 
-<tr class="border">
+<tr class="border hover:bg-gray-50">
 
 <td>${row.loan_id}</td>
 <td>${row.loan_discripton||""}</td>
@@ -139,18 +162,14 @@ table+=`
 
 <td>
 <input id="pay_${row.loan_id}" type="number"
-class="border p-1 rounded w-24">
+class="border p-1 rounded w-24 text-center">
 </td>
 
 <td>
-
 <button onclick="payLoan(${row.loan_id},${row.sadad||0})"
-class="bg-green-600 text-white px-3 py-1 rounded">
-
+class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
 سداد
-
 </button>
-
 </td>
 
 </tr>
@@ -168,11 +187,8 @@ async function payLoan(id,currentSadad){
 let pay=parseFloat(document.getElementById("pay_"+id).value);
 
 if(!pay || pay<=0){
-
 alert("ادخل مبلغ السداد");
-
 return;
-
 }
 
 let newSadad=currentSadad+pay;
@@ -183,15 +199,20 @@ const {error}=await supabaseClient
 .eq("loan_id",id);
 
 if(error){
-
 alert(error.message);
-
 return;
+}
+
+/* ✅ إعادة تحميل بدون تأثير */
+loadLoans();
 
 }
 
-loadLoans();
-
+/* ❌ لم يكن موجود */
+function logout(){
+localStorage.removeItem("user");
+localStorage.removeItem("role");
+window.location="index.html";
 }
 
 loadCustomers();
