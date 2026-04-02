@@ -1,10 +1,10 @@
-ايضا امكانية عرض هذه الصفحة عبر الموبايل
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إدارة المنتجات</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -14,48 +14,77 @@
 body{
 font-family:Tahoma;
 background:#f4f6f9;
-padding:20px;
+padding:10px;
 }
 
 .container{
 max-width:1000px;
 margin:auto;
 background:white;
-padding:20px;
+padding:15px;
 border-radius:10px;
 box-shadow:0 0 10px rgba(0,0,0,0.1);
 }
 
 h2{
 text-align:center;
+font-size:20px;
 }
 
 .grid{
 display:grid;
-grid-template-columns:repeat(3,1fr);
+grid-template-columns:1fr;
 gap:10px;
 }
 
+/* للشاشات الكبيرة */
+@media(min-width:768px){
+.grid{
+grid-template-columns:repeat(3,1fr);
+}
+}
+
 input,select{
-padding:8px;
+padding:10px;
 border:1px solid #ccc;
 border-radius:5px;
 width:100%;
+font-size:14px;
 }
 
 button{
-padding:8px 15px;
+padding:10px;
 border:none;
 border-radius:5px;
 cursor:pointer;
+font-size:14px;
+width:100%;
+margin-top:5px;
+}
+
+/* للشاشات الكبيرة */
+@media(min-width:768px){
+button{
+width:auto;
+}
 }
 
 .save{background:#28a745;color:white}
 .edit{background:#ffc107}
 .delete{background:#dc3545;color:white}
-.logout{background:#333;color:white;float:left}
+.logout{background:#333;color:white;float:none;margin-bottom:10px}
+
+/* للشاشات الكبيرة */
+@media(min-width:768px){
+.logout{float:left}
+}
+
+.table-container{
+overflow-x:auto;
+}
 
 table{
+min-width:600px;
 width:100%;
 margin-top:20px;
 border-collapse:collapse;
@@ -65,6 +94,7 @@ th,td{
 border:1px solid #ddd;
 padding:8px;
 text-align:center;
+font-size:13px;
 }
 
 th{
@@ -86,7 +116,7 @@ color:white;
 
 <input type="text" id="searchBox" placeholder="بحث عن منتج..." onkeyup="searchProduct()">
 
-<br><br>
+<br>
 
 <div class="grid">
 
@@ -120,12 +150,11 @@ color:white;
 
 <button class="save" onclick="saveProduct()">حفظ المنتج</button>
 
+<div class="table-container">
 <table>
 
 <thead>
-
 <tr>
-
 <th>ID</th>
 <th>المنتج</th>
 <th>المخزون</th>
@@ -133,14 +162,13 @@ color:white;
 <th>الصنف</th>
 <th>تعديل</th>
 <th>حذف</th>
-
 </tr>
-
 </thead>
 
 <tbody id="tableBody"></tbody>
 
 </table>
+</div>
 
 </div>
 
@@ -154,132 +182,87 @@ const supabaseClient = window.supabase.createClient(
 let edit_id=null
 let products=[]
 
-
 // تحميل الأصناف
 async function loadCategories(){
-
 const {data}=await supabaseClient
 .from("categories")
 .select("*")
 .order("description_cat")
 
 let html=""
-
 data.forEach(c=>{
-
 html+=`<option value="${c.id_cat}">${c.description_cat}</option>`
-
 })
 
 document.getElementById("id_cat").innerHTML=html
-
 }
-
 
 // تحميل المنتجات
 async function loadProducts(){
-
 const {data}=await supabaseClient
 .from("products")
 .select("*")
 
 products=data
-
 renderTable(products)
-
 }
-
 
 // عرض الجدول
 function renderTable(list){
-
 let html=""
-
 list.forEach(p=>{
-
 html+=`
-
 <tr>
-
 <td>${p.id_product}</td>
-
 <td>${p.product_name}</td>
-
 <td>${p.qte_in_stock}</td>
-
 <td>${p.seal_price}</td>
-
 <td>${p.id_cat}</td>
-
-<td>
-<button class="edit" onclick="editProduct(${p.id_product})">تعديل</button>
-</td>
-
-<td>
-<button class="delete" onclick="deleteProduct(${p.id_product})">حذف</button>
-</td>
-
-</tr>
-
-`
-
+<td><button class="edit" onclick="editProduct(${p.id_product})">تعديل</button></td>
+<td><button class="delete" onclick="deleteProduct(${p.id_product})">حذف</button></td>
+</tr>`
 })
-
 document.getElementById("tableBody").innerHTML=html
-
 }
-
 
 // حفظ
 async function saveProduct(){
+let payQte = Number(pay_qte.value) || 0
+let piceQte = Number(pice_qte.value) || 0
+let stockCalculated = payQte * piceQte
 
-  // التأكد من القيم الرقمية
-  let payQte = Number(pay_qte.value) || 0
-  let piceQte = Number(pice_qte.value) || 0
-
-  // حساب المخزون تلقائياً
-  let stockCalculated = payQte * piceQte
-
-  let data = {
-    product_name: product_name.value || null,
-    pay_qte: payQte,
-    pice_qte: piceQte,
-    qte_in_stock: stockCalculated,
-    pay_price: Number(pay_price.value) || 0,
-    seal_price: Number(seal_price.value) || 0,
-    pay_date: pay_date.value || null,
-    expare_date: expare_date.value || null,
-    req_id: req_id.value || null,
-    coasts_value: Number(coasts_value.value) || 0,
-    id_cat: Number(id_cat.value) || 1, // اختيار افتراضي
-    p_weight: p_weight.value || null
-  }
-
-  try {
-    if(edit_id == null){
-      const {data:inserted, error} = await supabaseClient
-        .from("products")
-        .insert([data])
-      if(error) throw error
-    } else {
-      const {data:updated, error} = await supabaseClient
-        .from("products")
-        .update(data)
-        .eq("id_product", edit_id)
-      if(error) throw error
-      edit_id = null
-    }
-
-    clearForm()
-    loadProducts()
-  } catch(err){
-    alert("حدث خطأ أثناء الحفظ: " + err.message)
-  }
-
+let data = {
+product_name: product_name.value || null,
+pay_qte: payQte,
+pice_qte: piceQte,
+qte_in_stock: stockCalculated,
+pay_price: Number(pay_price.value) || 0,
+seal_price: Number(seal_price.value) || 0,
+pay_date: pay_date.value || null,
+expare_date: expare_date.value || null,
+req_id: req_id.value || null,
+coasts_value: Number(coasts_value.value) || 0,
+id_cat: Number(id_cat.value) || 1,
+p_weight: p_weight.value || null
 }
+
+try{
+if(edit_id==null){
+await supabaseClient.from("products").insert([data])
+}else{
+await supabaseClient.from("products").update(data).eq("id_product",edit_id)
+edit_id=null
+}
+
+clearForm()
+loadProducts()
+}catch(err){
+alert("خطأ: "+err.message)
+}
+}
+
 // تعديل
 function editProduct(id){
-
 let p=products.find(x=>x.id_product==id)
 
 product_name.value=p.product_name
@@ -296,54 +279,33 @@ id_cat.value=p.id_cat
 p_weight.value=p.p_weight
 
 edit_id=id
-
 }
-
 
 // حذف
 async function deleteProduct(id){
-
 if(!confirm("تأكيد الحذف؟")) return
-
-await supabaseClient
-.from("products")
-.delete()
-.eq("id_product",id)
-
+await supabaseClient.from("products").delete().eq("id_product",id)
 loadProducts()
-
 }
-
 
 // بحث
 function searchProduct(){
-
 let word=searchBox.value.toLowerCase()
-
 let filtered=products.filter(p =>
 p.product_name?.toLowerCase().includes(word)
 )
-
 renderTable(filtered)
-
 }
 
-
-// مسح الحقول
+// مسح
 function clearForm(){
-
 document.querySelectorAll("input").forEach(i=>i.value="")
-
 }
-
 
 // خروج
 function logout(){
-
 window.location.href="index.html"
-
 }
-
 
 loadCategories()
 loadProducts()
