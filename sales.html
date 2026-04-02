@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نظام المبيعات</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,13 +11,14 @@
 
 </head>
 
-<body class="bg-gray-100 p-6">
+<body class="bg-gray-100 p-3 md:p-6">
 
-<div class="max-w-6xl mx-auto bg-white shadow-lg rounded-xl p-6">
+<div class="max-w-6xl mx-auto bg-white shadow-lg rounded-xl p-4 md:p-6">
 
-<h1 class="text-2xl font-bold mb-6 text-center">🛒 صفحة المبيعات</h1>
+<h1 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center">🛒 صفحة المبيعات</h1>
 
-<div class="grid grid-cols-3 gap-4 mb-4">
+<!-- معلومات العميل والبائع وطريقة الدفع -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
 
 <div>
 <label>العميل</label>
@@ -42,30 +43,24 @@
 
 <hr class="my-4">
 
-<h2 class="text-xl mb-3">إضافة منتج</h2>
+<h2 class="text-lg md:text-xl mb-3">إضافة منتج</h2>
 
-<div class="grid grid-cols-4 gap-4">
-
-<select id="productSelect" class="border p-2 rounded"></select>
-
-<input type="number" id="qte" placeholder="الكمية" class="border p-2 rounded">
-
-<input type="number" id="price" placeholder="السعر" class="border p-2 rounded">
-
-<button onclick="addToCart()" class="bg-blue-600 text-white rounded p-2">
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+<select id="productSelect" class="border p-2 rounded w-full"></select>
+<input type="number" id="qte" placeholder="الكمية" class="border p-2 rounded w-full">
+<input type="number" id="price" placeholder="السعر" class="border p-2 rounded w-full">
+<button onclick="addToCart()" class="bg-blue-600 text-white rounded p-2 w-full md:w-auto">
 إضافة للسلة
 </button>
-
 </div>
 
 <hr class="my-4">
 
-<h2 class="text-xl mb-3">سلة المشتريات</h2>
+<h2 class="text-lg md:text-xl mb-3">سلة المشتريات</h2>
 
-<table class="w-full border">
-
+<div class="overflow-x-auto">
+<table class="w-full border text-center min-w-[400px]">
 <thead class="bg-gray-200">
-
 <tr>
 <th>المنتج</th>
 <th>الكمية</th>
@@ -73,27 +68,23 @@
 <th>الإجمالي</th>
 <th>حذف</th>
 </tr>
-
 </thead>
-
 <tbody id="cartTable"></tbody>
-
 </table>
-
-<div class="text-left mt-4 text-xl">
-
-الإجمالي: <span id="total">0</span>
-
 </div>
 
-<button onclick="saveInvoice()" class="mt-6 bg-green-600 text-white p-3 rounded w-full">
+<div class="text-left mt-4 text-lg md:text-xl">
+الإجمالي: <span id="total">0</span>
+</div>
+
+<button onclick="saveInvoice()" class="mt-6 bg-green-600 text-white p-3 rounded w-full md:w-auto">
 💾 حفظ الفاتورة
 </button>
 
 </div>
 
 <script>
-
+// إعداد Supabase
 const supabase = window.supabase.createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
@@ -103,243 +94,114 @@ let cart=[]
 let products=[]
 
 async function loadCustomers(){
+    const { data, error } = await supabase.from('customers').select('*')
+    if(error){ alert(error.message); return }
 
-const { data, error } = await supabase
-.from('customers')
-.select('*')
-
-if(error){
-alert(error.message)
-return
-}
-
-let select=document.getElementById("customerSelect")
-select.innerHTML=""
-
-data.forEach(c=>{
-
-let op=document.createElement("option")
-
-op.value=c.id_customer
-op.text=c.first_name
-
-select.appendChild(op)
-
-})
-
+    let select=document.getElementById("customerSelect")
+    select.innerHTML=""
+    data.forEach(c=>{
+        let op=document.createElement("option")
+        op.value=c.id_customer
+        op.text=c.first_name
+        select.appendChild(op)
+    })
 }
 
 async function loadProducts(){
+    const { data, error } = await supabase.from('products').select('*')
+    if(error){ alert(error.message); return }
 
-const { data, error } = await supabase
-.from('products')
-.select('*')
-
-if(error){
-alert(error.message)
-return
-}
-
-products=data
-
-let select=document.getElementById("productSelect")
-select.innerHTML=""
-
-data.forEach(p=>{
-
-let op=document.createElement("option")
-
-op.value=p.id_product
-op.text=p.product_name
-
-select.appendChild(op)
-
-})
-
+    products=data
+    let select=document.getElementById("productSelect")
+    select.innerHTML=""
+    data.forEach(p=>{
+        let op=document.createElement("option")
+        op.value=p.id_product
+        op.text=p.product_name
+        select.appendChild(op)
+    })
 }
 
 function addToCart(){
+    let productId=document.getElementById("productSelect").value
+    let qte=parseFloat(document.getElementById("qte").value)
+    let price=parseFloat(document.getElementById("price").value)
 
-let productId=document.getElementById("productSelect").value
-let qte=parseFloat(document.getElementById("qte").value)
-let price=parseFloat(document.getElementById("price").value)
+    if(!qte || qte<=0){ alert("ادخل الكمية"); return }
+    if(!price || price<=0){ alert("ادخل السعر"); return }
 
-if(!qte || qte<=0){
-alert("ادخل الكمية")
-return
-}
+    let product=products.find(p=>p.id_product==productId)
+    if(!product){ alert("المنتج غير موجود"); return }
+    if(qte > product.qte_in_stock){ alert("المخزون غير كاف"); return }
 
-if(!price || price<=0){
-alert("ادخل السعر")
-return
-}
-
-let product=products.find(p=>p.id_product==productId)
-
-if(!product){
-alert("المنتج غير موجود")
-return
-}
-
-if(qte > product.qte_in_stock){
-alert("المخزون غير كاف")
-return
-}
-
-let total=qte*price
-
-cart.push({
-
-id_product:productId,
-product_name:product.product_name,
-qte:qte,
-price:price,
-total:total
-
-})
-
-renderCart()
-
+    let total=qte*price
+    cart.push({ id_product:productId, product_name:product.product_name, qte:qte, price:price, total:total })
+    renderCart()
 }
 
 function renderCart(){
+    let table=document.getElementById("cartTable")
+    table.innerHTML=""
+    let sum=0
 
-let table=document.getElementById("cartTable")
-
-table.innerHTML=""
-
-let sum=0
-
-cart.forEach((item,index)=>{
-
-sum+=item.total
-
-table.innerHTML+=`
-
+    cart.forEach((item,index)=>{
+        sum+=item.total
+        table.innerHTML+=`
 <tr class="border">
-
 <td>${item.product_name}</td>
 <td>${item.qte}</td>
 <td>${item.price}</td>
 <td>${item.total}</td>
-
 <td>
-<button onclick="removeItem(${index})" class="bg-red-500 text-white px-2 rounded">
-X
-</button>
+<button onclick="removeItem(${index})" class="bg-red-500 text-white px-2 rounded">X</button>
 </td>
-
 </tr>
-
 `
+    })
 
-})
-
-document.getElementById("total").innerText=sum
-
+    document.getElementById("total").innerText=sum
 }
 
-function removeItem(index){
-
-cart.splice(index,1)
-
-renderCart()
-
-}
+function removeItem(index){ cart.splice(index,1); renderCart() }
 
 async function saveInvoice(){
+    if(cart.length==0){ alert("السلة فارغة"); return }
 
-if(cart.length==0){
-alert("السلة فارغة")
-return
-}
+    let customer=document.getElementById("customerSelect").value
+    let payMethod=document.getElementById("payMethod").value
+    let sealMan=document.getElementById("sealMan").value
 
-let customer=document.getElementById("customerSelect").value
-let payMethod=document.getElementById("payMethod").value
-let sealMan=document.getElementById("sealMan").value
+    const {data:order,error:orderError}=await supabase.from("orders_o").insert({
+        customer_id:customer, date_order:new Date(), pay_method:payMethod, seal_man:sealMan
+    }).select().single()
 
-const {data:order,error:orderError}=await supabase
-.from("orders_o")
-.insert({
+    if(orderError){ alert(orderError.message); return }
 
-customer_id:customer,
-date_order:new Date(),
-pay_method:payMethod,
-seal_man:sealMan
+    let orderId=order.id_order
+    for(let item of cart){
+        const {error:detailError}=await supabase.from("orders_details").insert({
+            id_product:item.id_product, id_order:orderId,
+            qte:item.qte, price:item.price, amount:item.total, total_amount:item.total,
+            id_customer:customer, date_order:new Date(), pay_method:payMethod, seal_man:sealMan
+        })
+        if(detailError){ alert(detailError.message); return }
 
-})
-.select()
-.single()
+        const {data:prod,error:stockError1}=await supabase.from("products").select("qte_in_stock").eq("id_product",item.id_product).single()
+        if(stockError1){ alert(stockError1.message); return }
 
-if(orderError){
-alert(orderError.message)
-return
-}
+        let newStock=Number(prod.qte_in_stock)-Number(item.qte)
+        const {error:stockError2}=await supabase.from("products").update({qte_in_stock:newStock}).eq("id_product",item.id_product)
+        if(stockError2){ alert(stockError2.message); return }
+    }
 
-let orderId=order.id_order
-
-for(let item of cart){
-
-const {error:detailError}=await supabase
-.from("orders_details")
-.insert({
-
-id_product:item.id_product,
-id_order:orderId,
-qte:item.qte,
-price:item.price,
-amount:item.total,
-total_amount:item.total,
-id_customer:customer,
-date_order:new Date(),
-pay_method:payMethod,
-seal_man:sealMan
-
-})
-
-if(detailError){
-alert(detailError.message)
-return
-}
-
-const {data:prod,error:stockError1}=await supabase
-.from("products")
-.select("qte_in_stock")
-.eq("id_product",item.id_product)
-.single()
-
-if(stockError1){
-alert(stockError1.message)
-return
-}
-
-let newStock=Number(prod.qte_in_stock)-Number(item.qte)
-
-const {error:stockError2}=await supabase
-.from("products")
-.update({qte_in_stock:newStock})
-.eq("id_product",item.id_product)
-
-if(stockError2){
-alert(stockError2.message)
-return
-}
-
-}
-
-alert("تم حفظ الفاتورة وتحديث المخزون")
-
-cart=[]
-
-renderCart()
-
-loadProducts()
-
+    alert("تم حفظ الفاتورة وتحديث المخزون")
+    cart=[]
+    renderCart()
+    loadProducts()
 }
 
 loadCustomers()
 loadProducts()
-
 </script>
 
 </body>
