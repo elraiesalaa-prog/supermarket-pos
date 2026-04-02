@@ -3,6 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تفاصيل المنتجات</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,18 +12,18 @@
 
 </head>
 
-<body class="bg-blue-50 p-6">
+<body class="bg-blue-50 p-3 md:p-6">
 
-<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-4 md:p-6">
 
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
+<h1 class="text-xl md:text-3xl font-bold text-center text-blue-700 mb-4 md:mb-6">
 تفاصيل المنتجات
 </h1>
 
 <!-- زر الطباعة -->
-<div class="mb-4 text-left">
+<div class="mb-4 flex justify-start">
 <button onclick="printPDF()" 
-class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md">
+class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-5 md:py-2 rounded-lg shadow-md w-full md:w-auto">
 🖨️ طباعة PDF
 </button>
 </div>
@@ -31,12 +32,12 @@ class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md
 <div class="mb-4">
 <input id="searchInput" type="text"
 placeholder="بحث باسم المنتج..."
-class="w-full border px-3 py-2 rounded">
+class="w-full border px-3 py-2 rounded text-sm md:text-base">
 </div>
 
 <!-- الجدول -->
-<div class="overflow-auto">
-<table class="w-full border text-center">
+<div class="overflow-x-auto">
+<table class="min-w-[800px] w-full border text-center text-sm md:text-base">
 
 <thead class="bg-blue-600 text-white">
 <tr>
@@ -60,14 +61,14 @@ class="w-full border px-3 py-2 rounded">
 
 <script>
 
-// ================== إعداد Supabase ==================
+// ================== Supabase ==================
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let reportData = [];
 
-// ================== تحميل البيانات ==================
+// تحميل البيانات
 async function loadReport() {
 
 const { data, error } = await supabaseClient
@@ -85,7 +86,7 @@ renderTable();
 
 }
 
-// ================== عرض البيانات ==================
+// عرض البيانات
 function renderTable() {
 
 const search = document.getElementById("searchInput").value.toLowerCase();
@@ -119,13 +120,12 @@ document.getElementById("tableBody").innerHTML = table;
 
 }
 
-// ================== البحث ==================
+// البحث
 document.getElementById("searchInput")
 .addEventListener("input", renderTable);
 
-// تشغيل التحميل
+// تشغيل
 loadReport();
-
 
 // ================== PDF ==================
 window.printPDF = async function () {
@@ -139,27 +139,23 @@ alert("خطأ في تحميل البيانات");
 return;
 }
 
-// الحاوية
 const container = document.createElement("div");
 container.setAttribute("dir", "rtl");
 container.style.fontFamily = "Tahoma";
 container.style.padding = "10px";
 
-// العنوان
 const title = document.createElement("h2");
 title.innerText = "تقرير المنتجات";
 title.style.textAlign = "center";
 title.style.marginBottom = "15px";
 container.appendChild(title);
 
-// الجدول
 const table = document.createElement("table");
 table.style.width = "100%";
 table.style.borderCollapse = "collapse";
 table.style.textAlign = "center";
 table.style.fontSize = "12px";
 
-// الهيدر
 const headers = [
 "اسم المنتج","عدد القطع","كمية الشراء","تكلفة المنتج",
 "تكلفة الوحدة","سعر بيع الوحدة","ربح الوحدة","ربح المنتج"
@@ -169,19 +165,13 @@ let html = "<thead><tr>";
 
 headers.forEach(h => {
 html += `
-<th style="
-border:1px solid #000;
-padding:6px;
-background:#007bff;
-color:#fff;
-font-weight:bold;">
+<th style="border:1px solid #000;padding:6px;background:#007bff;color:#fff;">
 ${h}
 </th>`;
 });
 
 html += "</tr></thead><tbody>";
 
-// البيانات
 data.forEach(r => {
 html += `
 <tr>
@@ -200,11 +190,9 @@ ${Number(r["ربح المنتج"] || 0).toFixed(2)}
 });
 
 html += "</tbody>";
-
 table.innerHTML = html;
 container.appendChild(table);
 
-// إجمالي الأرباح
 let total = data.reduce((sum, r) => sum + Number(r["ربح المنتج"] || 0), 0);
 
 const totalDiv = document.createElement("div");
@@ -215,17 +203,13 @@ totalDiv.style.fontWeight = "bold";
 
 container.appendChild(totalDiv);
 
-// إعدادات PDF
-const opt = {
+html2pdf().set({
 margin: 0.5,
 filename: "تقرير_المنتجات.pdf",
 image: { type: "jpeg", quality: 1 },
 html2canvas: { scale: 3 },
 jsPDF: { unit: "cm", format: "a4", orientation: "landscape" }
-};
-
-// إنشاء PDF
-html2pdf().set(opt).from(container).save();
+}).from(container).save();
 
 };
 
