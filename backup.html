@@ -6,12 +6,47 @@
 <title>إنشاء نسخة احتياطية متقدمة</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  body { font-family: Arial, sans-serif; padding: 20px; margin:0; background: #f5f5f5; display:flex; flex-direction:column; align-items:center; }
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    margin:0;
+    background: #f5f5f5;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
   h1 { margin-bottom: 20px; text-align:center; }
-  button { padding: 12px 24px; font-size: 18px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 8px; width: 90%; max-width: 400px; margin-bottom:10px; }
+  button {
+    padding: 12px 24px;
+    font-size: 18px;
+    cursor: pointer;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 400px;
+    margin-bottom:10px;
+  }
   #status { margin-top: 10px; font-weight: bold; text-align:center; }
-  #progressContainer { width: 90%; max-width: 400px; background: #ddd; border-radius: 8px; margin-top: 15px; height: 25px; overflow: hidden; }
-  #progressBar { width: 0%; height: 25px; background: #4CAF50; text-align: center; color: white; line-height: 25px; font-weight:bold; }
+  #progressContainer {
+    width: 90%;
+    max-width: 400px;
+    background: #ddd;
+    border-radius: 8px;
+    margin-top: 15px;
+    height: 25px;
+    overflow: hidden;
+  }
+  #progressBar {
+    width: 0%;
+    height: 25px;
+    background: #4CAF50;
+    text-align: center;
+    color: white;
+    line-height: 25px;
+    font-weight:bold;
+  }
 </style>
 </head>
 <body>
@@ -24,12 +59,15 @@
 </div>
 
 <script>
-  // إعداد Supabase Storage (اختياري للتخزين الدائم)
-  const supabaseUrl = "https://YOUR_SUPABASE_PROJECT.supabase.co";
-  const supabaseKey = "YOUR_SUPABASE_ANON_KEY";
-  const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-  const storageBucket = "backups"; // تأكد من إنشاء Bucket بنفس الاسم
+  // تعريف supabase مرة واحدة فقط لتجنب أي تكرار
+  if (!window.supabaseClient) {
+    const supabaseUrl = "https://YOUR_SUPABASE_PROJECT.supabase.co";
+    const supabaseKey = "YOUR_SUPABASE_ANON_KEY";
+    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  }
+  const supabase = window.supabaseClient;
 
+  const storageBucket = "backups"; // تأكد من إنشاء Bucket بنفس الاسم
   const backupBtn = document.getElementById('backupBtn');
   const status = document.getElementById('status');
   const progressBar = document.getElementById('progressBar');
@@ -41,7 +79,10 @@
 
     try {
       const response = await fetch('https://YOUR_PROJECT.functions.supabase.co/backup', {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          "Content-Type": "application/json"
+        }
       });
 
       if (!response.ok) throw new Error('فشل إنشاء النسخة الاحتياطية');
@@ -57,7 +98,6 @@
         chunks.push(value);
         receivedLength += value.length;
 
-        // تحديث شريط التقدم
         if (contentLength) {
           let percent = Math.floor((receivedLength / contentLength) * 100);
           let mb = (receivedLength / (1024*1024)).toFixed(2);
