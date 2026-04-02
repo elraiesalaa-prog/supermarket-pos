@@ -1,84 +1,105 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إدارة المستخدمين</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-
 body{
-font-family:Arial;
-padding:30px;
-background:#f4f4f4;
+  font-family:Arial;
+  padding:15px;
+  background:#f4f4f4;
+  margin:0;
 }
-
-input,select{
-padding:7px;
-margin:4px;
+input, select, button{
+  padding:7px;
+  margin:4px 0;
+  width:100%;
+  box-sizing:border-box;
 }
-
 button{
-padding:7px 12px;
-cursor:pointer;
+  cursor:pointer;
 }
-
 table{
-border-collapse:collapse;
-width:100%;
-background:white;
-margin-top:20px;
+  border-collapse:collapse;
+  width:100%;
+  background:white;
+  margin-top:15px;
+  display:block;
+  overflow-x:auto;
 }
-
 th,td{
-border:1px solid #ccc;
-padding:8px;
-text-align:center;
+  border:1px solid #ccc;
+  padding:8px;
+  text-align:center;
+  white-space:nowrap;
 }
-
 th{
-background:#eee;
+  background:#eee;
 }
-
+.container{
+  max-width:1000px;
+  margin:auto;
+}
+.add-user, .actions{
+  margin-bottom:15px;
+}
+.add-user input, .add-user select{
+  margin-bottom:8px;
+}
+.msg{
+  color:green;
+  margin-top:5px;
+}
+@media(max-width:600px){
+  body{
+    padding:10px;
+  }
+  .add-user input, .add-user select, .add-user button{
+    font-size:14px;
+  }
+  table{
+    font-size:12px;
+  }
+  .actions button{
+    font-size:12px;
+    padding:5px;
+  }
+}
 </style>
 
 </head>
 
 <body>
-
+<div class="container">
 <h2 align="center">إدارة المستخدمين</h2>
 
-<h3 align="right">إضافة مستخدم</h3>
-
+<div class="add-user">
+<h3>إضافة مستخدم</h3>
 <input id="username" placeholder="اسم المستخدم">
 <input id="pwd" placeholder="كلمة المرور">
 <input id="fullname" placeholder="الاسم الكامل">
-
 <select id="usertype">
 <option value="مدير">مدير</option>
 <option value="تقني حاسوب">تقني حاسوب</option>
 <option value="مشرف">مشرف</option>
 <option value="بائع">بائع</option>
 </select>
-
 <button onclick="addUser()">إضافة</button>
+<p id="msg" class="msg"></p>
+</div>
 
-<p id="msg"></p>
-
-<hr>
-
+<div class="actions">
 <input id="search" placeholder="بحث..." onkeyup="searchUsers()">
-
 <button onclick="exportExcel()">Excel</button>
 <button onclick="printUsersPDF()">PDF</button>
+</div>
 
 <table>
-
 <thead>
 <tr>
 <th>ID</th>
@@ -90,63 +111,35 @@ background:#eee;
 <th>حذف</th>
 </tr>
 </thead>
-
 <tbody id="usersTable"></tbody>
-
 </table>
+</div>
 
 <script>
-
 const supabaseUrl="https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey="sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-
 const client=window.supabase.createClient(supabaseUrl,supabaseKey);
-
 let users=[];
 
 loadUsers();
-
 async function loadUsers(){
-
-const {data,error}=await client
-.from("tb_users")
-.select("*")
-.order("id",{ascending:true});
-
-if(error){
-console.log(error);
-return;
-}
-
-users=data;
-drawTable(users);
-
+  const {data,error}=await client.from("tb_users").select("*").order("id",{ascending:true});
+  if(error){ console.log(error); return; }
+  users=data;
+  drawTable(users);
 }
 
 function drawTable(data){
-
-let table="";
-
-data.forEach(user=>{
-
-table+=`
+  let table="";
+  data.forEach(user=>{
+    table+=`
 <tr>
-
 <td>${user.id}</td>
-
-<td contenteditable="true" id="u${user.id}">
-${user.username || ""}
-</td>
-
+<td contenteditable="true" id="u${user.id}">${user.username||""}</td>
 <td style="display:flex;gap:5px;justify-content:center;align-items:center;">
-
-<input type="password" id="p${user.id}" value="${user.pwd}" 
-style="border:none;text-align:center;width:80%;">
-
+<input type="password" id="p${user.id}" value="${user.pwd}" style="border:none;text-align:center;width:70%;">
 <button onclick="togglePassword('p${user.id}')">👁️</button>
-
 </td>
-
 <td>
 <select id="t${user.id}">
 <option ${user.usertype=="مدير"?"selected":""}>مدير</option>
@@ -155,162 +148,77 @@ style="border:none;text-align:center;width:80%;">
 <option ${user.usertype=="بائع"?"selected":""}>بائع</option>
 </select>
 </td>
-
-<td contenteditable="true" id="f${user.id}">
-${user.fullname || ""}
-</td>
-
-<td>
-<button onclick="updateUser('${user.id}')">حفظ</button>
-</td>
-
-<td>
-<button onclick="deleteUser('${user.id}')">حذف</button>
-</td>
-
+<td contenteditable="true" id="f${user.id}">${user.fullname||""}</td>
+<td><button onclick="updateUser('${user.id}')">حفظ</button></td>
+<td><button onclick="deleteUser('${user.id}')">حذف</button></td>
 </tr>
 `;
-
-});
-
-document.getElementById("usersTable").innerHTML=table;
-
+  });
+  document.getElementById("usersTable").innerHTML=table;
 }
 
 function togglePassword(id){
-
-let input=document.getElementById(id);
-
-if(input.type==="password"){
-input.type="text";
-}else{
-input.type="password";
-}
-
+  let input=document.getElementById(id);
+  input.type = input.type==="password"?"text":"password";
 }
 
 async function addUser(){
-
-let username=document.getElementById("username").value;
-let pwd=document.getElementById("pwd").value;
-let fullname=document.getElementById("fullname").value;
-let usertype=document.getElementById("usertype").value;
-
-const {error}=await client
-.from("tb_users")
-.insert([{
-username,
-pwd,
-fullname,
-usertype
-}]);
-
-if(error){
-document.getElementById("msg").innerHTML=error.message;
-}else{
-document.getElementById("msg").innerHTML="تمت إضافة المستخدم";
-loadUsers();
-}
-
+  let username=document.getElementById("username").value;
+  let pwd=document.getElementById("pwd").value;
+  let fullname=document.getElementById("fullname").value;
+  let usertype=document.getElementById("usertype").value;
+  const {error}=await client.from("tb_users").insert([{username,pwd,fullname,usertype}]);
+  if(error){ document.getElementById("msg").innerHTML=error.message; } 
+  else { document.getElementById("msg").innerHTML="تمت إضافة المستخدم"; loadUsers(); }
 }
 
 async function updateUser(id){
-
-let username=document.getElementById("u"+id).innerText;
-let pwd=document.getElementById("p"+id).value;
-let fullname=document.getElementById("f"+id).innerText;
-let usertype=document.getElementById("t"+id).value;
-
-await client
-.from("tb_users")
-.update({
-username,
-pwd,
-fullname,
-usertype
-})
-.eq("id",id);
-
-loadUsers();
-
+  let username=document.getElementById("u"+id).innerText;
+  let pwd=document.getElementById("p"+id).value;
+  let fullname=document.getElementById("f"+id).innerText;
+  let usertype=document.getElementById("t"+id).value;
+  await client.from("tb_users").update({username,pwd,fullname,usertype}).eq("id",id);
+  loadUsers();
 }
 
 async function deleteUser(id){
-
-await client
-.from("tb_users")
-.delete()
-.eq("id",id);
-
-loadUsers();
-
+  await client.from("tb_users").delete().eq("id",id);
+  loadUsers();
 }
 
 function searchUsers(){
-
-let key=document.getElementById("search").value.toLowerCase();
-
-let filtered=users.filter(u=>
-(u.username || "").toLowerCase().includes(key) ||
-(u.fullname || "").toLowerCase().includes(key)
-);
-
-drawTable(filtered);
-
+  let key=document.getElementById("search").value.toLowerCase();
+  let filtered=users.filter(u=>(u.username||"").toLowerCase().includes(key) || (u.fullname||"").toLowerCase().includes(key));
+  drawTable(filtered);
 }
 
 function exportExcel(){
-
-let ws=XLSX.utils.json_to_sheet(users);
-let wb=XLSX.utils.book_new();
-
-XLSX.utils.book_append_sheet(wb,ws,"Users");
-
-XLSX.writeFile(wb,"users.xlsx");
-
+  let ws=XLSX.utils.json_to_sheet(users);
+  let wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Users");
+  XLSX.writeFile(wb,"users.xlsx");
 }
 
-// ✅ PDF عربي بدون أعمدة تعديل/حذف
 function printUsersPDF(){
-
-let element=document.createElement("div");
-
-let html=`
-<h2 style="text-align:center;">كشف المستخدمين</h2>
-
+  let element=document.createElement("div");
+  let html=`<h2 style="text-align:center;">كشف المستخدمين</h2>
 <table border="1" style="width:100%;border-collapse:collapse;text-align:center;direction:rtl">
-
 <tr>
-<th>ID</th>
-<th>اسم المستخدم</th>
-<th>كلمة المرور</th>
-<th>نوع المستخدم</th>
-<th>الاسم الكامل</th>
-</tr>
-`;
-
-users.forEach(u=>{
-html+=`
-<tr>
+<th>ID</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>نوع المستخدم</th><th>الاسم الكامل</th>
+</tr>`;
+  users.forEach(u=>{
+    html+=`<tr>
 <td>${u.id}</td>
-<td>${u.username || ""}</td>
+<td>${u.username||""}</td>
 <td>******</td>
 <td>${u.usertype}</td>
-<td>${u.fullname || ""}</td>
-</tr>
-`;
-});
-
-html+=`</table>`;
-
-element.innerHTML=html;
-
-html2pdf().from(element).save("users.pdf");
-
+<td>${u.fullname||""}</td>
+</tr>`;
+  });
+  html+=`</table>`;
+  element.innerHTML=html;
+  html2pdf().from(element).save("users.pdf");
 }
-
 </script>
-
 </body>
-
 </html>
