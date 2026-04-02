@@ -1,92 +1,60 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إدارة الموردين</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+<style>
+body{ margin:0; font-family:Arial, sans-serif; background: linear-gradient(to right, #ebf8ff, #dbeafe); }
+table th, table td{ white-space: nowrap; }
+</style>
 </head>
 
-<body class="bg-gradient-to-r from-blue-50 to-blue-100 min-h-screen p-6">
+<body class="p-4">
 
-<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-4 flex flex-col gap-4">
 
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
-إدارة الموردين
-</h1>
+<h1 class="text-3xl font-bold text-center text-blue-700 mb-4">إدارة الموردين</h1>
 
-<div class="container">
-
-<button onclick="history.back()" class="bg-gray-600 text-white p-4 rounded shadow">
-رجوع
-</button>
-
-<button onclick="logout()" class="bg-gray-600 text-white p-4 rounded shadow">
-خروج
-</button>
+<!-- الأزرار الرئيسية -->
+<div class="flex flex-wrap gap-2 mb-4">
+<button onclick="history.back()" class="bg-gray-600 text-white p-3 rounded flex-1 sm:flex-auto">رجوع</button>
+<button onclick="logout()" class="bg-gray-600 text-white p-3 rounded flex-1 sm:flex-auto">خروج</button>
+</div>
 
 <!-- البحث -->
-<div class="mb-4 flex gap-2">
-
-<input id="search"
-placeholder="بحث باسم المورد أو الشركة"
-class="border p-2 rounded w-full">
-
-<button onclick="renderTable()"
-class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded">
-بحث
-</button>
-
-<button onclick="printImportersPDF()"
-class="bg-red-600 text-white px-5 py-2 rounded">
-PDF
-</button>
-
+<div class="flex flex-col sm:flex-row gap-2 mb-4">
+<input id="search" placeholder="بحث باسم المورد أو الشركة" class="border p-2 rounded flex-1 w-full">
+<button onclick="renderTable()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full sm:w-auto">بحث</button>
+<button onclick="printImportersPDF()" class="bg-red-600 text-white px-4 py-2 rounded w-full sm:w-auto">PDF</button>
 </div>
 
 <!-- نموذج الإدخال -->
-<div class="grid grid-cols-2 gap-4 mb-6">
-
-<input id="name" placeholder="اسم المورد" class="border p-2 rounded">
-<input id="comp" placeholder="الشركة" class="border p-2 rounded">
-<input id="tel" placeholder="الهاتف" class="border p-2 rounded">
-<input id="whatsapp" placeholder="واتساب" class="border p-2 rounded">
-<input id="email" placeholder="البريد الإلكتروني" class="border p-2 rounded">
-<input type="file" id="image" class="border p-2 rounded">
-
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+<input id="name" placeholder="اسم المورد" class="border p-2 rounded w-full">
+<input id="comp" placeholder="الشركة" class="border p-2 rounded w-full">
+<input id="tel" placeholder="الهاتف" class="border p-2 rounded w-full">
+<input id="whatsapp" placeholder="واتساب" class="border p-2 rounded w-full">
+<input id="email" placeholder="البريد الإلكتروني" class="border p-2 rounded w-full">
+<input type="file" id="image" class="border p-2 rounded w-full">
 </div>
 
-<!-- الأزرار -->
-<div class="flex gap-3 mb-6">
-
-<button onclick="addImporter()"
-class="bg-green-600 text-white px-5 py-2 rounded">إضافة</button>
-
-<button onclick="updateImporter()"
-class="bg-yellow-500 text-white px-5 py-2 rounded">حفظ التعديل</button>
-
-<button onclick="clearForm()"
-class="bg-gray-500 text-white px-5 py-2 rounded">جديد</button>
-
-<a href="index.html"
-class="bg-blue-600 text-white px-5 py-2 rounded">رجوع</a>
-
+<!-- أزرار العمليات -->
+<div class="flex flex-wrap gap-2 mb-4">
+<button onclick="addImporter()" class="bg-green-600 text-white px-5 py-2 rounded flex-1 sm:flex-auto">إضافة</button>
+<button onclick="updateImporter()" class="bg-yellow-500 text-white px-5 py-2 rounded flex-1 sm:flex-auto">حفظ التعديل</button>
+<button onclick="clearForm()" class="bg-gray-500 text-white px-5 py-2 rounded flex-1 sm:flex-auto">جديد</button>
 </div>
 
 <!-- جدول الموردين -->
-
-<div class="overflow-auto max-h-[400px] border rounded">
-
-<table class="w-full border text-center min-w-[900px]">
-
+<div class="overflow-x-auto border rounded">
+<table class="w-full min-w-[900px] text-center">
 <thead class="bg-blue-600 text-white sticky top-0">
-
 <tr>
 <th>الصورة</th>
 <th>رقم المورد</th>
@@ -100,67 +68,33 @@ class="bg-blue-600 text-white px-5 py-2 rounded">رجوع</a>
 <th>تعديل</th>
 <th>حذف</th>
 </tr>
-
 </thead>
-
 <tbody id="tableBody"></tbody>
-
 </table>
-
 </div>
 
 </div>
 
 <script>
-
 const supabaseUrl="https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey="sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-
 const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
-
-let data=[];
-let editID=null;
-
-loadImporters();
+let data=[], editID=null;
 
 async function loadImporters(){
-
-const {data:rows,error}=await supabaseClient
-.from("importer")
-.select("*")
-.order("import_id",{ascending:false});
-
-if(error){
-alert(error.message);
-return;
-}
-
+const {data:rows,error}=await supabaseClient.from("importer").select("*").order("import_id",{ascending:false});
+if(error){ alert(error.message); return; }
 data=rows || [];
 renderTable();
-
 }
 
 function renderTable(){
-
-let search=(document.getElementById("search").value || "").toLowerCase();
-
-let filtered=data.filter(r=>
-(r.name||"").toLowerCase().includes(search) ||
-(r.comp||"").toLowerCase().includes(search)
-);
-
+let search=(document.getElementById("search").value||"").toLowerCase();
+let filtered=data.filter(r=>(r.name||"").toLowerCase().includes(search) || (r.comp||"").toLowerCase().includes(search));
 let table="";
-
 filtered.forEach(row=>{
-
-let img="";
-
-if(row.import_image){
-img=`<img src="data:image/png;base64,${row.import_image}" class="w-12 h-12 rounded-full mx-auto">`;
-}
-
-table+=`
-<tr class="border hover:bg-gray-50">
+let img=row.import_image?`<img src="data:image/png;base64,${row.import_image}" class="w-12 h-12 rounded-full mx-auto">`:"";
+table+=`<tr class="border hover:bg-gray-50">
 <td>${img}</td>
 <td>${row.import_id}</td>
 <td>${row.name||""}</td>
@@ -168,81 +102,32 @@ table+=`
 <td>${row.tel||""}</td>
 <td>${row.whatsapp||""}</td>
 <td>${row.email||""}</td>
-
 <td><a href="tel:${row.tel}" class="bg-green-500 text-white px-2 py-1 rounded">📞</a></td>
 <td><a href="https://wa.me/${row.whatsapp}" target="_blank" class="bg-green-600 text-white px-2 py-1 rounded">💬</a></td>
-
 <td><button onclick="editRow(${row.import_id})" class="bg-yellow-400 px-3 py-1 rounded">تعديل</button></td>
 <td><button onclick="deleteRow(${row.import_id})" class="bg-red-600 text-white px-3 py-1 rounded">حذف</button></td>
-</tr>
-`;
+</tr>`;
 });
-
 document.getElementById("tableBody").innerHTML=table;
-
 }
 
-// ✅ طباعة PDF منظمة
 function printImportersPDF(){
-
 let element=document.createElement("div");
-
-let html=`
-<div style="direction:rtl;font-family:Arial;padding:10px">
-
-<h2 style="text-align:center;margin-bottom:20px;">
-كشف الموردين
-</h2>
-
-<table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">
-
-<tr style="background:#2c3e50;color:white">
-<th style="border:1px solid #000;padding:6px;">الصورة</th>
-<th style="border:1px solid #000;padding:6px;">رقم المورد</th>
-<th style="border:1px solid #000;padding:6px;">الاسم</th>
-<th style="border:1px solid #000;padding:6px;">الشركة</th>
-<th style="border:1px solid #000;padding:6px;">الهاتف</th>
-<th style="border:1px solid #000;padding:6px;">واتساب</th>
-<th style="border:1px solid #000;padding:6px;">البريد</th>
-</tr>
-`;
-
+let html=`<div style="direction:rtl;font-family:Arial;padding:10px"><h2 style="text-align:center;margin-bottom:20px;">كشف الموردين</h2><table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px"><tr style="background:#2c3e50;color:white"><th style="border:1px solid #000;padding:6px;">الصورة</th><th style="border:1px solid #000;padding:6px;">رقم المورد</th><th style="border:1px solid #000;padding:6px;">الاسم</th><th style="border:1px solid #000;padding:6px;">الشركة</th><th style="border:1px solid #000;padding:6px;">الهاتف</th><th style="border:1px solid #000;padding:6px;">واتساب</th><th style="border:1px solid #000;padding:6px;">البريد</th></tr>`;
 data.forEach(r=>{
-
-let img="";
-
-if(r.import_image){
-img=`<img src="data:image/png;base64,${r.import_image}" style="width:35px;height:35px;border-radius:50%">`;
-}
-
-html+=`
-<tr>
-<td style="border:1px solid #000;padding:5px;">${img}</td>
-<td style="border:1px solid #000;padding:5px;">${r.import_id}</td>
-<td style="border:1px solid #000;padding:5px;">${r.name||""}</td>
-<td style="border:1px solid #000;padding:5px;">${r.comp||""}</td>
-<td style="border:1px solid #000;padding:5px;">${r.tel||""}</td>
-<td style="border:1px solid #000;padding:5px;">${r.whatsapp||""}</td>
-<td style="border:1px solid #000;padding:5px;">${r.email||""}</td>
-</tr>
-`;
+let img=r.import_image?`<img src="data:image/png;base64,${r.import_image}" style="width:35px;height:35px;border-radius:50%">`:"";
+html+=`<tr><td style="border:1px solid #000;padding:5px;">${img}</td><td style="border:1px solid #000;padding:5px;">${r.import_id}</td><td style="border:1px solid #000;padding:5px;">${r.name||""}</td><td style="border:1px solid #000;padding:5px;">${r.comp||""}</td><td style="border:1px solid #000;padding:5px;">${r.tel||""}</td><td style="border:1px solid #000;padding:5px;">${r.whatsapp||""}</td><td style="border:1px solid #000;padding:5px;">${r.email||""}</td></tr>`;
 });
-
 html+=`</table></div>`;
-
 element.innerHTML=html;
-
-html2pdf().set({
-margin:5,
-filename:"importers.pdf",
-html2canvas:{scale:2},
-jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
-}).from(element).save();
-
+html2pdf().set({margin:5,filename:"importers.pdf",html2canvas:{scale:2},jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}}).from(element).save();
 }
 
-document.getElementById("search").addEventListener("input",renderTable);
+function logout(){ localStorage.removeItem("user"); localStorage.removeItem("role"); window.location="index.html"; }
 
+document.getElementById("search").addEventListener("input", renderTable);
+
+loadImporters();
 </script>
 
 </body>
