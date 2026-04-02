@@ -3,33 +3,74 @@
 
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تقرير القروض</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-gray-100 p-6">
+<body class="bg-gray-100 p-3 md:p-6">
 
-<div class="max-w-7xl mx-auto bg-white shadow-lg rounded-lg p-6">
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">تقرير القروض</h1>
+<div class="max-w-7xl mx-auto bg-white shadow-lg rounded-lg p-4 md:p-6">
 
-<div class="flex gap-3 mb-6">
-<input id="search" placeholder="بحث باسم العميل" class="border p-2 rounded w-full">
-<button onclick="renderTable()" class="bg-green-600 text-white px-5 py-2 rounded">بحث</button>
-<button onclick="printLoansPDF()" class="bg-blue-600 text-white px-5 py-2 rounded">طباعة التقرير</button>
-<a href="index.html" class="bg-gray-600 text-white px-5 py-2 rounded">رجوع</a>
+<h1 class="text-xl md:text-3xl font-bold text-center text-blue-700 mb-6">
+تقرير القروض
+</h1>
+
+<!-- الأدوات -->
+<div class="flex flex-col md:flex-row gap-3 mb-6">
+
+<input id="search"
+placeholder="بحث باسم العميل"
+class="border p-2 rounded w-full">
+
+<button onclick="renderTable()"
+class="bg-green-600 text-white px-5 py-2 rounded w-full md:w-auto">
+بحث
+</button>
+
+<button onclick="printLoansPDF()"
+class="bg-blue-600 text-white px-5 py-2 rounded w-full md:w-auto">
+طباعة التقرير
+</button>
+
+<a href="index.html"
+class="bg-gray-600 text-white px-5 py-2 rounded text-center w-full md:w-auto">
+رجوع
+</a>
+
 </div>
 
-<div class="grid grid-cols-4 gap-4 mb-6 text-center text-lg font-bold">
-<div class="bg-blue-100 p-4 rounded">إجمالي القروض<div id="totalLoans">0</div></div>
-<div class="bg-green-100 p-4 rounded">إجمالي المسدد<div id="totalPaid">0</div></div>
-<div class="bg-red-100 p-4 rounded">المتبقي<div id="totalRemain">0</div></div>
-<div class="bg-yellow-100 p-4 rounded">عدد العملاء<div id="totalCustomers">0</div></div>
+<!-- الإحصائيات -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6 text-center text-sm md:text-lg font-bold">
+
+<div class="bg-blue-100 p-3 md:p-4 rounded">
+إجمالي القروض
+<div id="totalLoans">0</div>
 </div>
 
-<div class="overflow-auto">
-<table class="w-full border text-center">
+<div class="bg-green-100 p-3 md:p-4 rounded">
+إجمالي المسدد
+<div id="totalPaid">0</div>
+</div>
+
+<div class="bg-red-100 p-3 md:p-4 rounded">
+المتبقي
+<div id="totalRemain">0</div>
+</div>
+
+<div class="bg-yellow-100 p-3 md:p-4 rounded">
+عدد العملاء
+<div id="totalCustomers">0</div>
+</div>
+
+</div>
+
+<!-- الجدول -->
+<div class="overflow-x-auto">
+<table class="min-w-[700px] w-full border text-center text-sm md:text-base">
 <thead class="bg-blue-600 text-white">
 <tr>
 <th>رقم القرض</th>
@@ -44,6 +85,7 @@
 <tbody id="tableBody"></tbody>
 </table>
 </div>
+
 </div>
 
 <script>
@@ -53,7 +95,6 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let data = [];
 
-// تحميل القروض
 async function loadLoans() {
     const { data: rows, error } = await supabaseClient
         .from("loans")
@@ -70,14 +111,18 @@ async function loadLoans() {
     calculateTotals();
 }
 
-// عرض القروض في الجدول
 function renderTable() {
     const search = document.getElementById("search").value.toLowerCase();
-    const filtered = data.filter(r => (r.c_name || "").toLowerCase().includes(search));
+
+    const filtered = data.filter(r =>
+        (r.c_name || "").toLowerCase().includes(search)
+    );
+
     let table = "";
 
     filtered.forEach(row => {
         const remain = (row.loan_value || 0) - (row.sadad || 0);
+
         table += `
         <tr class="border">
             <td>${row.loan_id}</td>
@@ -93,7 +138,6 @@ function renderTable() {
     document.getElementById("tableBody").innerHTML = table;
 }
 
-// حساب المجموعات
 function calculateTotals() {
     let totalLoans = 0;
     let totalPaid = 0;
@@ -111,11 +155,14 @@ function calculateTotals() {
     document.getElementById("totalCustomers").innerText = customers.size;
 }
 
-// طباعة تقرير القروض بنفس أسلوب العملاء والموردين
 function printLoansPDF() {
-    if (data.length === 0) { alert("لا توجد بيانات للطباعة"); return; }
+    if (data.length === 0) {
+        alert("لا توجد بيانات للطباعة");
+        return;
+    }
 
     let element = document.createElement("div");
+
     let html = `
     <div style="direction:rtl;font-family:Arial;padding:10px">
     <h2 style="text-align:center;margin-bottom:20px;">كشف القروض</h2>
@@ -133,6 +180,7 @@ function printLoansPDF() {
 
     data.forEach(r => {
         const remain = (r.loan_value || 0) - (r.sadad || 0);
+
         html += `
         <tr>
             <td style="border:1px solid #000;padding:5px;">${r.loan_id}</td>
