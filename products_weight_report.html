@@ -3,6 +3,7 @@
 
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تصنيف المنتجات حسب الوزن</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -10,34 +11,35 @@
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="bg-blue-50 p-6">
+<body class="bg-blue-50 p-3 md:p-6">
 
-<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
+<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-4 md:p-6">
 
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">
+<h1 class="text-xl md:text-3xl font-bold text-center text-blue-700 mb-4 md:mb-6">
 تصنيف المنتجات حسب الوزن
 </h1>
 
 <!-- زر الطباعة -->
-<div class="mb-4 text-left">
+<div class="mb-4">
 <button onclick="printPDF()" 
-class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg shadow-md">
+class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-5 md:py-2 rounded-lg shadow-md w-full md:w-auto">
 🖨️ طباعة PDF
 </button>
 </div>
 
 <!-- البحث -->
-<div class="flex gap-3 mb-6">
+<div class="flex flex-col md:flex-row gap-2 md:gap-3 mb-6">
 <input id="search"
 placeholder="بحث باسم المنتج"
-class="border p-2 rounded w-full">
+class="border p-2 rounded w-full md:flex-1 text-sm md:text-base">
 <button onclick="renderTables()"
-class="bg-green-600 text-white px-5 py-2 rounded">بحث</button>
+class="bg-green-600 text-white px-4 py-2 rounded w-full md:w-auto">بحث</button>
 </div>
 
 <!-- منتجات بالكيلو -->
-<h2 class="text-xl font-bold text-green-700 mb-2">🟢 منتجات بالكيلو</h2>
-<table class="w-full border text-center mb-6">
+<h2 class="text-lg md:text-xl font-bold text-green-700 mb-2">🟢 منتجات بالكيلو</h2>
+<div class="overflow-x-auto mb-6">
+<table class="min-w-[300px] w-full border text-center">
 <thead class="bg-green-600 text-white">
 <tr>
 <th class="p-2">اسم المنتج</th>
@@ -46,10 +48,12 @@ class="bg-green-600 text-white px-5 py-2 rounded">بحث</button>
 </thead>
 <tbody id="kiloTable"></tbody>
 </table>
+</div>
 
 <!-- منتجات بالرطل -->
-<h2 class="text-xl font-bold text-yellow-700 mb-2">🟡 منتجات بالرطل</h2>
-<table class="w-full border text-center mb-6">
+<h2 class="text-lg md:text-xl font-bold text-yellow-700 mb-2">🟡 منتجات بالرطل</h2>
+<div class="overflow-x-auto mb-6">
+<table class="min-w-[300px] w-full border text-center">
 <thead class="bg-yellow-600 text-white">
 <tr>
 <th class="p-2">اسم المنتج</th>
@@ -58,10 +62,12 @@ class="bg-green-600 text-white px-5 py-2 rounded">بحث</button>
 </thead>
 <tbody id="ratlTable"></tbody>
 </table>
+</div>
 
 <!-- منتجات بدون وزن -->
-<h2 class="text-xl font-bold text-red-700 mb-2">🔴 منتجات بدون وزن</h2>
-<table class="w-full border text-center mb-6">
+<h2 class="text-lg md:text-xl font-bold text-red-700 mb-2">🔴 منتجات بدون وزن</h2>
+<div class="overflow-x-auto mb-6">
+<table class="min-w-[300px] w-full border text-center">
 <thead class="bg-red-600 text-white">
 <tr>
 <th class="p-2">اسم المنتج</th>
@@ -70,11 +76,12 @@ class="bg-green-600 text-white px-5 py-2 rounded">بحث</button>
 </thead>
 <tbody id="emptyTable"></tbody>
 </table>
+</div>
 
 <!-- أزرار -->
-<div class="flex gap-3 mt-6">
-<a href="products.html" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded">تعديل المنتجات</a>
-<a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">رجوع</a>
+<div class="flex flex-col md:flex-row gap-2 md:gap-3 mt-6">
+<a href="products.html" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded w-full md:w-auto text-center">تعديل المنتجات</a>
+<a href="index.html" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full md:w-auto text-center">رجوع</a>
 </div>
 
 </div>
@@ -87,7 +94,7 @@ const supabaseClient=supabase.createClient(supabaseUrl,supabaseKey);
 
 let reportData=[];
 
-// ================== تحميل البيانات ==================
+// تحميل البيانات
 async function loadData(){
     const {data,error}=await supabaseClient.from("products_weight_report").select("*");
     if(error){
@@ -99,7 +106,7 @@ async function loadData(){
     renderTables();
 }
 
-// ================== عرض البيانات ==================
+// عرض البيانات
 function renderTables(){
     let search=document.getElementById("search").value.toLowerCase();
     let kilo="", ratl="", empty="";
@@ -123,7 +130,7 @@ function renderTables(){
     document.getElementById("emptyTable").innerHTML=empty;
 }
 
-// ================== تشغيل ==================
+// تشغيل
 document.getElementById("search").addEventListener("input",renderTables);
 loadData();
 
@@ -135,20 +142,17 @@ window.printPDF = async function(){
         return;
     }
 
-    // الحاوية
     const container=document.createElement("div");
     container.setAttribute("dir","rtl");
     container.style.fontFamily="Tahoma";
     container.style.padding="10px";
 
-    // العنوان
     const title=document.createElement("h2");
     title.innerText="تقرير تصنيف المنتجات حسب الوزن";
     title.style.textAlign="center";
     title.style.marginBottom="15px";
     container.appendChild(title);
 
-    // دالة إنشاء جدول
     function createTable(titleText,color,rows){
         if(rows.length===0) return;
 
@@ -180,27 +184,21 @@ window.printPDF = async function(){
         container.appendChild(table);
     }
 
-    // تقسيم البيانات
     const kilo=data.filter(r=>r.p_weight==="كيلو");
     const ratl=data.filter(r=>r.p_weight==="رطل");
     const empty=data.filter(r=>!r.p_weight);
 
-    // إنشاء الجداول
     createTable("🟢 منتجات بالكيلو","#16a34a",kilo);
     createTable("🟡 منتجات بالرطل","#ca8a04",ratl);
     createTable("🔴 منتجات بدون وزن","#dc2626",empty);
 
-    // إعداد PDF
-    const opt={
+    html2pdf().set({
         margin:0.5,
         filename:"تقرير_تصنيف_المنتجات.pdf",
         image:{type:"jpeg",quality:1},
         html2canvas:{scale:3},
         jsPDF:{unit:"cm",format:"a4",orientation:"portrait"}
-    };
-
-    // إنشاء PDF
-    html2pdf().set(opt).from(container).save();
+    }).from(container).save();
 };
 </script>
 
