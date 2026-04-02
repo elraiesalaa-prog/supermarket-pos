@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>لوحة البائع</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -11,296 +10,179 @@
 <script src="https://unpkg.com/feather-icons"></script>
 
 <style>
-
-body{
-background:linear-gradient(135deg,#1e3a8a,#0f172a);
-font-family:tahoma;
+body {
+  background: linear-gradient(135deg,#1e3a8a,#0f172a);
+  font-family: tahoma;
 }
-
-.menu{
-padding:10px;
-margin-bottom:6px;
-border-radius:8px;
-cursor:pointer;
-transition:0.3s;
-background:#3b82f6;
-color:white;
-font-weight:bold;
+.menu {
+  padding: 10px;
+  margin-bottom: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  background: #3b82f6;
+  color: white;
+  font-weight: bold;
 }
-
-.menu:hover{
-background:#2563eb;
-transform:translateX(-4px);
+.menu:hover {
+  background: #2563eb;
+  transform: translateX(-4px);
 }
-
-.panel{
-background:white;
-box-shadow:0 10px 25px rgba(0,0,0,0.2);
+.panel {
+  background: white;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
-
-.topbar{
-background:#0f172a;
-color:white;
-padding:10px 20px;
-display:flex;
-justify-content:space-between;
-align-items:center;
+.topbar {
+  background: #0f172a;
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
 }
-
 </style>
-
 </head>
 
-<body>
+<body class="flex flex-col min-h-screen">
 
 <!-- رأس الصفحة -->
-<div class="bg-blue-700 text-white p-3 flex justify-between items-center">
-
-<div class="text-xl font-bold">
-<span id="storeHeader">نظام إدارة المبيعات</span>
+<div class="bg-blue-700 text-white p-3 flex flex-wrap justify-between items-center">
+  <div class="text-xl font-bold"><span id="storeHeader">نظام إدارة المبيعات</span></div>
+  <div>🏪 <span id="storeName">ABM للتجارة والاستثمار</span></div>
 </div>
 
-<div>
-🏪 <span id="storeName">ABM للتجارة والاستثمار</span>
-</div>
-
-</div>
-
-<div class="bg-blue-500 text-white flex gap-4 p-2 justify-center">
-
-<button class="px-4 py-1 bg-blue-600 rounded">فواتير مبدئية</button>
-
-<button class="px-4 py-1 bg-blue-600 rounded">فواتير نهائية</button>
-
-
-
-
+<!-- أزرار الفواتير -->
+<div class="bg-blue-500 text-white flex flex-wrap gap-2 p-2 justify-center">
+  <button class="px-4 py-1 bg-blue-600 rounded">فواتير مبدئية</button>
+  <button class="px-4 py-1 bg-blue-600 rounded">فواتير نهائية</button>
 </div>
 
 <!-- الشريط العلوي -->
-
 <div class="topbar">
-
-<div>
-👤 مرحبا :
-<span id="usernameDisplay"></span>
+  <div class="mb-2 sm:mb-0">👤 مرحبا: <span id="usernameDisplay"></span></div>
+  <div id="clock" class="mb-2 sm:mb-0"></div>
+  <div class="menu" onclick="editPassword()">تعديل كلمة المرور</div>
 </div>
 
-<div id="clock"></div>
+<!-- محتوى الصفحة -->
+<div class="flex flex-col md:flex-row flex-1 min-h-[calc(100vh-120px)]">
 
-<div class="menu" onclick="editPassword()">تعديل كلمة المرور</div>
+  <!-- القائمة اليمنى -->
+  <div class="w-full md:w-64 p-4 overflow-y-auto text-white flex-shrink-0"
+       style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
+    <h2 class="text-xl font-bold text-center mb-4 text-blue-700">القائمة الرئيسية</h2>
+    <div class="menu mb-2"> </div>
+    <div class="menu mb-2"> </div>
+    <div class="menu mb-2"> </div>
+    <div class="menu mb-2"> </div>
+    <hr class="my-2">
+    <div class="menu mb-2"> </div>
+    <div class="menu mb-2"> </div>
+    <hr class="my-2">
+    <div class="menu mb-2"> </div>
+    <hr class="my-2">
+  </div>
 
-</div>
+  <!-- الوسط -->
+  <div class="flex-1 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl p-4 sm:p-10 w-full sm:w-5/6 h-64 sm:h-5/6 flex items-center justify-center">
+      <img src="pic14.webp" loading="lazy" class="max-w-full max-h-full object-contain">
+    </div>
+  </div>
 
-<div class="flex h-[calc(100vh-50px)]">
-
-<!-- القائمة اليمنى -->
-
-<div class="w-64 p-4 overflow-y-auto text-white"
-style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
-
-<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
-القائمة الرئيسية
-</h2>
-
-<div class="menu"> </div>
-<div class="menu"> </div>
-
-<div class="menu"> </div>
-<div class="menu"> </div>
-
-<hr>
-
-<div class="menu"> </div>
-<div class="menu">   </div>
-
-<hr>
-
-<div class="menu"> </div>
-
-<hr>
-
-</div>
-
-<!-- الوسط -->
-
-<div class="flex-1 flex items-center justify-center p-6">
-
-<div class="bg-white rounded-xl shadow-2xl p-10 w-5/6 h-5/6 flex items-center justify-center">
-
-<img src="pic14.webp"
-loading="lazy"
-style="max-width:120%; max-height:120%; object-fit:contain;">
-
-</div>
-
-</div>
-
-<!-- القائمة اليسرى -->
-
-<div class="w-64 p-4 overflow-y-auto text-white"
-style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
-
-<h2 class="text-xl font-bold text-center mb-4 text-blue-700">
-العمليات
-</h2>
-
-<div class="menu" onclick="go('sales_advanced.html')">المبيعات</div>
-
-
-<hr>
-
-<div class="menu" onclick="go('products_weight_report.html')">اوزان المنتجات</div>
-<div class="menu" onclick="go('weight_kg.html')"> </div>
-<div class="menu" onclick="go('weight_lb.html')"> </div>
-
-<div class="menu" style="background-color:#ef4444; text-align:center;" onclick="logout()">خروج</div>
-
-</div>
+  <!-- القائمة اليسرى -->
+  <div class="w-full md:w-64 p-4 overflow-y-auto text-white flex-shrink-0"
+       style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
+    <h2 class="text-xl font-bold text-center mb-4 text-blue-700">العمليات</h2>
+    <div class="menu mb-2" onclick="go('sales_advanced.html')">المبيعات</div>
+    <hr class="my-2">
+    <div class="menu mb-2" onclick="go('products_weight_report.html')">اوزان المنتجات</div>
+    <div class="menu mb-2" onclick="go('weight_kg.html')"> </div>
+    <div class="menu mb-2" onclick="go('weight_lb.html')"> </div>
+    <div class="menu mb-2 bg-red-500 text-center" onclick="logout()">خروج</div>
+  </div>
 
 </div>
 
 <!-- نافذة تغيير كلمة المرور -->
-
-<div id="passwordBox" style="display:none;
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:white;
-padding:25px;
-border-radius:10px;
-box-shadow:0 0 20px rgba(0,0,0,0.3);
-width:300px">
-
-<h3>تغيير كلمة المرور</h3>
-
-<input type="password" id="oldPass" placeholder="كلمة المرور القديمة">
-<input type="password" id="newPass" placeholder="كلمة المرور الجديدة">
-
-<br><br>
-
-<button onclick="savePassword()">حفظ</button>
-<button onclick="closePassword()">إلغاء</button>
-
+<div id="passwordBox" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 hidden z-50">
+  <div class="bg-white p-6 rounded-lg w-11/12 sm:w-80 shadow-lg flex flex-col gap-3">
+    <h3 class="text-lg font-bold">تغيير كلمة المرور</h3>
+    <input type="password" id="oldPass" placeholder="كلمة المرور القديمة" class="border p-2 rounded w-full">
+    <input type="password" id="newPass" placeholder="كلمة المرور الجديدة" class="border p-2 rounded w-full">
+    <div class="flex justify-end gap-2 mt-2">
+      <button class="bg-green-600 text-white px-3 py-1 rounded" onclick="savePassword()">حفظ</button>
+      <button class="bg-gray-400 text-white px-3 py-1 rounded" onclick="closePassword()">إلغاء</button>
+    </div>
+  </div>
 </div>
 
 <script>
-
 const supabaseClient = supabase.createClient(
-"https://vmxbedovoahuggfpcmyk.supabase.co",
-"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-)
+  "https://vmxbedovoahuggfpcmyk.supabase.co",
+  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+);
 
-function loadStore(){
-
-let name = localStorage.getItem("storeName")
-let header = localStorage.getItem("storeHeader")
-
-if(!name){
-name="ABM للتجارة والاستثمار"
-localStorage.setItem("storeName",name)
+function loadStore() {
+  let name = localStorage.getItem("storeName") || "ABM للتجارة والاستثمار";
+  let header = localStorage.getItem("storeHeader") || "نظام إدارة المبيعات";
+  localStorage.setItem("storeName", name);
+  localStorage.setItem("storeHeader", header);
+  document.getElementById("storeName").innerText = name;
+  document.getElementById("storeHeader").innerText = header;
 }
 
-if(!header){
-header="نظام إدارة المبيعات"
-localStorage.setItem("storeHeader",header)
-}
-
-document.getElementById("storeName").innerText=name
-document.getElementById("storeHeader").innerText=header
-
-}
-/* ✅ تم إضافة الدالة الناقصة */
-function go(page){
-window.location.href = page
-}
-loadStore()
+function go(page){ window.location.href = page; }
+loadStore();
 
 function updateClock(){
-
-let now = new Date()
-
-let time = now.toLocaleTimeString()
-let date = now.toLocaleDateString()
-
-document.getElementById("clock").innerHTML =
-"🕒 " + time + " | " + date
-
+  let now = new Date();
+  document.getElementById("clock").innerHTML =
+    "🕒 " + now.toLocaleTimeString() + " | " + now.toLocaleDateString();
 }
-
-setInterval(updateClock,1000)
-updateClock()
+setInterval(updateClock,1000);
+updateClock();
 
 document.addEventListener("DOMContentLoaded", function(){
-
-let user = localStorage.getItem("user")
-
-if(!user){
-window.location="index.html"
-return
-}
-
-document.getElementById("usernameDisplay").textContent = user
-
-})
+  let user = localStorage.getItem("user");
+  if(!user){ window.location="index.html"; return; }
+  document.getElementById("usernameDisplay").textContent = user;
+});
 
 function logout(){
-
-localStorage.removeItem("user")
-localStorage.removeItem("role")
-
-window.location="index.html"
-
+  localStorage.removeItem("user");
+  localStorage.removeItem("role");
+  window.location="index.html";
 }
 
-function editPassword(){
-document.getElementById("passwordBox").style.display="block"
-}
-
-function closePassword(){
-document.getElementById("passwordBox").style.display="none"
-}
+function editPassword(){ document.getElementById("passwordBox").classList.remove("hidden"); }
+function closePassword(){ document.getElementById("passwordBox").classList.add("hidden"); }
 
 async function savePassword(){
+  let username = localStorage.getItem("user");
+  let oldPass = document.getElementById("oldPass").value;
+  let newPass = document.getElementById("newPass").value;
+  if(!oldPass || !newPass){ alert("أدخل جميع البيانات"); return; }
 
-let username = localStorage.getItem("user")
-let oldPass = document.getElementById("oldPass").value
-let newPass = document.getElementById("newPass").value
+  const {data,error}=await supabaseClient
+    .from("tb_users")
+    .select("*")
+    .eq("fullname",username)
+    .eq("pwd",oldPass)
+    .single();
 
-if(!oldPass || !newPass){
-alert("أدخل جميع البيانات")
-return
+  if(error || !data){ alert("كلمة المرور القديمة غير صحيحة"); return; }
+
+  const {error:updateError}=await supabaseClient
+    .from("tb_users")
+    .update({pwd:newPass})
+    .eq("fullname",username);
+
+  if(updateError){ alert("حدث خطأ أثناء التحديث"); return; }
+  alert("تم تغيير كلمة المرور بنجاح");
+  closePassword();
 }
-
-const {data,error}=await supabaseClient
-.from("tb_users")
-.select("*")
-.eq("fullname",username)
-.eq("pwd",oldPass)
-.single()
-
-if(error || !data){
-alert("كلمة المرور القديمة غير صحيحة")
-return
-}
-
-const {error:updateError}=await supabaseClient
-.from("tb_users")
-.update({pwd:newPass})
-.eq("fullname",username)
-
-if(updateError){
-alert("حدث خطأ أثناء التحديث")
-return
-}
-
-alert("تم تغيير كلمة المرور بنجاح")
-
-closePassword()
-
-}
-
 </script>
 
 </body>
