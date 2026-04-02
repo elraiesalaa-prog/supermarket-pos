@@ -4,25 +4,45 @@
 <head>
 <meta charset="UTF-8">
 <title>إدارة القروض</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{
+margin:0;
+overflow:hidden;
+}
+.scroll{
+overflow:auto;
+}
+</style>
+
 </head>
 
-<body class="bg-gradient-to-r from-blue-50 to-blue-100 min-h-screen p-6">
+<body class="bg-gradient-to-r from-blue-50 to-blue-100">
 
-<div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-6">
-
-<h1 class="text-3xl font-bold text-center text-blue-700 mb-6">إدارة القروض</h1>
-
-<!-- شريط البحث -->
-<div class="flex gap-3 mb-6">
-<input id="search" placeholder="بحث باسم العميل" class="border p-2 rounded w-full">
-<button onclick="renderTable()" class="bg-green-600 text-white px-5 py-2 rounded">بحث</button>
+<!-- ✅ هيدر ثابت -->
+<div class="bg-blue-700 text-white p-4 text-center text-xl font-bold sticky top-0 z-50">
+إدارة القروض
 </div>
 
-<!-- نموذج إضافة وتعديل القروض -->
-<div class="grid grid-cols-3 gap-4 mb-6">
+<!-- ✅ المحتوى -->
+<div class="h-[calc(100vh-70px)] p-4 flex justify-center">
+
+<div class="w-full max-w-7xl bg-white shadow-xl rounded-xl p-4 flex flex-col scroll">
+
+<!-- ✅ البحث -->
+<div class="flex flex-wrap gap-3 mb-4">
+<input id="search" placeholder="بحث باسم العميل" class="border p-2 rounded flex-1 min-w-[200px]">
+<button onclick="renderTable()" class="bg-green-600 text-white px-5 py-2 rounded">بحث</button>
+<button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded">خروج</button>
+</div>
+
+<!-- ✅ النموذج -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+
 <select id="customer_id" class="border p-2 rounded"></select>
 <input id="loan_discripton" placeholder="وصف القرض" class="border p-2 rounded">
 <input id="loan_value" placeholder="قيمة القرض" class="border p-2 rounded">
@@ -33,21 +53,30 @@
 <input id="seal_man" placeholder="اسم الموظف" class="border p-2 rounded">
 <input id="pay_method" placeholder="طريقة الدفع" class="border p-2 rounded">
 <input type="datetime-local" id="loan_date" class="border p-2 rounded">
-<button onclick="printLoansPDF()" class="bg-green-600 text-white px-5 py-2 rounded">طباعة PDF</button>
+
 </div>
 
-<!-- أزرار التحكم -->
-<div class="flex gap-3 mb-6">
+<!-- ✅ الأزرار -->
+<div class="flex flex-wrap gap-3 mb-4">
+
 <button onclick="addLoan()" class="bg-green-600 text-white px-5 py-2 rounded">إضافة</button>
+
 <button onclick="updateLoan()" class="bg-yellow-500 text-white px-5 py-2 rounded">حفظ التعديل</button>
+
 <button onclick="clearForm()" class="bg-gray-500 text-white px-5 py-2 rounded">جديد</button>
-<a href="index.html" class="bg-blue-600 text-white px-5 py-2 rounded">رجوع</a>
+
+<button onclick="printLoansPDF()" class="bg-blue-600 text-white px-5 py-2 rounded">طباعة PDF</button>
+
+<button onclick="history.back()" class="bg-gray-600 text-white px-5 py-2 rounded">رجوع</button>
+
 </div>
 
-<!-- جدول عرض القروض -->
-<div class="overflow-auto">
-<table class="w-full border text-center">
-<thead class="bg-blue-600 text-white">
+<!-- ✅ الجدول -->
+<div class="scroll border rounded">
+
+<table class="w-full border text-center min-w-[1200px]">
+
+<thead class="bg-blue-600 text-white sticky top-0">
 <tr>
 <th>رقم القرض</th>
 <th>اسم العميل</th>
@@ -64,13 +93,19 @@
 <th>حذف</th>
 </tr>
 </thead>
+
 <tbody id="tableBody"></tbody>
+
 </table>
+
+</div>
+
 </div>
 
 </div>
 
 <script>
+
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
@@ -78,190 +113,192 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 let data = [];
 let editID = null;
 
+/* ✅ حماية */
+document.addEventListener("DOMContentLoaded", function(){
+let user = localStorage.getItem("user");
+if(!user){
+window.location="index.html";
+}
+});
+
 // تحميل العملاء
 async function loadCustomers() {
-    const { data: rows, error } = await supabaseClient
-        .from("customers")
-        .select("id_customer,first_name")
-        .order("first_name");
+const { data: rows, error } = await supabaseClient
+.from("customers")
+.select("id_customer,first_name")
+.order("first_name");
 
-    if (error) { alert(error.message); return; }
+if (error) { alert(error.message); return; }
 
-    let options = "<option value=''>اختر العميل</option>";
-    rows.forEach(c => { options += `<option value="${c.id_customer}">${c.first_name}</option>`; });
-    document.getElementById("customer_id").innerHTML = options;
+let options = "<option value=''>اختر العميل</option>";
+rows.forEach(c => { options += `<option value="${c.id_customer}">${c.first_name}</option>`; });
+
+document.getElementById("customer_id").innerHTML = options;
 }
 
 // تحميل القروض
 async function loadLoans() {
-    const { data: rows, error } = await supabaseClient
-        .from("loans")
-        .select(`loan_id,loan_discripton,loan_value,sadad,tel,whatsapp,email,loan_date,seal_man,pay_method,customer_id,customers(first_name)`)
-        .order("loan_id",{ascending:false});
+const { data: rows, error } = await supabaseClient
+.from("loans")
+.select(`loan_id,loan_discripton,loan_value,sadad,tel,whatsapp,email,loan_date,seal_man,pay_method,customer_id,customers(first_name)`)
+.order("loan_id",{ascending:false});
 
-    if (error) { alert(error.message); return; }
+if (error) { alert(error.message); return; }
 
-    data = rows;
-    renderTable();
+data = rows;
+renderTable();
 }
 
-// عرض القروض
+// عرض البيانات
 function renderTable() {
-    const search = document.getElementById("search").value.toLowerCase();
-    const filtered = data.filter(r => (r.customers?.first_name || "").toLowerCase().includes(search));
 
-    let table = "";
-    filtered.forEach(row => {
-        const remain = (row.loan_value || 0) - (row.sadad || 0);
-        const date = row.loan_date ? new Date(row.loan_date).toLocaleString() : "";
+const search = document.getElementById("search").value.toLowerCase();
 
-        table += `
-        <tr class="border">
-            <td>${row.loan_id}</td>
-            <td>${row.customers?.first_name||""}</td>
-            <td>${row.loan_discripton||""}</td>
-            <td>${row.loan_value||0}</td>
-            <td>${row.sadad||0}</td>
-            <td class="text-red-600 font-bold">${remain}</td>
-            <td>${date}</td>
-            <td>${row.seal_man||""}</td>
-            <td>${row.pay_method||""}</td>
-            <td><a href="tel:${row.tel||""}" class="bg-green-500 text-white px-2 py-1 rounded">📞</a></td>
-            <td><a href="https://wa.me/${row.whatsapp||""}" target="_blank" class="bg-green-600 text-white px-2 py-1 rounded">💬</a></td>
-            <td><button onclick="editRow(${row.loan_id})" class="bg-yellow-400 px-3 py-1 rounded">تعديل</button></td>
-            <td><button onclick="deleteRow(${row.loan_id})" class="bg-red-600 text-white px-3 py-1 rounded">حذف</button></td>
-        </tr>`;
-    });
+const filtered = data.filter(r =>
+(r.customers?.first_name || "").toLowerCase().includes(search)
+);
 
-    document.getElementById("tableBody").innerHTML = table;
+let table = "";
+
+filtered.forEach(row => {
+
+const remain = (row.loan_value || 0) - (row.sadad || 0);
+const date = row.loan_date ? new Date(row.loan_date).toLocaleString() : "";
+
+table += `
+<tr class="border hover:bg-gray-50">
+<td>${row.loan_id}</td>
+<td>${row.customers?.first_name||""}</td>
+<td>${row.loan_discripton||""}</td>
+<td>${row.loan_value||0}</td>
+<td>${row.sadad||0}</td>
+<td class="text-red-600 font-bold">${remain}</td>
+<td>${date}</td>
+<td>${row.seal_man||""}</td>
+<td>${row.pay_method||""}</td>
+<td><a href="tel:${row.tel||""}" class="bg-green-500 text-white px-2 py-1 rounded">📞</a></td>
+<td><a href="https://wa.me/${row.whatsapp||""}" target="_blank" class="bg-green-600 text-white px-2 py-1 rounded">💬</a></td>
+<td><button onclick="editRow(${row.loan_id})" class="bg-yellow-400 px-3 py-1 rounded">تعديل</button></td>
+<td><button onclick="deleteRow(${row.loan_id})" class="bg-red-600 text-white px-3 py-1 rounded">حذف</button></td>
+</tr>
+`;
+
+});
+
+document.getElementById("tableBody").innerHTML = table;
+
 }
 
-// إضافة قرض
-async function addLoan() {
-    const customer_id = document.getElementById("customer_id").value;
-    if(!customer_id){ alert("اختر العميل أولا"); return; }
+// باقي الدوال (بدون تغيير)
+async function addLoan(){ /* نفس كودك */ 
+const customer_id = document.getElementById("customer_id").value;
+if(!customer_id){ alert("اختر العميل أولا"); return; }
 
-    const loan_discripton = document.getElementById("loan_discripton").value;
-    const loan_value = document.getElementById("loan_value").value;
-    const sadad = document.getElementById("sadad").value;
-    const tel = document.getElementById("tel").value;
-    const whatsapp = document.getElementById("whatsapp").value;
-    const email = document.getElementById("email").value;
-    const seal_man = document.getElementById("seal_man").value;
-    const pay_method = document.getElementById("pay_method").value;
-    const loan_date = document.getElementById("loan_date").value;
+const loan_discripton = document.getElementById("loan_discripton").value;
+const loan_value = document.getElementById("loan_value").value;
+const sadad = document.getElementById("sadad").value;
+const tel = document.getElementById("tel").value;
+const whatsapp = document.getElementById("whatsapp").value;
+const email = document.getElementById("email").value;
+const seal_man = document.getElementById("seal_man").value;
+const pay_method = document.getElementById("pay_method").value;
+const loan_date = document.getElementById("loan_date").value;
 
-    const { error } = await supabaseClient.from("loans").insert([{ customer_id, loan_discripton, loan_value, sadad, tel, whatsapp, email, seal_man, pay_method, loan_date }]);
-    if(error){ alert(error.message); return; }
+const { error } = await supabaseClient.from("loans")
+.insert([{ customer_id, loan_discripton, loan_value, sadad, tel, whatsapp, email, seal_man, pay_method, loan_date }]);
 
-    clearForm();
-    loadLoans();
+if(error){ alert(error.message); return; }
+
+clearForm();
+loadLoans();
 }
 
-// تعديل قرض
-async function editRow(id) {
-    editID = id;
-    const { data, error } = await supabaseClient.from("loans").select("*").eq("loan_id",id).single();
-    if(error){ alert(error.message); return; }
+async function editRow(id){ /* نفس كودك */
+editID = id;
+const { data, error } = await supabaseClient.from("loans").select("*").eq("loan_id",id).single();
+if(error){ alert(error.message); return; }
 
-    document.getElementById("customer_id").value = data.customer_id;
-    document.getElementById("loan_discripton").value = data.loan_discripton;
-    document.getElementById("loan_value").value = data.loan_value;
-    document.getElementById("sadad").value = data.sadad;
-    document.getElementById("tel").value = data.tel;
-    document.getElementById("whatsapp").value = data.whatsapp;
-    document.getElementById("email").value = data.email;
-    document.getElementById("seal_man").value = data.seal_man;
-    document.getElementById("pay_method").value = data.pay_method;
-    document.getElementById("loan_date").value = data.loan_date;
+document.getElementById("customer_id").value = data.customer_id;
+document.getElementById("loan_discripton").value = data.loan_discripton;
+document.getElementById("loan_value").value = data.loan_value;
+document.getElementById("sadad").value = data.sadad;
+document.getElementById("tel").value = data.tel;
+document.getElementById("whatsapp").value = data.whatsapp;
+document.getElementById("email").value = data.email;
+document.getElementById("seal_man").value = data.seal_man;
+document.getElementById("pay_method").value = data.pay_method;
+document.getElementById("loan_date").value = data.loan_date;
 }
 
-// حفظ التعديلات
-async function updateLoan() {
-    if(!editID){ alert("اختر قرض للتعديل"); return; }
+async function updateLoan(){ /* نفس كودك */
+if(!editID){ alert("اختر قرض للتعديل"); return; }
 
-    const loan_discripton = document.getElementById("loan_discripton").value;
-    const loan_value = document.getElementById("loan_value").value;
-    const sadad = document.getElementById("sadad").value;
+const loan_discripton = document.getElementById("loan_discripton").value;
+const loan_value = document.getElementById("loan_value").value;
+const sadad = document.getElementById("sadad").value;
 
-    const { error } = await supabaseClient.from("loans").update({loan_discripton, loan_value, sadad}).eq("loan_id",editID);
-    if(error){ alert(error.message); return; }
+const { error } = await supabaseClient.from("loans")
+.update({loan_discripton, loan_value, sadad})
+.eq("loan_id",editID);
 
-    clearForm();
-    loadLoans();
+if(error){ alert(error.message); return; }
+
+clearForm();
+loadLoans();
 }
 
-// حذف قرض
-async function deleteRow(id) {
-    if(!confirm("هل تريد حذف القرض؟")) return;
-    const { error } = await supabaseClient.from("loans").delete().eq("loan_id",id);
-    if(error){ alert(error.message); return; }
-    loadLoans();
+async function deleteRow(id){
+if(!confirm("هل تريد حذف القرض؟")) return;
+
+const { error } = await supabaseClient.from("loans").delete().eq("loan_id",id);
+
+if(error){ alert(error.message); return; }
+
+loadLoans();
 }
 
-// مسح النموذج
-function clearForm() {
-    editID = null;
-    document.getElementById("customer_id").value = "";
-    document.getElementById("loan_discripton").value = "";
-    document.getElementById("loan_value").value = "";
-    document.getElementById("sadad").value = "";
-    document.getElementById("tel").value = "";
-    document.getElementById("whatsapp").value = "";
-    document.getElementById("email").value = "";
-    document.getElementById("seal_man").value = "";
-    document.getElementById("pay_method").value = "";
-    document.getElementById("loan_date").value = "";
+function clearForm(){
+editID = null;
+
+["customer_id","loan_discripton","loan_value","sadad","tel","whatsapp","email","seal_man","pay_method","loan_date"]
+.forEach(id=>document.getElementById(id).value="");
 }
 
-// طباعة القروض PDF
-function printLoansPDF() {
-    if(data.length===0){ alert("لا توجد بيانات للطباعة"); return; }
+/* PDF بدون تغيير */
+function printLoansPDF(){ /* نفس كودك */ 
+if(data.length===0){ alert("لا توجد بيانات للطباعة"); return; }
 
-    let element = document.createElement("div");
-    let html = `
-    <div style="direction:rtl;font-family:Arial;padding:10px">
-    <h2 style="text-align:center;margin-bottom:20px;">كشف القروض</h2>
-    <table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px">
-    <tr style="background:#2c3e50;color:white">
-        <th style="border:1px solid #000;padding:6px;">رقم القرض</th>
-        <th style="border:1px solid #000;padding:6px;">اسم العميل</th>
-        <th style="border:1px solid #000;padding:6px;">الوصف</th>
-        <th style="border:1px solid #000;padding:6px;">قيمة القرض</th>
-        <th style="border:1px solid #000;padding:6px;">المسدد</th>
-        <th style="border:1px solid #000;padding:6px;">المتبقي</th>
-        <th style="border:1px solid #000;padding:6px;">التاريخ</th>
-    </tr>`;
+let element=document.createElement("div");
+let html=`<div style="direction:rtl;font-family:Arial;padding:10px"><h2 style="text-align:center;margin-bottom:20px;">كشف القروض</h2><table style="width:100%;border-collapse:collapse;text-align:center;font-size:12px"><tr style="background:#2c3e50;color:white"><th style="border:1px solid #000;padding:6px;">رقم القرض</th><th style="border:1px solid #000;padding:6px;">اسم العميل</th><th style="border:1px solid #000;padding:6px;">الوصف</th><th style="border:1px solid #000;padding:6px;">قيمة القرض</th><th style="border:1px solid #000;padding:6px;">المسدد</th><th style="border:1px solid #000;padding:6px;">المتبقي</th><th style="border:1px solid #000;padding:6px;">التاريخ</th></tr>`;
 
-    data.forEach(r => {
-        const remain = (r.loan_value || 0) - (r.sadad || 0);
-        html += `
-        <tr>
-            <td style="border:1px solid #000;padding:5px;">${r.loan_id}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.customers?.first_name || ""}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.loan_discripton || ""}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.loan_value || 0}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.sadad || 0}</td>
-            <td style="border:1px solid #000;padding:5px;color:red;font-weight:bold">${remain}</td>
-            <td style="border:1px solid #000;padding:5px;">${r.loan_date ? new Date(r.loan_date).toLocaleDateString() : ""}</td>
-        </tr>`;
-    });
+data.forEach(r=>{
+const remain=(r.loan_value||0)-(r.sadad||0);
+html+=`<tr><td style="border:1px solid #000;padding:5px;">${r.loan_id}</td><td style="border:1px solid #000;padding:5px;">${r.customers?.first_name||""}</td><td style="border:1px solid #000;padding:5px;">${r.loan_discripton||""}</td><td style="border:1px solid #000;padding:5px;">${r.loan_value||0}</td><td style="border:1px solid #000;padding:5px;">${r.sadad||0}</td><td style="border:1px solid #000;padding:5px;color:red;font-weight:bold">${remain}</td><td style="border:1px solid #000;padding:5px;">${r.loan_date?new Date(r.loan_date).toLocaleDateString():""}</td></tr>`;
+});
 
-    html += `</table></div>`;
-    element.innerHTML = html;
+html+=`</table></div>`;
+element.innerHTML=html;
 
-    html2pdf().set({
-        margin:5,
-        filename:"loans_report.pdf",
-        html2canvas:{scale:2},
-        jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
-    }).from(element).save();
+html2pdf().set({
+margin:5,
+filename:"loans_report.pdf",
+html2canvas:{scale:2},
+jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
+}).from(element).save();
 }
 
-// استدعاءات أولية
+/* إضافات */
+function logout(){
+localStorage.removeItem("user");
+localStorage.removeItem("role");
+window.location="index.html";
+}
+
 document.getElementById("search").addEventListener("input", renderTable);
+
 loadCustomers();
 loadLoans();
+
 </script>
 
 </body>
