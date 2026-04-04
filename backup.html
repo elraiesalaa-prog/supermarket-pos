@@ -58,16 +58,17 @@
   <div id="progressBar">0%</div>
 </div>
 
-<script>
-  // تعريف Supabase مرة واحدة كمتغير عالمي
-  if (!window.supabaseClient) {
-    const supabaseUrl = "https://YOUR_SUPABASE_PROJECT.supabase.co";
-    const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-  }
-  const supabase = window.supabaseClient;
 
-  const storageBucket = "backups"; // اسم الـ Bucket
+
+    <script>
+  // تعريف جديد باسم مختلف نهائيًا
+  if (!window.sbClient) {
+    const url = "https://YOUR_SUPABASE_PROJECT.supabase.co";
+    const key = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+    window.sbClient = window.supabase.createClient(url, key);
+  }
+
+  const storageBucket = "backups";
   const backupBtn = document.getElementById('backupBtn');
   const status = document.getElementById('status');
   const progressBar = document.getElementById('progressBar');
@@ -79,10 +80,60 @@
 
     try {
       const response = await fetch('https://YOUR_PROJECT.functions.supabase.co/backup', {
-        method: 'POST',
-        headers: { "Content-Type": "application/json" }
+        method: 'POST'
       });
 
+      if (!response.ok) throw new Error('فشل إنشاء النسخة الاحتياطية');
+
+      const reader = response.body.getReader();
+      const contentLength = +response.headers.get('Content-Length') || 0;
+      let receivedLength = 0;
+      let chunks = [];
+
+      while(true){
+        const {done, value} = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        receivedLength += value.length;
+
+        if (contentLength) {
+          let percent = Math.floor((receivedLength / contentLength) * 100);
+          let mb = (receivedLength / (1024*1024)).toFixed(2);
+          progressBar.style.width = percent + '%';
+          progressBar.textContent = `${percent}% (${mb} MB)`;
+        }
+      }
+
+      const blob = new Blob(chunks, { type: 'application/gzip' });
+      const filename = `backup_${new Date().toISOString().replace(/[:.]/g,'_')}.backup.gz`;
+
+      // تحميل
+      const urlFile = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = urlFile;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(urlFile);
+
+      // رفع إلى Supabase
+      const { error } = await window.sbClient
+        .storage
+        .from(storageBucket)
+        .upload(filename, blob, { upsert: true });
+
+      if (error) console.error(error);
+
+      progressBar.style.width = '100%';
+      progressBar.textContent = '100%';
+      status.textContent = "تم إنشاء النسخة الاحتياطية بنجاح!";
+
+    } catch (error) {
+      status.textContent = "حدث خطأ: " + error.message;
+      progressBar.style.width = '0%';
+      progressBar.textContent = '0%';
+    }
+  });
+</script>
       if (!response.ok) throw new Error('فشل إنشاء النسخة الاحتياطية');
 
       const reader = response.body.getReader();
