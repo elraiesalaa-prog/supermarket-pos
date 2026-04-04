@@ -21,7 +21,6 @@ button { padding:12px 24px; font-size:18px; cursor:pointer; background:#4CAF50; 
 <div id="progressContainer"><div id="progressBar">0%</div></div>
 
 <script>
-const SUPABASE_ANON_KEY = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"; // مفتاح ANON
 const FUNCTION_URL = "https://vmxbedovoahuggfpcmyk.supabase.co/functions/v1/backup";
 
 const backupBtn = document.getElementById('backupBtn');
@@ -34,13 +33,7 @@ backupBtn.addEventListener('click', async () => {
   progressBar.textContent = '0%';
 
   try {
-    const response = await fetch(FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": "Bearer " + SUPABASE_ANON_KEY
-      }
-    });
+    const response = await fetch(FUNCTION_URL, { method: 'POST' });
 
     if (!response.ok) throw new Error('فشل إنشاء النسخة الاحتياطية');
 
