@@ -1,45 +1,90 @@
-export const config = { verify_jwt: false };
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نسخة احتياطية متقدمة</title>
+<style>
+body { font-family: Arial; padding:20px; background:#f5f5f5; display:flex; flex-direction:column; align-items:center; }
+h1 { margin-bottom:20px; text-align:center; }
+button { padding:12px 24px; font-size:18px; cursor:pointer; background:#4CAF50; color:white; border:none; border-radius:8px; width:90%; max-width:400px; margin-bottom:10px; }
+#status { margin-top:10px; font-weight:bold; text-align:center; }
+#progressContainer { width:90%; max-width:400px; background:#ddd; border-radius:8px; margin-top:15px; height:25px; overflow:hidden; }
+#progressBar { width:0%; height:25px; background:#4CAF50; text-align:center; color:white; line-height:25px; font-weight:bold; }
+</style>
+</head>
+<body>
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+<h1>إنشاء نسخة احتياطية متقدمة</h1>
+<button id="backupBtn">إنشاء النسخة الاحتياطية</button>
+<div id="status">اضغط الزر لبدء النسخ الاحتياطي</div>
+<div id="progressContainer"><div id="progressBar">0%</div></div>
 
-// رابط المشروع ومفتاح الخدمة
-const SUPABASE_URL = "https://vmxbedovoahuggfpcmyk.supabase.co";
-const SUPABASE_SERVICE_KEY = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+<script>
+const SUPABASE_ANON_KEY = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"; // مفتاح ANON
+const FUNCTION_URL = "https://vmxbedovoahuggfpcmyk.supabase.co/functions/v1/backup";
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const backupBtn = document.getElementById('backupBtn');
+const status = document.getElementById('status');
+const progressBar = document.getElementById('progressBar');
 
-serve(async (req) => {
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "*",
-    "Access-Control-Allow-Methods": "POST, GET, OPTIONS"
-  };
-
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+backupBtn.addEventListener('click', async () => {
+  status.textContent = "جارٍ إنشاء النسخة الاحتياطية...";
+  progressBar.style.width = '0%';
+  progressBar.textContent = '0%';
 
   try {
-    // إنشاء نسخة احتياطية تجريبية (يمكنك استبدالها بكود النسخ الفعلي)
-    const filename = `backup_${new Date().toISOString().replace(/[:.]/g,'_')}.txt`;
-    const data = new TextEncoder().encode("نسخة احتياطية اختبارية");
-
-    // رفع النسخة إلى Supabase Storage في bucket "backups"
-    const { error: uploadError } = await supabase.storage
-      .from("backups")
-      .upload(filename, data, { upsert: true });
-
-    if (uploadError) throw new Error(uploadError.message);
-
-    return new Response(data, {
-      headers: { ...corsHeaders, "Content-Type": "application/octet-stream" }
+    const response = await fetch(FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + SUPABASE_ANON_KEY
+      }
     });
 
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    if (!response.ok) throw new Error('فشل إنشاء النسخة الاحتياطية');
+
+    const reader = response.body.getReader();
+    const contentLength = +response.headers.get('Content-Length') || 0;
+    let receivedLength = 0;
+    let chunks = [];
+
+    while(true){
+      const {done, value} = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      receivedLength += value.length;
+
+      if (contentLength) {
+        let percent = Math.floor((receivedLength / contentLength) * 100);
+        let mb = (receivedLength / (1024*1024)).toFixed(2);
+        progressBar.style.width = percent + '%';
+        progressBar.textContent = `${percent}% (${mb} MB)`;
+      }
+    }
+
+    const blob = new Blob(chunks, { type: 'application/octet-stream' });
+    const filename = `backup_${new Date().toISOString().replace(/[:.]/g,'_')}.backup.gz`;
+
+    // تحميل النسخة مباشرة للمستخدم
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+
+    progressBar.style.width = '100%';
+    progressBar.textContent = '100%';
+    status.textContent = "تم إنشاء النسخة الاحتياطية بنجاح!";
+
+  } catch (error) {
+    status.textContent = "حدث خطأ: " + error.message;
+    progressBar.style.width = '0%';
+    progressBar.textContent = '0%';
   }
 });
+</script>
+
+</body>
+</html>
