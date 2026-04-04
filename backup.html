@@ -84,8 +84,13 @@
 
     try {
 
-      const response = await fetch('https://YOUR_PROJECT.functions.supabase.co/backup', {
-        method: 'POST'
+     const response = await fetch('https://vmxbedovoahuggfpcmyk.supabase.co/functions/v1/backup', {
+  method: 'POST',
+  headers: {
+    "apikey": "https://YOUR_SUPABASE_PROJECT.supabase.co",
+    "Authorization": "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+  }
+
       });
 
       if (!response.ok) throw new Error('فشل إنشاء النسخة الاحتياطية');
