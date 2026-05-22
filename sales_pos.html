@@ -219,11 +219,51 @@ window.showInvoiceModal = function(){
 
     rows += `
     <tr>
-      <td>${index + 1}</td>
-      <td>${i.name}</td>
-      <td>${i.price}</td>
-      <td>${i.qte}</td>
-      <td>${i.total}</td>
+
+      <td style="
+      border:1px solid #cbd5e1;
+      padding:10px;
+      min-width:50px;
+      ">
+      ${index + 1}
+      </td>
+
+      <td style="
+      border:1px solid #cbd5e1;
+      padding:10px;
+      min-width:180px;
+      white-space:normal;
+      word-break:break-word;
+      ">
+      ${i.name}
+      </td>
+
+      <td style="
+      border:1px solid #cbd5e1;
+      padding:10px;
+      min-width:90px;
+      ">
+      ${i.price}
+      </td>
+
+      <td style="
+      border:1px solid #cbd5e1;
+      padding:10px;
+      min-width:90px;
+      ">
+      ${i.qte}
+      </td>
+
+      <td style="
+      border:1px solid #cbd5e1;
+      padding:10px;
+      min-width:110px;
+      font-weight:bold;
+      color:#1d4ed8;
+      ">
+      ${i.total}
+      </td>
+
     </tr>
     `;
 
@@ -237,7 +277,10 @@ window.showInvoiceModal = function(){
   overflow:hidden;
   font-family:tahoma;
   background:white;
+  width:100%;
   ">
+
+    <!-- رأس الفاتورة -->
 
     <div style="
     background:linear-gradient(135deg,#2563eb,#1d4ed8);
@@ -246,15 +289,23 @@ window.showInvoiceModal = function(){
     text-align:center;
     ">
 
-      <h2 style="margin:0;font-size:24px;">
+      <h2 style="
+      margin:0;
+      font-size:24px;
+      ">
       فاتورة بيع
       </h2>
 
-      <div style="margin-top:6px;font-size:13px;">
+      <div style="
+      margin-top:6px;
+      font-size:13px;
+      ">
       نظام POS متقدم
       </div>
 
     </div>
+
+    <!-- معلومات الفاتورة -->
 
     <div style="
     display:flex;
@@ -281,26 +332,70 @@ window.showInvoiceModal = function(){
 
     </div>
 
-    <div style="overflow-x:auto;">
+    <!-- الجدول -->
+
+    <div style="
+    width:100%;
+    overflow-x:auto;
+    background:white;
+    ">
 
       <table style="
       width:100%;
       border-collapse:collapse;
+      border-spacing:0;
       text-align:center;
-      min-width:500px;
+      min-width:650px;
+      table-layout:auto;
       ">
 
-        <thead style="
-        background:#2563eb;
-        color:white;
-        ">
+        <thead>
 
-          <tr>
-            <th style="padding:10px;border:1px solid #ddd;">#</th>
-            <th style="padding:10px;border:1px solid #ddd;">المنتج</th>
-            <th style="padding:10px;border:1px solid #ddd;">السعر</th>
-            <th style="padding:10px;border:1px solid #ddd;">الكمية</th>
-            <th style="padding:10px;border:1px solid #ddd;">الإجمالي</th>
+          <tr style="
+          background:#2563eb;
+          color:white;
+          ">
+
+            <th style="
+            border:1px solid #dbeafe;
+            padding:12px;
+            min-width:50px;
+            ">
+            #
+            </th>
+
+            <th style="
+            border:1px solid #dbeafe;
+            padding:12px;
+            min-width:180px;
+            ">
+            المنتج
+            </th>
+
+            <th style="
+            border:1px solid #dbeafe;
+            padding:12px;
+            min-width:90px;
+            ">
+            السعر
+            </th>
+
+            <th style="
+            border:1px solid #dbeafe;
+            padding:12px;
+            min-width:90px;
+            ">
+            الكمية
+            </th>
+
+            <th style="
+            border:1px solid #dbeafe;
+            padding:12px;
+            min-width:110px;
+            ">
+            الإجمالي
+            </th>
+
           </tr>
 
         </thead>
@@ -315,6 +410,8 @@ window.showInvoiceModal = function(){
 
     </div>
 
+    <!-- الإجمالي -->
+
     <div style="
     padding:18px;
     text-align:left;
@@ -322,12 +419,15 @@ window.showInvoiceModal = function(){
     font-weight:bold;
     color:#2563eb;
     border-top:1px solid #ddd;
+    background:#f8fafc;
     ">
 
       الإجمالي:
       ${total}
 
     </div>
+
+    <!-- التذييل -->
 
     <div style="
     text-align:center;
@@ -349,7 +449,6 @@ window.showInvoiceModal = function(){
   .classList.remove("hidden");
 
 };
-
 // إغلاق نافذة الفاتورة
 window.closeInvoiceModal = function(){
   document.getElementById("invoiceModal").classList.add("hidden");
