@@ -1,75 +1,427 @@
-<!-- استبدل الجزء المعطوب بالكامل من:
-عرض الفاتورة
-إلى قبل:
-إغلاق نافذة الفاتورة
-بهذا الكود الصحيح بدون أي تأثير سلبي -->
+رتبه بالطريقة الصحيحة دون تأير سلبي
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>نظام POS متقدم v3</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-gray-100 p-6">
 
-<!-- عرض الفاتورة -->
-window.showInvoiceModal = function(){
+<div class="max-w-7xl mx-auto">
 
-  if(cart.length === 0){
-    alert("السلة فارغة");
-    return;
+<h1 class="text-3xl font-bold text-center mb-6">نظام POS متقدم v3</h1>
+
+<div class="grid grid-cols-3 gap-6">
+
+<!-- العملاء -->
+<div class="bg-white p-4 rounded shadow">
+<h2 class="font-bold mb-3">العميل</h2>
+<select id="customer" class="border p-2 w-full mb-3"></select>
+
+<select id="pay_method" class="border p-2 w-full mb-3">
+<option value="cash">نقد</option>
+<option value="bank">تحويل</option>
+<option value="later">آجل</option>
+</select>
+
+<input id="seal_man" class="border p-2 w-full" readonly/>
+</div>
+
+<!-- المنتجات -->
+<div class="bg-white p-4 rounded shadow">
+<h2 class="font-bold mb-3">المنتجات</h2>
+<select id="product" class="border p-2 w-full mb-3"></select>
+
+<div class="flex gap-2 mb-3">
+<input id="price" placeholder="سعر البيع" class="border p-2 w-full" readonly/>
+<input id="stock" placeholder="المخزون" class="border p-2 w-full" readonly/>
+</div>
+
+<input id="qte" type="number" placeholder="الكمية" class="border p-2 w-full mb-3"/>
+<button onclick="addItem()" class="bg-blue-600 text-white w-full py-2 rounded">إضافة للسلة</button>
+</div>
+
+<!-- الإجمالي -->
+<div class="bg-white p-4 rounded shadow">
+<h2 class="font-bold mb-3">الإجمالي</h2>
+<div class="text-xl font-bold mb-4">
+الإجمالي : <span id="total">0</span>
+</div>
+<div class="flex flex-col gap-2">
+<button onclick="showInvoiceModal()" class="bg-yellow-600 text-white w-full py-2 rounded">عرض الفاتورة</button>
+<button onclick="saveInvoice()" class="bg-green-600 text-white w-full py-2 rounded">إتمام البيع</button>
+</div>
+</div>
+
+</div>
+
+<!-- سلة المشتريات -->
+<div class="bg-white mt-6 p-4 rounded shadow">
+<table class="w-full text-center">
+<thead class="bg-gray-200">
+<tr>
+<th>المنتج</th>
+<th>السعر</th>
+<th>الكمية</th>
+<th>المجموع</th>
+<th>تعديل</th>
+<th>حذف</th>
+</tr>
+</thead>
+<tbody id="cart"></tbody>
+</table>
+</div>
+
+<!-- نافذة عرض الفاتورة -->
+<div id="invoiceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+<div class="bg-white p-6 rounded w-96 relative max-h-[80vh] overflow-y-auto">
+<h2 class="text-xl font-bold mb-3 text-center">فاتورة البيع</h2>
+<div id="invoiceContent" class="text-right text-sm mb-4"></div>
+<div class="flex justify-end gap-2">
+<button onclick="printInvoice()" class="bg-blue-600 text-white px-3 py-1 rounded">طباعة</button>
+<button onclick="closeInvoiceModal()" class="bg-gray-400 text-white px-3 py-1 rounded">إغلاق</button>
+</div>
+</div>
+</div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+
+const supabase = window.supabase.createClient(
+  "https://vmxbedovoahuggfpcmyk.supabase.co",
+  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+);
+
+const currentUserName = "Alaadin Adam";
+document.getElementById("seal_man").value = currentUserName;
+
+let products = [];
+let cart = [];
+
+// تحميل العملاء
+async function loadCustomers() {
+  const select = document.getElementById("customer");
+  select.innerHTML = "";
+  const { data, error } = await supabase.from("customers").select("id_customer,first_name");
+  if(error){ console.log(error); alert("خطأ في تحميل العملاء"); return; }
+  data.forEach(c=>{
+    const option=document.createElement("option");
+    option.value=c.id_customer;
+    option.textContent=c.first_name;
+    select.appendChild(option);
+  });
+}
+
+// تحميل المنتجات
+async function loadProducts() {
+  const select = document.getElementById("product");
+  select.innerHTML = "";
+  const { data, error } = await supabase.from("products").select("id_product,product_name,seal_price,qte_in_stock");
+  if(error){ console.log(error); alert("خطأ في تحميل المنتجات"); return; }
+  products = data;
+  data.forEach(p=>{
+    const option=document.createElement("option");
+    option.value=p.id_product;
+    option.textContent=p.product_name;
+    select.appendChild(option);
+  });
+  select.addEventListener("change", showProduct);
+  showProduct();
+}
+
+// عرض سعر ومخزون المنتج
+function showProduct(){
+  const id=document.getElementById("product").value;
+  const p=products.find(x=>x.id_product==id);
+  if(!p) return;
+  document.getElementById("price").value=p.seal_price;
+  document.getElementById("stock").value=p.qte_in_stock;
+}
+
+// عرض السلة
+function renderCart(){
+  const table=document.getElementById("cart");
+  table.innerHTML="";
+  let total=0;
+  cart.forEach((i,index)=>{
+    total+=i.total;
+    table.innerHTML+=`
+    <tr class="border-b">
+      <td>${i.name}</td>
+      <td>${i.price}</td>
+      <td><input type="number" value="${i.qte}" min="1" style="width:60px" onchange="updateQty(${index},this.value)"/></td>
+      <td>${i.total}</td>
+      <td><button onclick="updateQty(${index},document.querySelectorAll('#cart input')[${index}].value)" class="text-blue-600">تحديث</button></td>
+      <td><button onclick="removeItem(${index})" class="text-red-600">حذف</button></td>
+    </tr>`;
+  });
+  document.getElementById("total").innerText=total;
+}
+
+// إضافة منتج للسلة
+window.addItem = function(){
+  const productId = document.getElementById("product").value;
+  const qte = parseFloat(document.getElementById("qte").value);
+  const product = products.find(p=>p.id_product==productId);
+  if(!qte||qte<=0){ alert("ادخل الكمية"); return; }
+  if(qte>product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
+
+  product.qte_in_stock -= qte; // تحديث المخزون محلياً
+  cart.push({id_product:productId,name:product.product_name,price:product.seal_price,qte:qte,total:qte*product.seal_price});
+  renderCart();
+  showProduct();
+}
+
+// تعديل كمية المنتج في السلة
+window.updateQty = function(index,value){
+  const q=parseFloat(value);
+  const product=products.find(p=>p.id_product==cart[index].id_product);
+  const delta = q - cart[index].qte;
+  if(delta > product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
+  product.qte_in_stock -= delta;
+  cart[index].qte=q;
+  cart[index].total=q*cart[index].price;
+  renderCart();
+  showProduct();
+}
+
+// حذف المنتج من السلة
+window.removeItem = function(index){
+  const product=products.find(p=>p.id_product==cart[index].id_product);
+  product.qte_in_stock += cart[index].qte;
+  cart.splice(index,1);
+  renderCart();
+  showProduct();
+}
+
+// عرض الفاتورة
+<script>
+
+/* عرض الفاتورة */
+function showInvoice(){
+
+  if(cart.length===0){
+    alert("السلة فارغة")
+    return
   }
 
   let customerName =
-  document.getElementById("customer").selectedOptions[0].text;
+  document.getElementById("customerSelect").selectedOptions[0].text
 
-  let total =
-  document.getElementById("total").innerText;
+  let total = document.getElementById("total").innerText
 
-  let rows = "";
+  let rows = ""
 
   cart.forEach((i,index)=>{
 
     rows += `
     <tr>
-      <td>${index + 1}</td>
+      <td>${index+1}</td>
       <td>${i.name}</td>
       <td>${i.price}</td>
-      <td>${i.qte}</td>
+      <td>${i.qty}</td>
       <td>${i.total}</td>
     </tr>
-    `;
+    `
 
-  });
+  })
 
-  document.getElementById("invoiceContent").innerHTML = `
+  let invoice = `
+  <!DOCTYPE html>
+  <html lang="ar" dir="rtl">
 
-  <div style="
+  <head>
+
+  <meta charset="UTF-8">
+
+  <title>فاتورة بيع</title>
+
+  <style>
+
+  *{
+  box-sizing:border-box;
+  }
+
+  body{
+  font-family:tahoma;
+  padding:20px;
+  color:#111;
+  background:white;
+  }
+
+  .invoice-box{
+  max-width:900px;
+  margin:auto;
   border:2px solid #2563eb;
   border-radius:14px;
   overflow:hidden;
-  font-family:tahoma;
-  background:white;
-  ">
+  }
 
-    <div style="
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
-    color:white;
-    padding:15px;
+  .header{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  color:white;
+  padding:20px;
+  text-align:center;
+  }
+
+  .header h1{
+  margin:0;
+  font-size:28px;
+  }
+
+  .header p{
+  margin-top:8px;
+  font-size:14px;
+  }
+
+  .info{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:18px;
+  background:#f8fafc;
+  border-bottom:1px solid #ddd;
+  }
+
+  .info div{
+  font-size:15px;
+  }
+
+  table{
+  width:100%;
+  border-collapse:collapse;
+  }
+
+  thead{
+  background:#2563eb;
+  color:white;
+  }
+
+  th{
+  padding:14px 10px;
+  font-size:15px;
+  border:1px solid #dbeafe;
+  }
+
+  td{
+  padding:12px 10px;
+  text-align:center;
+  border:1px solid #e5e7eb;
+  font-size:14px;
+  }
+
+  tbody tr:nth-child(even){
+  background:#f9fafb;
+  }
+
+  .total-box{
+  padding:20px;
+  text-align:left;
+  font-size:24px;
+  font-weight:bold;
+  color:#2563eb;
+  }
+
+  .footer{
+  text-align:center;
+  padding:15px;
+  color:#666;
+  border-top:1px solid #ddd;
+  font-size:13px;
+  }
+
+  .print-btn{
+  background:#16a34a;
+  color:white;
+  border:none;
+  padding:12px 25px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:16px;
+  margin:20px auto;
+  display:block;
+  }
+
+  .print-btn:hover{
+  background:#15803d;
+  }
+
+  @media print{
+
+    body{
+    padding:0;
+    }
+
+    .print-btn{
+    display:none;
+    }
+
+    .invoice-box{
+    border:none;
+    }
+
+  }
+
+  /* تحسين الموبايل */
+
+  @media(max-width:600px){
+
+    body{
+    padding:8px;
+    }
+
+    .header h1{
+    font-size:22px;
+    }
+
+    .info{
+    flex-direction:column;
+    }
+
+    th,td{
+    font-size:12px;
+    padding:8px 4px;
+    }
+
+    .total-box{
+    font-size:20px;
     text-align:center;
-    ">
+    }
 
-      <h2 style="margin:0;font-size:24px;">
+  }
+
+  </style>
+
+  </head>
+
+  <body>
+
+  <button class="print-btn" onclick="window.print()">
+  🖨 طباعة الفاتورة
+  </button>
+
+  <div class="invoice-box">
+
+    <div class="header">
+
+      <h1>
       فاتورة بيع
-      </h2>
+      </h1>
 
-      <div style="margin-top:6px;font-size:13px;">
-      نظام POS متقدم
-      </div>
+      <p>
+      نظام إدارة المبيعات POS
+      </p>
 
     </div>
 
-    <div style="
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:10px;
-    padding:15px;
-    background:#f8fafc;
-    border-bottom:1px solid #ddd;
-    ">
+    <div class="info">
 
       <div>
       👤 العميل:
@@ -77,70 +429,47 @@ window.showInvoiceModal = function(){
       </div>
 
       <div>
-      📅 ${new Date().toLocaleDateString()}
+      📅 التاريخ:
+      <strong>${new Date().toLocaleDateString()}</strong>
       </div>
 
       <div>
-      🕒 ${new Date().toLocaleTimeString()}
+      🕒 الوقت:
+      <strong>${new Date().toLocaleTimeString()}</strong>
       </div>
 
     </div>
 
-    <div style="overflow-x:auto;">
+    <table>
 
-      <table style="
-      width:100%;
-      border-collapse:collapse;
-      text-align:center;
-      min-width:500px;
-      ">
+      <thead>
 
-        <thead style="
-        background:#2563eb;
-        color:white;
-        ">
+        <tr>
+          <th>#</th>
+          <th>المنتج</th>
+          <th>السعر</th>
+          <th>الكمية</th>
+          <th>الإجمالي</th>
+        </tr>
 
-          <tr>
-            <th style="padding:10px;border:1px solid #ddd;">#</th>
-            <th style="padding:10px;border:1px solid #ddd;">المنتج</th>
-            <th style="padding:10px;border:1px solid #ddd;">السعر</th>
-            <th style="padding:10px;border:1px solid #ddd;">الكمية</th>
-            <th style="padding:10px;border:1px solid #ddd;">الإجمالي</th>
-          </tr>
+      </thead>
 
-        </thead>
+      <tbody>
 
-        <tbody>
+      ${rows}
 
-        ${rows}
+      </tbody>
 
-        </tbody>
+    </table>
 
-      </table>
-
-    </div>
-
-    <div style="
-    padding:18px;
-    text-align:left;
-    font-size:22px;
-    font-weight:bold;
-    color:#2563eb;
-    border-top:1px solid #ddd;
-    ">
+    <div class="total-box">
 
       الإجمالي:
       ${total}
 
     </div>
 
-    <div style="
-    text-align:center;
-    padding:12px;
-    color:#666;
-    font-size:13px;
-    border-top:1px solid #eee;
-    ">
+    <div class="footer">
 
       شكراً لتعاملكم معنا
 
@@ -148,9 +477,7 @@ window.showInvoiceModal = function(){
 
   </div>
 
-  `;
+  </body>
 
-  document.getElementById("invoiceModal")
-  .classList.remove("hidden");
-
-};
+  </html>
+ 
