@@ -12,39 +12,395 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://unpkg.com/feather-icons"></script>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
 body{
-background:linear-gradient(135deg,#1e3a8a,#0f172a);
-font-family:tahoma;
+font-family:'Cairo',Tahoma,sans-serif;
+background:
+linear-gradient(rgba(15,23,42,0.92),rgba(15,23,42,0.95)),
+url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1600&auto=format&fit=crop") center/cover fixed;
+min-height:100vh;
+color:white;
+overflow-x:hidden;
+}
+
+/* ===== شريط علوي ===== */
+
+.header{
+background:rgba(15,23,42,0.8);
+backdrop-filter:blur(12px);
+border-bottom:1px solid rgba(255,255,255,0.08);
+padding:15px 20px;
+position:sticky;
+top:0;
+z-index:999;
+}
+
+.header-flex{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:15px;
+flex-wrap:wrap;
+}
+
+.brand-box{
+display:flex;
+align-items:center;
+gap:15px;
+}
+
+.logo{
+width:60px;
+height:60px;
+border-radius:18px;
+background:linear-gradient(135deg,#2563eb,#7c3aed);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:26px;
+font-weight:bold;
+box-shadow:0 10px 25px rgba(37,99,235,0.35);
+}
+
+.brand-text h1{
+font-size:24px;
+font-weight:800;
+margin-bottom:3px;
+}
+
+.brand-text p{
+font-size:14px;
+color:#cbd5e1;
+}
+
+.top-info{
+display:flex;
+align-items:center;
+gap:12px;
+flex-wrap:wrap;
+}
+
+.info-card{
+background:rgba(255,255,255,0.08);
+padding:10px 16px;
+border-radius:14px;
+font-size:14px;
+backdrop-filter:blur(10px);
+border:1px solid rgba(255,255,255,0.05);
+}
+
+/* ===== أزرار علوية ===== */
+
+.quick-actions{
+padding:15px 20px;
+display:flex;
+gap:12px;
+overflow-x:auto;
+scrollbar-width:none;
+}
+
+.quick-actions::-webkit-scrollbar{
+display:none;
+}
+
+.action-btn{
+min-width:max-content;
+padding:12px 18px;
+border:none;
+border-radius:14px;
+background:rgba(255,255,255,0.08);
+color:white;
+cursor:pointer;
+font-weight:700;
+transition:0.3s;
+border:1px solid rgba(255,255,255,0.06);
+backdrop-filter:blur(10px);
+}
+
+.action-btn:hover{
+transform:translateY(-3px);
+background:linear-gradient(135deg,#2563eb,#7c3aed);
+}
+
+/* ===== التخطيط ===== */
+
+.main-layout{
+display:grid;
+grid-template-columns:260px 1fr 260px;
+gap:20px;
+padding:20px;
+min-height:calc(100vh - 150px);
+}
+
+/* ===== القوائم ===== */
+
+.sidebar{
+background:rgba(255,255,255,0.08);
+border-radius:24px;
+padding:20px;
+backdrop-filter:blur(14px);
+border:1px solid rgba(255,255,255,0.06);
+height:fit-content;
+}
+
+.sidebar-title{
+font-size:22px;
+font-weight:800;
+margin-bottom:22px;
+text-align:center;
+background:linear-gradient(90deg,#60a5fa,#c084fc);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
 }
 
 .menu{
-padding:10px;
-margin-bottom:6px;
-border-radius:8px;
+padding:15px;
+margin-bottom:12px;
+border-radius:16px;
 cursor:pointer;
 transition:0.3s;
-background:#3b82f6;
-color:white;
-font-weight:bold;
-text-align:center;
+background:rgba(255,255,255,0.07);
+border:1px solid rgba(255,255,255,0.05);
+font-weight:700;
+display:flex;
+align-items:center;
+gap:10px;
 }
 
 .menu:hover{
-background:#2563eb;
-transform:translateX(-4px);
+transform:translateX(-5px);
+background:linear-gradient(135deg,#2563eb,#7c3aed);
 }
 
-.topbar{
-background:#0f172a;
-color:white;
-padding:10px;
+hr{
+border:none;
+height:1px;
+background:rgba(255,255,255,0.08);
+margin:18px 0;
+}
+
+/* ===== الوسط ===== */
+
+.center-area{
 display:flex;
-flex-wrap:wrap;
-gap:10px;
+flex-direction:column;
+gap:20px;
+}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:18px;
+}
+
+.stat-card{
+background:rgba(255,255,255,0.08);
+padding:22px;
+border-radius:24px;
+backdrop-filter:blur(14px);
+border:1px solid rgba(255,255,255,0.05);
+transition:0.3s;
+}
+
+.stat-card:hover{
+transform:translateY(-5px);
+}
+
+.stat-top{
+display:flex;
 justify-content:space-between;
 align-items:center;
+margin-bottom:15px;
+}
+
+.stat-icon{
+width:52px;
+height:52px;
+border-radius:16px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:24px;
+background:linear-gradient(135deg,#2563eb,#7c3aed);
+}
+
+.stat-title{
+font-size:14px;
+color:#cbd5e1;
+}
+
+.stat-number{
+font-size:28px;
+font-weight:800;
+}
+
+/* ===== الصورة ===== */
+
+.hero-box{
+background:rgba(255,255,255,0.08);
+border-radius:28px;
+padding:20px;
+backdrop-filter:blur(14px);
+border:1px solid rgba(255,255,255,0.05);
+display:flex;
+align-items:center;
+justify-content:center;
+min-height:420px;
+overflow:hidden;
+}
+
+.hero-box img{
+width:100%;
+max-height:500px;
+object-fit:contain;
+border-radius:20px;
+}
+
+/* ===== النافذة ===== */
+
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.55);
+z-index:9999;
+align-items:center;
+justify-content:center;
+padding:20px;
+}
+
+.modal-content{
+background:white;
+width:100%;
+max-width:400px;
+border-radius:24px;
+padding:25px;
+color:#111827;
+box-shadow:0 20px 40px rgba(0,0,0,0.4);
+}
+
+.modal-content h3{
+margin-bottom:20px;
+font-size:24px;
+font-weight:800;
+text-align:center;
+}
+
+.modal-content input{
+width:100%;
+padding:14px;
+border-radius:14px;
+border:1px solid #d1d5db;
+margin-bottom:15px;
+font-family:'Cairo',Tahoma,sans-serif;
+}
+
+.modal-content input:focus{
+outline:none;
+border-color:#2563eb;
+box-shadow:0 0 0 4px rgba(37,99,235,0.12);
+}
+
+.modal-buttons{
+display:flex;
+gap:10px;
+}
+
+.modal-buttons button{
+flex:1;
+padding:12px;
+border:none;
+border-radius:14px;
+cursor:pointer;
+font-weight:700;
+font-family:'Cairo',Tahoma,sans-serif;
+}
+
+.save-btn{
+background:linear-gradient(135deg,#2563eb,#7c3aed);
+color:white;
+}
+
+.cancel-btn{
+background:#e5e7eb;
+}
+
+/* ===== موبايل ===== */
+
+@media(max-width:1100px){
+
+.main-layout{
+grid-template-columns:1fr;
+}
+
+.sidebar{
+width:100%;
+}
+
+}
+
+@media(max-width:768px){
+
+.header{
+padding:15px;
+}
+
+.brand-text h1{
+font-size:20px;
+}
+
+.logo{
+width:52px;
+height:52px;
+font-size:22px;
+}
+
+.quick-actions{
+padding:12px;
+}
+
+.action-btn{
+padding:10px 14px;
+font-size:14px;
+}
+
+.stats{
+grid-template-columns:1fr;
+}
+
+.hero-box{
+min-height:250px;
+padding:12px;
+}
+
+.menu{
+padding:13px;
+font-size:15px;
+}
+
+}
+
+::-webkit-scrollbar{
+width:8px;
+height:8px;
+}
+
+::-webkit-scrollbar-thumb{
+background:#7c3aed;
+border-radius:20px;
 }
 
 </style>
@@ -53,147 +409,237 @@ align-items:center;
 
 <body>
 
-<!-- رأس الصفحة -->
-<div class="bg-blue-700 text-white p-3 flex flex-wrap justify-between items-center gap-2">
+<!-- ===== الهيدر ===== -->
 
-<div class="text-lg md:text-xl font-bold">
-<span id="storeHeader">نظام إدارة المبيعات</span>
+<div class="header">
+
+<div class="header-flex">
+
+<div class="brand-box">
+
+<div class="logo">
+💼
 </div>
 
-<div>
+<div class="brand-text">
+<h1 id="storeHeader">نظام إدارة المبيعات</h1>
+<p>
 🏪 <span id="storeName">ABM للتجارة والاستثمار</span>
+</p>
 </div>
 
 </div>
 
-<!-- الأزرار العلوية -->
-<div class="bg-blue-500 text-white flex flex-wrap gap-2 p-2 justify-center">
+<div class="top-info">
 
-<button onclick="go('products_report.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
-تفاصيل المنتجات
-</button>
+<div class="info-card">
+👤 <span id="usernameDisplay"></span>
+</div>
 
-<button onclick="go('sales_advanced.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
-فواتير مبدئية
-</button>
+<div class="info-card" id="clock"></div>
 
-<button onclick="go('sales_advanced.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
-فواتير نهائية
-</button>
-
-<button onclick="go('backup.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
-نسخة احتياطية
-</button>
-
-<button onclick="go('restore.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
-استعادة
-</button>
-
-<button onclick="go('dashboard.html')" class="px-3 py-1 bg-blue-600 rounded text-sm md:text-base">
-لوحة التحكم
-</button>
-
-<div class="menu text-sm md:text-base" onclick="go('settings.html')">⚙ إعدادات</div>
+<div class="info-card cursor-pointer" onclick="editPassword()">
+🔒 كلمة المرور
+</div>
 
 </div>
 
-<!-- الشريط العلوي -->
-<div class="topbar">
-
-<div>👤 <span id="usernameDisplay"></span></div>
-
-<div id="clock"></div>
-
-<div class="menu text-sm" onclick="editPassword()">كلمة المرور</div>
+</div>
 
 </div>
 
-<!-- المحتوى -->
-<div class="flex flex-col md:flex-row h-auto md:h-[calc(100vh-50px)]">
+<!-- ===== الأزرار السريعة ===== -->
+
+<div class="quick-actions">
+
+<button onclick="go('products_report.html')" class="action-btn">
+📦 تفاصيل المنتجات
+</button>
+
+<button onclick="go('sales_advanced.html')" class="action-btn">
+🧾 فواتير مبدئية
+</button>
+
+<button onclick="go('sales_advanced.html')" class="action-btn">
+✅ فواتير نهائية
+</button>
+
+<button onclick="go('backup.html')" class="action-btn">
+💾 نسخة احتياطية
+</button>
+
+<button onclick="go('restore.html')" class="action-btn">
+♻️ استعادة
+</button>
+
+<button onclick="go('dashboard.html')" class="action-btn">
+📊 لوحة التحكم
+</button>
+
+<button onclick="go('settings.html')" class="action-btn">
+⚙ إعدادات
+</button>
+
+</div>
+
+<!-- ===== المحتوى ===== -->
+
+<div class="main-layout">
 
 <!-- القائمة اليمنى -->
-<div class="w-full md:w-64 p-4 overflow-y-auto text-white"
-style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
-<h2 class="text-lg md:text-xl font-bold text-center mb-4 text-blue-700">
+<div class="sidebar">
+
+<div class="sidebar-title">
 القائمة الرئيسية
-</h2>
+</div>
 
-<div class="menu" onclick="go('categories.html')">الأصناف</div>
-<div class="menu" onclick="go('products.html')">المنتجات</div>
-<div class="menu" onclick="go('customers.html')">العملاء</div>
-<div class="menu" onclick="go('importer.html')">الموردين</div>
+<div class="menu" onclick="go('categories.html')">
+📂 الأصناف
+</div>
+
+<div class="menu" onclick="go('products.html')">
+📦 المنتجات
+</div>
+
+<div class="menu" onclick="go('customers.html')">
+👥 العملاء
+</div>
+
+<div class="menu" onclick="go('importer.html')">
+🚚 الموردين
+</div>
 
 <hr>
 
-<div class="menu" onclick="go('loans.html')">القروض</div>
-<div class="menu" onclick="go('loan_statement.html')">سداد القروض</div>
+<div class="menu" onclick="go('loans.html')">
+💰 القروض
+</div>
+
+<div class="menu" onclick="go('loan_statement.html')">
+📄 سداد القروض
+</div>
 
 <hr>
 
-<div class="menu" onclick="go('coast_value.html')">المصروفات</div>
+<div class="menu" onclick="go('coast_value.html')">
+💸 المصروفات
+</div>
 
 </div>
 
 <!-- الوسط -->
-<div class="flex-1 flex items-center justify-center p-4">
 
-<div class="bg-white rounded-xl shadow-2xl p-4 w-full h-full flex items-center justify-center">
+<div class="center-area">
+
+<div class="stats">
+
+<div class="stat-card">
+<div class="stat-top">
+<div>
+<div class="stat-title">إدارة المنتجات</div>
+<div class="stat-number">24/7</div>
+</div>
+
+<div class="stat-icon">📦</div>
+</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-top">
+<div>
+<div class="stat-title">سرعة النظام</div>
+<div class="stat-number">100%</div>
+</div>
+
+<div class="stat-icon">⚡</div>
+</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-top">
+<div>
+<div class="stat-title">إدارة العملاء</div>
+<div class="stat-number">CRM</div>
+</div>
+
+<div class="stat-icon">👥</div>
+</div>
+</div>
+
+</div>
+
+<div class="hero-box">
 
 <img src="pic14.webp"
 loading="lazy"
-class="max-w-full max-h-[400px] object-contain">
+alt="sales dashboard">
 
 </div>
 
 </div>
 
 <!-- القائمة اليسرى -->
-<div class="w-full md:w-64 p-4 overflow-y-auto text-white"
-style="background:linear-gradient(to bottom,#60a5fa,#3b82f6);">
 
-<h2 class="text-lg md:text-xl font-bold text-center mb-4 text-blue-700">
+<div class="sidebar">
+
+<div class="sidebar-title">
 العمليات
-</h2>
+</div>
 
-<div class="menu" onclick="go('sales_advanced.html')">المبيعات</div>
-<div class="menu" onclick="go('products_report_simple.html')">تحليل المنتجات</div>
-<div class="menu" onclick="go('profits_report.html')">الأرباح</div>
+<div class="menu" onclick="go('sales_advanced.html')">
+🛒 المبيعات
+</div>
+
+<div class="menu" onclick="go('products_report_simple.html')">
+📈 تحليل المنتجات
+</div>
+
+<div class="menu" onclick="go('profits_report.html')">
+💵 الأرباح
+</div>
 
 <hr>
 
-<div class="menu" onclick="go('products_weight_report.html')">الأوزان</div>
+<div class="menu" onclick="go('products_weight_report.html')">
+⚖ الأوزان
+</div>
 
-<div class="menu" style="background-color:#ef4444;" onclick="logout()">
-خروج
+<div class="menu"
+style="background:linear-gradient(135deg,#ef4444,#dc2626);"
+onclick="logout()">
+🚪 خروج
 </div>
 
 </div>
 
 </div>
 
-<!-- نافذة تغيير كلمة المرور -->
-<div id="passwordBox" style="display:none;
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:white;
-padding:20px;
-border-radius:10px;
-box-shadow:0 0 20px rgba(0,0,0,0.3);
-width:90%;
-max-width:300px">
+<!-- ===== نافذة كلمة المرور ===== -->
+
+<div id="passwordBox" class="modal">
+
+<div class="modal-content">
 
 <h3>تغيير كلمة المرور</h3>
 
-<input type="password" id="oldPass" placeholder="القديمة" class="w-full border p-2 mb-2">
-<input type="password" id="newPass" placeholder="الجديدة" class="w-full border p-2">
+<input type="password" id="oldPass" placeholder="كلمة المرور القديمة">
 
-<br><br>
+<input type="password" id="newPass" placeholder="كلمة المرور الجديدة">
 
-<button onclick="savePassword()" class="bg-blue-600 text-white px-3 py-1 rounded">حفظ</button>
-<button onclick="closePassword()" class="bg-gray-400 px-3 py-1 rounded">إلغاء</button>
+<div class="modal-buttons">
+
+<button onclick="savePassword()" class="save-btn">
+حفظ
+</button>
+
+<button onclick="closePassword()" class="cancel-btn">
+إلغاء
+</button>
+
+</div>
+
+</div>
 
 </div>
 
@@ -209,38 +655,61 @@ const supabaseClient = supabase.createClient(
 )
 
 function loadStore(){
+
 let name = localStorage.getItem("storeName") || "ABM للتجارة والاستثمار"
 let header = localStorage.getItem("storeHeader") || "نظام إدارة المبيعات"
 
-document.getElementById("storeName").innerText=name
-document.getElementById("storeHeader").innerText=header
+document.getElementById("storeName").innerText = name
+document.getElementById("storeHeader").innerText = header
+
 }
+
 loadStore()
 
 function updateClock(){
+
 let now = new Date()
+
 document.getElementById("clock").innerHTML =
 "🕒 " + now.toLocaleTimeString() + " | " + now.toLocaleDateString()
+
 }
+
+updateClock()
 setInterval(updateClock,1000)
 
 document.addEventListener("DOMContentLoaded", function(){
+
 let user = localStorage.getItem("user")
-if(!user){ window.location="index.html"; return }
+
+if(!user){
+
+window.location = "index.html"
+return
+
+}
+
 document.getElementById("usernameDisplay").textContent = user
+
 })
 
 function logout(){
+
 localStorage.clear()
-window.location="index.html"
+window.location = "index.html"
+
 }
 
 function editPassword(){
-document.getElementById("passwordBox").style.display="block"
+
+document.getElementById("passwordBox").style.display = "flex"
+
 }
 
 function closePassword(){
-document.getElementById("passwordBox").style.display="none"
+
+document.getElementById("passwordBox").style.display = "none"
+
 }
 
 async function savePassword(){
@@ -250,11 +719,13 @@ let oldPass = document.getElementById("oldPass").value
 let newPass = document.getElementById("newPass").value
 
 if(!oldPass || !newPass){
+
 alert("أدخل جميع البيانات")
 return
+
 }
 
-const {data,error}=await supabaseClient
+const {data,error} = await supabaseClient
 .from("tb_users")
 .select("*")
 .eq("fullname",username)
@@ -262,23 +733,31 @@ const {data,error}=await supabaseClient
 .single()
 
 if(error || !data){
+
 alert("كلمة المرور غير صحيحة")
 return
+
 }
 
-const {error:updateError}=await supabaseClient
+const {error:updateError} = await supabaseClient
 .from("tb_users")
 .update({pwd:newPass})
 .eq("fullname",username)
 
 if(updateError){
+
 alert("خطأ في التحديث")
 return
+
 }
 
 alert("تم التغيير بنجاح")
+
 closePassword()
+
 }
+
+feather.replace()
 
 </script>
 
