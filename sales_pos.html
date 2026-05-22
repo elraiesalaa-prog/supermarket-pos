@@ -200,16 +200,296 @@ window.removeItem = function(index){
 }
 
 // عرض الفاتورة
-window.showInvoiceModal = function(){
-  if(cart.length===0){ alert("السلة فارغة"); return; }
-  const container=document.getElementById("invoiceContent");
-  container.innerHTML=`<table class="w-full text-right border-collapse border border-gray-400">
-  <thead class="bg-gray-200"><tr><th class="border p-1">المنتج</th><th class="border p-1">السعر</th><th class="border p-1">الكمية</th><th class="border p-1">المجموع</th></tr></thead><tbody>`;
-  cart.forEach(i=>{ container.innerHTML+=`<tr><td class="border p-1">${i.name}</td><td class="border p-1">${i.price}</td><td class="border p-1">${i.qte}</td><td class="border p-1">${i.total}</td></tr>`; });
-  container.innerHTML+=`</tbody></table><p class="mt-2"><strong>الإجمالي:</strong> ${document.getElementById("total").innerText}</p>`;
-  container.innerHTML+=`<p><strong>العميل:</strong> ${document.getElementById("customer").selectedOptions[0].text} <br> <strong>البائع:</strong> ${document.getElementById("seal_man").value} <br> <strong>طريقة الدفع:</strong> ${document.getElementById("pay_method").value}</p>`;
-  document.getElementById("invoiceModal").classList.remove("hidden");
+<script>
+
+/* عرض الفاتورة */
+function showInvoice(){
+
+  if(cart.length===0){
+    alert("السلة فارغة")
+    return
+  }
+
+  let customerName =
+  document.getElementById("customerSelect").selectedOptions[0].text
+
+  let total = document.getElementById("total").innerText
+
+  let rows = ""
+
+  cart.forEach((i,index)=>{
+
+    rows += `
+    <tr>
+      <td>${index+1}</td>
+      <td>${i.name}</td>
+      <td>${i.price}</td>
+      <td>${i.qty}</td>
+      <td>${i.total}</td>
+    </tr>
+    `
+
+  })
+
+  let invoice = `
+  <!DOCTYPE html>
+  <html lang="ar" dir="rtl">
+
+  <head>
+
+  <meta charset="UTF-8">
+
+  <title>فاتورة بيع</title>
+
+  <style>
+
+  *{
+  box-sizing:border-box;
+  }
+
+  body{
+  font-family:tahoma;
+  padding:20px;
+  color:#111;
+  background:white;
+  }
+
+  .invoice-box{
+  max-width:900px;
+  margin:auto;
+  border:2px solid #2563eb;
+  border-radius:14px;
+  overflow:hidden;
+  }
+
+  .header{
+  background:linear-gradient(135deg,#2563eb,#1d4ed8);
+  color:white;
+  padding:20px;
+  text-align:center;
+  }
+
+  .header h1{
+  margin:0;
+  font-size:28px;
+  }
+
+  .header p{
+  margin-top:8px;
+  font-size:14px;
+  }
+
+  .info{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:18px;
+  background:#f8fafc;
+  border-bottom:1px solid #ddd;
+  }
+
+  .info div{
+  font-size:15px;
+  }
+
+  table{
+  width:100%;
+  border-collapse:collapse;
+  }
+
+  thead{
+  background:#2563eb;
+  color:white;
+  }
+
+  th{
+  padding:14px 10px;
+  font-size:15px;
+  border:1px solid #dbeafe;
+  }
+
+  td{
+  padding:12px 10px;
+  text-align:center;
+  border:1px solid #e5e7eb;
+  font-size:14px;
+  }
+
+  tbody tr:nth-child(even){
+  background:#f9fafb;
+  }
+
+  .total-box{
+  padding:20px;
+  text-align:left;
+  font-size:24px;
+  font-weight:bold;
+  color:#2563eb;
+  }
+
+  .footer{
+  text-align:center;
+  padding:15px;
+  color:#666;
+  border-top:1px solid #ddd;
+  font-size:13px;
+  }
+
+  .print-btn{
+  background:#16a34a;
+  color:white;
+  border:none;
+  padding:12px 25px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:16px;
+  margin:20px auto;
+  display:block;
+  }
+
+  .print-btn:hover{
+  background:#15803d;
+  }
+
+  @media print{
+
+    body{
+    padding:0;
+    }
+
+    .print-btn{
+    display:none;
+    }
+
+    .invoice-box{
+    border:none;
+    }
+
+  }
+
+  /* تحسين الموبايل */
+
+  @media(max-width:600px){
+
+    body{
+    padding:8px;
+    }
+
+    .header h1{
+    font-size:22px;
+    }
+
+    .info{
+    flex-direction:column;
+    }
+
+    th,td{
+    font-size:12px;
+    padding:8px 4px;
+    }
+
+    .total-box{
+    font-size:20px;
+    text-align:center;
+    }
+
+  }
+
+  </style>
+
+  </head>
+
+  <body>
+
+  <button class="print-btn" onclick="window.print()">
+  🖨 طباعة الفاتورة
+  </button>
+
+  <div class="invoice-box">
+
+    <div class="header">
+
+      <h1>
+      فاتورة بيع
+      </h1>
+
+      <p>
+      نظام إدارة المبيعات POS
+      </p>
+
+    </div>
+
+    <div class="info">
+
+      <div>
+      👤 العميل:
+      <strong>${customerName}</strong>
+      </div>
+
+      <div>
+      📅 التاريخ:
+      <strong>${new Date().toLocaleDateString()}</strong>
+      </div>
+
+      <div>
+      🕒 الوقت:
+      <strong>${new Date().toLocaleTimeString()}</strong>
+      </div>
+
+    </div>
+
+    <table>
+
+      <thead>
+
+        <tr>
+          <th>#</th>
+          <th>المنتج</th>
+          <th>السعر</th>
+          <th>الكمية</th>
+          <th>الإجمالي</th>
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+      ${rows}
+
+      </tbody>
+
+    </table>
+
+    <div class="total-box">
+
+      الإجمالي:
+      ${total}
+
+    </div>
+
+    <div class="footer">
+
+      شكراً لتعاملكم معنا
+
+    </div>
+
+  </div>
+
+  </body>
+
+  </html>
+  `
+
+  let w = window.open("", "_blank")
+
+  w.document.open()
+  w.document.write(invoice)
+  w.document.close()
+
 }
+
+</script>
 
 // إغلاق نافذة الفاتورة
 window.closeInvoiceModal = function(){
