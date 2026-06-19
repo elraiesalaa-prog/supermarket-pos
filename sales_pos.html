@@ -220,40 +220,6 @@ window.addItem = function(){
 
 }
 
-  // تحديث المخزون محلياً
-  product.qte_in_stock -= qte;
-
-  // إضافة المنتج بالسعر المعدل
-  cart.push({
-    id_product: productId,
-    name: product.product_name,
-    price: price,
-    qte: qte,
-    total: price * qte
-  });
-
-  renderCart();
-
-  // تحديث المخزون الظاهر
-  showProduct();
-
-  // تفريغ حقل الكمية
-  document.getElementById("qte").value = "";
-
-}
-// تعديل كمية المنتج في السلة
-window.updateQty = function(index,value){
-  const q=parseFloat(value);
-  const product=products.find(p=>p.id_product==cart[index].id_product);
-  const delta = q - cart[index].qte;
-  if(delta > product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
-  product.qte_in_stock -= delta;
-  cart[index].qte=q;
-  cart[index].total=q*cart[index].price;
-  renderCart();
-  showProduct();
-}
-
 // حذف المنتج من السلة
 window.removeItem = function(index){
   const product=products.find(p=>p.id_product==cart[index].id_product);
