@@ -183,14 +183,15 @@ if(!price || price<=0){
   return;
 }
 
+const price = parseFloat(document.getElementById("price").value);
+
 cart.push({
-  id_product:productId,
-  name:product.product_name,
-  price:price,
-  qte:qte,
-  total:qte*price
+  id_product: productId,
+  name: product.product_name,
+  price: price,
+  qte: qte,
+  total: qte * price
 });
-}
 
 // تعديل كمية المنتج في السلة
 window.updateQty = function(index,value){
