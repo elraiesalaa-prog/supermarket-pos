@@ -219,6 +219,28 @@ window.addItem = function(){
   document.getElementById("qte").value = "";
 
 }
+
+  // تحديث المخزون محلياً
+  product.qte_in_stock -= qte;
+
+  // إضافة المنتج بالسعر المعدل
+  cart.push({
+    id_product: productId,
+    name: product.product_name,
+    price: price,
+    qte: qte,
+    total: price * qte
+  });
+
+  renderCart();
+
+  // تحديث المخزون الظاهر
+  showProduct();
+
+  // تفريغ حقل الكمية
+  document.getElementById("qte").value = "";
+
+}
 // تعديل كمية المنتج في السلة
 window.updateQty = function(index,value){
   const q=parseFloat(value);
