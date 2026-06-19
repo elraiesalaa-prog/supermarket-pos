@@ -99,7 +99,125 @@ class="bg-indigo-600 text-white w-full py-2 rounded">
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
+window.showInvoicesList = async function(){
 
+  const {data,error}=await supabase
+  .from("orders_o")
+  .select("*")
+  .order("id_order",{ascending:false});
+
+  if(error){
+    alert("خطأ في تحميل الفواتير");
+    return;
+  }
+
+  let html="";
+
+  data.forEach(i=>{
+
+    html+=`
+    <tr>
+
+      <td class="border p-2">${i.id_order}</td>
+
+      <td class="border p-2">
+      ${new Date(i.date_order).toLocaleDateString()}
+      </td>
+
+      <td class="border p-2">${i.pay_method}</td>
+
+      <td class="border p-2">${i.seal_man}</td>
+
+      <td class="border p-2">
+      <button
+      class="bg-blue-600 text-white px-3 py-1 rounded"
+      onclick="openInvoice(${i.id_order})">
+      عرض
+      </button>
+      </td>
+
+    </tr>
+    `;
+  });
+
+  document.getElementById("invoiceListBody").innerHTML=html;
+
+  document.getElementById("invoiceListModal")
+  .classList.remove("hidden");
+
+  document.getElementById("invoiceListModal")
+  .classList.add("flex");
+
+}
+  window.closeInvoicesList = function(){
+
+ document.getElementById("invoiceListModal")
+ .classList.add("hidden");
+
+ document.getElementById("invoiceListModal")
+ .classList.remove("flex");
+
+}
+  window.openInvoice = async function(id_order){
+
+  const {data,error}=await supabase
+  .from("orders_details")
+  .select("*")
+  .eq("id_order",id_order);
+
+  if(error){
+    alert("خطأ في قراءة الفاتورة");
+    return;
+  }
+
+  let rows="";
+  let total=0;
+
+  data.forEach((i,index)=>{
+
+    total+=Number(i.total_amount);
+
+    rows+=`
+    <tr>
+    <td style="border:1px solid #ddd;padding:6px">${index+1}</td>
+    <td style="border:1px solid #ddd;padding:6px">${i.id_product}</td>
+    <td style="border:1px solid #ddd;padding:6px">${i.price}</td>
+    <td style="border:1px solid #ddd;padding:6px">${i.qte}</td>
+    <td style="border:1px solid #ddd;padding:6px">${i.total_amount}</td>
+    </tr>
+    `;
+  });
+
+  document.getElementById("invoiceContent").innerHTML=`
+
+  <h2 style="text-align:center;font-size:22px">
+  فاتورة رقم ${id_order}
+  </h2>
+
+  <table style="width:100%;border-collapse:collapse;text-align:center">
+
+  <tr style="background:#2563eb;color:white">
+  <th>#</th>
+  <th>المنتج</th>
+  <th>السعر</th>
+  <th>الكمية</th>
+  <th>الإجمالي</th>
+  </tr>
+
+  ${rows}
+
+  </table>
+
+  <h3 style="margin-top:20px;color:#2563eb">
+  الإجمالي : ${total}
+  </h3>
+  `;
+
+  document.getElementById("invoiceModal")
+  .classList.remove("hidden");
+
+}
+  
 const supabase = window.supabase.createClient(
   "https://vmxbedovoahuggfpcmyk.supabase.co",
   "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
@@ -567,7 +685,43 @@ await loadProducts();
 
 });
 </script>
+<div id="invoiceListModal"
+class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
 
+<div class="bg-white rounded p-4 w-[95%] max-w-4xl max-h-[90vh] overflow-auto">
+
+<h2 class="text-xl font-bold mb-4 text-center">
+الفواتير السابقة
+</h2>
+
+<table class="w-full text-center border-collapse">
+
+<thead class="bg-gray-200">
+
+<tr>
+<th class="border p-2">رقم الفاتورة</th>
+<th class="border p-2">التاريخ</th>
+<th class="border p-2">طريقة الدفع</th>
+<th class="border p-2">البائع</th>
+<th class="border p-2">عرض</th>
+</tr>
+
+</thead>
+
+<tbody id="invoiceListBody"></tbody>
+
+</table>
+
+<div class="mt-4 text-center">
+<button onclick="closeInvoicesList()"
+class="bg-red-600 text-white px-4 py-2 rounded">
+إغلاق
+</button>
+</div>
+
+</div>
+
+</div>
 </body>
 </html>
 ```
