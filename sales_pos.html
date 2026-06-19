@@ -529,9 +529,31 @@ window.saveInvoice = async function(){
     await supabase.from("products").update({qte_in_stock:product.qte_in_stock}).eq("id_product",item.id_product);
   }
 
-  alert("تمت عملية البيع بنجاح");
-  cart=[];
+ alert("تمت عملية البيع بنجاح");
+
+// عرض الفاتورة بعد الحفظ مباشرة
+showInvoiceModal();
+
+// حفظ نسخة مؤقتة من السلة الحالية
+const oldCart = [...cart];
+
+// تفريغ السلة بعد إغلاق الفاتورة
+const oldClose = window.closeInvoiceModal;
+
+window.closeInvoiceModal = function(){
+
+  document.getElementById("invoiceModal")
+  .classList.add("hidden");
+
+  // إعادة الدالة الأصلية
+  window.closeInvoiceModal = oldClose;
+
+  // تفريغ السلة بعد الانتهاء من عرض الفاتورة
+  cart = [];
   renderCart();
+  loadProducts();
+
+}
   await loadProducts();
 }
 
