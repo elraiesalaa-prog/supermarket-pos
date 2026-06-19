@@ -168,7 +168,15 @@ function renderCart(){
 }
 
 // إضافة منتج للسلة
-const price = parseFloat(document.getElementById("price").value);
+window.addItem = function(){
+  const productId = document.getElementById("product").value;
+  const qte = parseFloat(document.getElementById("qte").value);
+  const product = products.find(p=>p.id_product==productId);
+  if(!qte||qte<=0){ alert("ادخل الكمية"); return; }
+  if(qte>product.qte_in_stock){ alert("الكمية أكبر من المخزون"); return; }
+
+  product.qte_in_stock -= qte; // تحديث المخزون محلياً
+  const price = parseFloat(document.getElementById("price").value);
 
 if(!price || price<=0){
   alert("أدخل سعر البيع");
@@ -182,6 +190,7 @@ cart.push({
   qte:qte,
   total:qte*price
 });
+}
 
 // تعديل كمية المنتج في السلة
 window.updateQty = function(index,value){
