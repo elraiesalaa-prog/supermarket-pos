@@ -1,58 +1,296 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إدارة المخزون</title>
-<link rel="stylesheet" href="css/style.css">
+<title>الفواتير - نظام POS</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{
+    background:#f4f7fb;
+    font-family:Tahoma,sans-serif;
+}
+.card{
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+}
+</style>
 </head>
 
 <body>
 
-<header>
-<h2>📦 إدارة المنتجات</h2>
-<button onclick="logout()">خروج</button>
+<!-- Header -->
+<header class="bg-blue-900 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
+        <div class="text-3xl font-bold">
+            نظام POS
+        </div>
+
+        <div class="flex items-center gap-3">
+            <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                 class="w-10 h-10 rounded-full">
+            <span>Alaadin Adam</span>
+        </div>
+    </div>
 </header>
 
-<div class="pos-container">
+<div class="max-w-7xl mx-auto p-6">
 
-<h3>➕ إضافة منتج</h3>
+    <!-- عنوان -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-4xl font-bold text-slate-800">
+                الفواتير
+            </h1>
+            <p class="text-gray-500 mt-2">
+                عرض وإدارة جميع فواتير المبيعات
+            </p>
+        </div>
 
-<input type="text" id="name" placeholder="اسم المنتج">
-<input type="text" id="barcode" placeholder="الباركود">
-<input type="number" id="cost_price" placeholder="سعر التكلفة">
-<input type="number" id="price" placeholder="سعر البيع">
-<input type="number" id="stock" placeholder="الكمية">
-<input type="number" id="min_stock" placeholder="حد التنبيه">
+        <button
+        class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl shadow">
+            فاتورة جديدة
+        </button>
+    </div>
 
-<button onclick="addProduct()">إضافة</button>
+    <!-- الإحصائيات -->
+    <div class="grid md:grid-cols-4 gap-5 mb-6">
 
-<hr>
+        <div class="bg-white rounded-2xl shadow p-5">
+            <div class="text-gray-500">
+                إجمالي المبيعات
+            </div>
+            <div class="text-3xl font-bold text-green-600 mt-2">
+                12,450,000
+            </div>
+        </div>
 
-<h3>📋 قائمة المنتجات</h3>
+        <div class="bg-white rounded-2xl shadow p-5">
+            <div class="text-gray-500">
+                عدد الفواتير
+            </div>
+            <div class="text-3xl font-bold text-blue-600 mt-2">
+                156
+            </div>
+        </div>
 
-<table id="productsTable" border="1" width="100%">
-<thead>
-<tr>
-<th>الاسم</th>
-<th>السعر</th>
-<th>المخزون</th>
-<th>تنبيه</th>
-<th>حذف</th>
-</tr>
-</thead>
-<script>
-protectPage(["storekeeper","manager","admin"]);
-</script>
-<tbody></tbody>
-</table>
+        <div class="bg-white rounded-2xl shadow p-5">
+            <div class="text-gray-500">
+                مبيعات اليوم
+            </div>
+            <div class="text-3xl font-bold text-orange-500 mt-2">
+                450,000
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow p-5">
+            <div class="text-gray-500">
+                متوسط الفاتورة
+            </div>
+            <div class="text-3xl font-bold text-purple-600 mt-2">
+                79,808
+            </div>
+        </div>
+
+    </div>
+
+    <!-- المحتوى -->
+    <div class="grid lg:grid-cols-2 gap-6">
+
+        <!-- قائمة الفواتير -->
+        <div class="bg-white rounded-2xl shadow">
+
+            <div class="p-4 border-b">
+
+                <div class="flex gap-2">
+
+                    <input
+                    placeholder="بحث برقم الفاتورة..."
+                    class="border rounded-xl p-3 flex-1">
+
+                    <button
+                    class="bg-blue-600 text-white px-4 rounded-xl">
+                        بحث
+                    </button>
+
+                </div>
+
+            </div>
+
+            <div class="overflow-auto">
+
+                <table class="w-full text-center">
+
+                    <thead class="bg-gray-100">
+
+                        <tr>
+                            <th class="p-3">رقم الفاتورة</th>
+                            <th class="p-3">التاريخ</th>
+                            <th class="p-3">طريقة الدفع</th>
+                            <th class="p-3">البائع</th>
+                            <th class="p-3">الإجمالي</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr class="border-b hover:bg-blue-50 cursor-pointer">
+
+                            <td class="p-3 text-blue-600 font-bold">
+                                000156
+                            </td>
+
+                            <td>2026-06-25</td>
+
+                            <td>
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded">
+                                    نقد
+                                </span>
+                            </td>
+
+                            <td>Alaadin Adam</td>
+
+                            <td class="font-bold text-green-600">
+                                1,250,000
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        <!-- تفاصيل الفاتورة -->
+        <div class="bg-white rounded-2xl shadow">
+
+            <div class="p-5 border-b">
+
+                <h2 class="text-2xl font-bold">
+                    تفاصيل الفاتورة
+                </h2>
+
+            </div>
+
+            <div class="p-5">
+
+                <div class="bg-blue-50 rounded-xl p-4 mb-4">
+
+                    <div class="text-blue-700 font-bold text-xl">
+                        رقم الفاتورة : 000156
+                    </div>
+
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-5">
+
+                    <div>
+                        <div class="text-gray-500">
+                            التاريخ
+                        </div>
+                        <div class="font-bold">
+                            2026-06-25
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-gray-500">
+                            البائع
+                        </div>
+                        <div class="font-bold">
+                            Alaadin Adam
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="overflow-auto">
+
+                    <table class="w-full text-center">
+
+                        <thead class="bg-gray-100">
+
+                            <tr>
+                                <th class="p-2">#</th>
+                                <th class="p-2">المنتج</th>
+                                <th class="p-2">السعر</th>
+                                <th class="p-2">الكمية</th>
+                                <th class="p-2">الإجمالي</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            <tr class="border-b">
+                                <td>1</td>
+                                <td>منتج رقم 1</td>
+                                <td>250,000</td>
+                                <td>2</td>
+                                <td>500,000</td>
+                            </tr>
+
+                            <tr class="border-b">
+                                <td>2</td>
+                                <td>منتج رقم 2</td>
+                                <td>150,000</td>
+                                <td>3</td>
+                                <td>450,000</td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div
+                class="mt-6 bg-green-50 border border-green-200 rounded-xl p-4">
+
+                    <div class="text-lg">
+                        الإجمالي الكلي
+                    </div>
+
+                    <div
+                    class="text-3xl font-bold text-green-600 mt-2">
+
+                        1,250,000 ج.س
+
+                    </div>
+
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 mt-6">
+
+                    <button
+                    class="bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl">
+                        طباعة
+                    </button>
+
+                    <button
+                    class="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl">
+                        PDF
+                    </button>
+
+                    <button
+                    class="bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-xl">
+                        مشاركة
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/inventory.js"></script>
 
 </body>
 </html>
