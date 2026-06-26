@@ -1,931 +1,235 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>إدارة الفواتير الاحترافية</title>
+<title>إدارة الفواتير</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-<style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Cairo,Tahoma,sans-serif;
-}
-
-body{
-background:#eef2f7;
-}
-
-::-webkit-scrollbar{
-width:8px;
-height:8px;
-}
-
-::-webkit-scrollbar-thumb{
-background:#2563eb;
-border-radius:20px;
-}
-
-.card{
-background:#fff;
-border-radius:18px;
-box-shadow:0 10px 25px rgba(0,0,0,.08);
-}
-
-.tableHover tbody tr:hover{
-background:#eff6ff;
-cursor:pointer;
-transition:.25s;
-}
-
-.statCard{
-background:white;
-border-radius:18px;
-padding:20px;
-box-shadow:0 10px 20px rgba(0,0,0,.08);
-}
-
-.statTitle{
-font-size:14px;
-color:#666;
-margin-bottom:8px;
-}
-
-.statValue{
-font-size:32px;
-font-weight:bold;
-}
-
-input,select{
-outline:none;
-}
-
-button{
-transition:.25s;
-}
-
-button:hover{
-transform:translateY(-2px);
-}
-
-</style>
+<script src="https://cdn.tailwindcss.com"></script>
 
 </head>
 
-<body>
+<body class="bg-gray-100">
 
-<header class="bg-blue-900 text-white shadow-xl">
+<!-- ================= HEADER ================= -->
+<div class="bg-blue-600 text-white p-4 text-center text-2xl font-bold">
+    نظام إدارة الفواتير
+</div>
 
-<div class="max-w-7xl mx-auto p-5 flex justify-between items-center">
+<!-- ================= MAIN ================= -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
 
-<div>
+<!-- ========== العملاء ========== -->
+<div class="bg-white p-4 rounded shadow">
+    <h2 class="text-lg font-bold mb-2">العملاء</h2>
+    <select id="customerSelect" class="w-full border p-2 rounded"></select>
 
-<h1 class="text-3xl font-bold">
+    <div class="mt-2 text-sm text-gray-500" id="customerInfo"></div>
+</div>
 
-📄 إدارة الفواتير
+<!-- ========== المنتجات ========== -->
+<div class="bg-white p-4 rounded shadow">
+    <h2 class="text-lg font-bold mb-2">المنتجات</h2>
 
-</h1>
+    <select id="productSelect" class="w-full border p-2 rounded"></select>
 
-<div class="text-sm text-blue-200">
+    <input id="qty" type="number" placeholder="الكمية"
+        class="w-full border p-2 rounded mt-2">
 
-عرض جميع الفواتير ومتابعة تفاصيلها
+    <button onclick="addToCart()"
+        class="bg-green-600 text-white w-full p-2 mt-2 rounded">
+        إضافة للفاتورة
+    </button>
+</div>
 
+<!-- ========== الفاتورة الحالية ========== -->
+<div class="bg-white p-4 rounded shadow">
+    <h2 class="text-lg font-bold mb-2">الفاتورة الحالية</h2>
+
+    <div id="cart" class="text-sm space-y-2"></div>
+
+    <button onclick="createOrder()"
+        class="bg-blue-600 text-white w-full p-2 mt-3 rounded">
+        حفظ الفاتورة
+    </button>
 </div>
 
 </div>
 
-<div class="flex gap-3">
-
-<button
-onclick="loadInvoices()"
-class="bg-green-600 hover:bg-green-700 px-5 py-2 rounded-lg">
-
-تحديث
-
-</button>
-
-<a
-href="index.html"
-class="bg-white text-blue-900 px-5 py-2 rounded-lg font-bold">
-
-رجوع
-
-</a>
-
+<!-- ================= الفواتير ================= -->
+<div class="p-4">
+    <h2 class="text-xl font-bold mb-3">الفواتير المسجلة</h2>
+    <div id="ordersList" class="space-y-3"></div>
 </div>
-
-</div>
-
-</header>
-
-<div class="max-w-7xl mx-auto p-5">
-
-<div class="grid lg:grid-cols-4 md:grid-cols-2 gap-4 mb-6">
-
-<div class="statCard">
-
-<div class="statTitle">
-
-إجمالي المبيعات
-
-</div>
-
-<div
-id="totalSales"
-class="statValue text-green-600">
-
-0
-
-</div>
-
-</div>
-
-<div class="statCard">
-
-<div class="statTitle">
-
-عدد الفواتير
-
-</div>
-
-<div
-id="invoiceCount"
-class="statValue text-blue-700">
-
-0
-
-</div>
-
-</div>
-
-<div class="statCard">
-
-<div class="statTitle">
-
-عدد العملاء
-
-</div>
-
-<div
-id="customersCount"
-class="statValue text-orange-600">
-
-0
-
-</div>
-
-</div>
-
-<div class="statCard">
-
-<div class="statTitle">
-
-عدد المنتجات
-
-</div>
-
-<div
-id="productsCount"
-class="statValue text-purple-700">
-
-0
-
-</div>
-
-</div>
-
-</div>
-
-<div class="card p-5 mb-6">
-
-<div class="grid md:grid-cols-4 gap-3">
-
-<input
-id="search"
-type="text"
-placeholder="بحث برقم الفاتورة أو اسم العميل"
-class="border rounded-xl p-3">
-
-<select
-id="payFilter"
-class="border rounded-xl p-3">
-
-<option value="">كل طرق الدفع</option>
-<option value="cash">نقد</option>
-<option value="bank">تحويل</option>
-<option value="later">آجل</option>
-
-</select>
-
-<input
-id="dateFrom"
-type="date"
-class="border rounded-xl p-3">
-
-<input
-id="dateTo"
-type="date"
-class="border rounded-xl p-3">
-
-</div>
-
-</div>
-<!-- محتوى الصفحة -->
-
-<div class="grid lg:grid-cols-2 gap-6">
-
-    <!-- قائمة الفواتير -->
-
-    <div class="card overflow-hidden">
-
-        <div class="bg-blue-600 text-white p-4 flex justify-between items-center">
-
-            <span class="font-bold text-lg">
-                قائمة الفواتير
-            </span>
-
-            <span id="invoiceRows"
-                class="bg-white text-blue-700 px-3 py-1 rounded-full text-sm">
-                0 فاتورة
-            </span>
-
-        </div>
-
-        <div class="overflow-auto max-h-[700px]">
-
-            <table class="w-full text-center tableHover">
-
-                <thead class="bg-slate-100 sticky top-0">
-
-                    <tr>
-
-                        <th class="p-3">رقم</th>
-
-                        <th class="p-3">العميل</th>
-
-                        <th class="p-3">التاريخ</th>
-
-                        <th class="p-3">طريقة الدفع</th>
-
-                        <th class="p-3">الإجمالي</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody id="invoiceTable">
-
-                    <tr>
-
-                        <td colspan="5"
-                            class="p-5 text-gray-400">
-
-                            جاري تحميل البيانات...
-
-                        </td>
-
-                    </tr>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    </div>
-
-    <!-- تفاصيل الفاتورة -->
-
-    <div class="card overflow-hidden">
-
-        <div class="bg-green-600 text-white p-4 flex justify-between items-center">
-
-            <span class="font-bold text-lg">
-
-                تفاصيل الفاتورة
-
-            </span>
-
-            <div class="flex gap-2">
-
-                <button
-                    onclick="printInvoice()"
-                    class="bg-white text-green-700 px-3 py-2 rounded-lg">
-
-                    🖨 طباعة
-
-                </button>
-
-                <button
-                    onclick="downloadPDF()"
-                    class="bg-white text-blue-700 px-3 py-2 rounded-lg">
-
-                    PDF
-
-                </button>
-
-            </div>
-
-        </div>
-
-        <div
-            id="invoiceDetails"
-            class="p-6 min-h-[650px]">
-
-            <div
-                class="flex flex-col items-center justify-center h-full text-gray-400">
-
-                <svg xmlns="http://www.w3.org/2000/svg"
-                    width="80"
-                    height="80"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    viewBox="0 0 24 24">
-
-                    <path d="M9 12h6"/>
-                    <path d="M9 16h6"/>
-                    <path d="M8 2h8l5 5v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h3z"/>
-                    <path d="M14 2v6h6"/>
-
-                </svg>
-
-                <div class="mt-4 text-xl">
-
-                    اختر فاتورة من القائمة
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const supabase = window.supabase.createClient(
+// ================= SUPABASE =================
+const { createClient } = window.supabase;
+
+const supabase = createClient(
   "https://vmxbedovoahuggfpcmyk.supabase.co",
-  "YOUR_KEY"
+  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
-</script>
 
-let customers = [];
-    
-let products = [];
-let invoices = [];
-let currentInvoiceId = null;
+// ================= STATE =================
+let cart = [];
 
-function money(v){
+// ================= LOAD DATA =================
+async function loadCustomers() {
+    let { data } = await supabase.from('customers').select('*');
 
-    return Number(v || 0).toLocaleString();
+    let select = document.getElementById('customerSelect');
+    select.innerHTML = "";
 
-}
-function payBadge(pay){
-
-    if(pay==="cash")
-        return "<span class='bg-green-100 text-green-700 px-2 py-1 rounded-full'>نقد</span>";
-
-    if(pay==="bank")
-        return "<span class='bg-blue-100 text-blue-700 px-2 py-1 rounded-full'>تحويل</span>";
-
-    if(pay==="later")
-        return "<span class='bg-orange-100 text-orange-700 px-2 py-1 rounded-full'>آجل</span>";
-
-    return pay || "-";
-}
-
-async function loadMasterData(){
-
-    const {data:cust}=await supabase
-    .from("customers")
-    .select("*");
-
-    customers=cust||[];
-
-    const {data:prod}=await supabase
-    .from("products")
-    .select("*");
-
-    products=prod||[];
-
-}
-  //=========================
-// تحميل الإحصائيات
-//=========================
-
-async function loadStats(){
-
-    try{
-
-        const {data:sales,error:salesErr}=await supabase
-        .from("orders_details")
-        .select("total_amount");
-
-        if(salesErr) throw salesErr;
-
-        const totalSales=(sales||[]).reduce(
-            (sum,row)=>sum+Number(row.total_amount||0),
-            0
-        );
-
-        document.getElementById("totalSales").innerText=
-        money(totalSales);
-
-        const {count:invoiceCount}=await supabase
-        .from("orders_o")
-        .select("*",{count:"exact",head:true});
-
-        document.getElementById("invoiceCount").innerText=
-        invoiceCount||0;
-
-        const {count:customersCount}=await supabase
-        .from("customers")
-        .select("*",{count:"exact",head:true});
-
-        document.getElementById("customersCount").innerText=
-        customersCount||0;
-
-        const {count:productsCount}=await supabase
-        .from("products")
-        .select("*",{count:"exact",head:true});
-
-        document.getElementById("productsCount").innerText=
-        productsCount||0;
-
-    }catch(err){
-
-        console.error(err);
-
-    }
-
-}
-
-
-
-//=========================
-// تحميل الفواتير
-//=========================
-
-async function loadInvoices(){
-
-    try{
-
-        const payMethod=
-        document.getElementById("payFilter").value;
-
-        let query=supabase
-        .from("orders_o")
-        .select("*")
-        .order("id_order",{ascending:false});
-
-        if(payMethod){
-
-            query=query.eq("pay_method",payMethod);
-
-        }
-
-        const {data,error}=await query;
-
-        if(error) throw error;
-
-        invoices=data||[];
-
-        document.getElementById("invoiceRows").innerHTML=
-        invoices.length+" فاتورة";
-
-        let html="";
-
-        for(const inv of invoices){
-
-            const customer=customers.find(c=>
-
-                Number(c.id_customer)===Number(inv.customer_id)
-
-            );
-
-            const {data:details}=await supabase
-            .from("orders_details")
-            .select("total_amount")
-            .eq("id_order",inv.id_order);
-
-            const total=(details||[]).reduce(
-
-                (sum,row)=>sum+Number(row.total_amount||0),
-
-                0
-
-            );
-
-            html+=`
-
-            <tr
-            onclick="openInvoice(${inv.id_order})"
-            class="border-b hover:bg-blue-50">
-
-                <td class="p-3 font-bold text-blue-700">
-
-                    ${inv.id_order}
-
-                </td>
-
-                <td class="p-3">
-
-                    ${customer?.first_name||"-"}
-
-                </td>
-
-                <td class="p-3">
-
-                    ${new Date(inv.date_order).toLocaleDateString()}
-
-                </td>
-
-                <td class="p-3">
-
-                    ${payBadge(inv.pay_method)}
-
-                </td>
-
-                <td class="p-3 font-bold text-green-600">
-
-                    ${money(total)}
-
-                </td>
-
-            </tr>
-
-            `;
-
-        }
-
-        if(html===""){
-
-            html=`
-
-            <tr>
-
-            <td colspan="5"
-            class="p-5 text-gray-400">
-
-            لا توجد بيانات
-
-            </td>
-
-            </tr>
-
-            `;
-
-        }
-
-        document.getElementById("invoiceTable").innerHTML=html;
-
-    }
-
-    catch(err){
-
-        console.error(err);
-
-        alert(err.message);
-
-    }
-
-}
-
-
-
-//=========================
-// البحث
-//=========================
-
-document
-.getElementById("search")
-.addEventListener("keyup",function(){
-
-    const value=this.value.toLowerCase();
-
-    document
-    .querySelectorAll("#invoiceTable tr")
-    .forEach(row=>{
-
-        row.style.display=
-
-        row.innerText.toLowerCase()
-
-        .includes(value)
-
-        ? ""
-
-        : "none";
-
+    data.forEach(c => {
+        let opt = document.createElement('option');
+        opt.value = c.id_customer;
+        opt.textContent = c.first_name + " - " + (c.tel || "");
+        select.appendChild(opt);
     });
-
-});
-
-
-
-//=========================
-// تحديث الفلاتر
-//=========================
-
-document
-.getElementById("payFilter")
-.addEventListener("change",loadInvoices);
-  //======================================
-// عرض تفاصيل الفاتورة
-//======================================
-
-async function openInvoice(id_order){
-
-    currentInvoiceId=id_order;
-
-    try{
-
-        const {data:order,error:orderError}=await supabase
-        .from("orders_o")
-        .select("*")
-        .eq("id_order",id_order)
-        .single();
-
-        if(orderError) throw orderError;
-
-        const customer=customers.find(c=>
-            Number(c.id_customer)===Number(order.customer_id)
-        );
-
-        const {data:details,error:detailsError}=await supabase
-        .from("orders_details")
-        .select("*")
-        .eq("id_order",id_order);
-
-        if(detailsError) throw detailsError;
-
-        let total=0;
-        let rows="";
-
-        details.forEach((item,index)=>{
-
-            const product=products.find(p=>
-                Number(p.id_product)===Number(item.id_product)
-            );
-
-            total+=Number(item.total_amount||0);
-
-            rows+=`
-
-            <tr class="border-b">
-
-                <td class="p-2">${index+1}</td>
-
-                <td class="p-2">
-                    ${product?.product_name||"-"}
-                </td>
-
-                <td class="p-2">
-                    ${money(item.price)}
-                </td>
-
-                <td class="p-2">
-                    ${item.qte}
-                </td>
-
-                <td class="p-2 text-green-700 font-bold">
-                    ${money(item.total_amount)}
-                </td>
-
-            </tr>
-
-            `;
-
-        });
-
-        document.getElementById("invoiceDetails").innerHTML=`
-
-        <div id="printArea">
-
-            <div class="mb-5 border-b pb-3">
-
-                <h2 class="text-3xl font-bold text-blue-700">
-
-                    فاتورة رقم ${order.id_order}
-
-                </h2>
-
-                <div class="text-gray-600 mt-2">
-
-                    التاريخ :
-                    ${new Date(order.date_order).toLocaleString()}
-
-                </div>
-
-                <div class="mt-2">
-
-                    طريقة الدفع :
-                    ${payBadge(order.pay_method)}
-
-                </div>
-
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-5">
-
-                <div>
-
-                    <div class="font-bold">
-
-                        العميل
-
-                    </div>
-
-                    <div>
-
-                        ${customer?.first_name||"-"}
-
-                    </div>
-
-                    <div>
-
-                        ${customer?.tel||"-"}
-
-                    </div>
-
-                    <div>
-
-                        ${customer?.whatsapp||"-"}
-
-                    </div>
-
-                </div>
-
-                <div class="text-left">
-
-                    <div class="font-bold">
-
-                        الرصيد
-
-                    </div>
-
-                    <div class="text-blue-700 text-2xl">
-
-                        ${money(customer?.balance)}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <table class="w-full text-center border">
-
-                <thead class="bg-slate-100">
-
-                    <tr>
-
-                        <th class="p-2">#</th>
-                        <th class="p-2">المنتج</th>
-                        <th class="p-2">السعر</th>
-                        <th class="p-2">الكمية</th>
-                        <th class="p-2">الإجمالي</th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    ${rows}
-
-                </tbody>
-
-            </table>
-
-            <div class="mt-6 p-5 bg-green-50 rounded-xl">
-
-                <div class="text-lg">
-
-                    إجمالي الفاتورة
-
-                </div>
-
-                <div class="text-3xl font-bold text-green-700">
-
-                    ${money(total)}
-
-                </div>
-
-            </div>
-
-        </div>
-
+}
+
+async function loadProducts() {
+    let { data } = await supabase.from('products').select('*');
+
+    let select = document.getElementById('productSelect');
+    select.innerHTML = "";
+
+    data.forEach(p => {
+        let opt = document.createElement('option');
+        opt.value = p.id_product;
+        opt.textContent = p.product_name + " | سعر: " + p.seal_price;
+        opt.dataset.price = p.seal_price;
+        select.appendChild(opt);
+    });
+}
+
+async function loadOrders() {
+    let { data } = await supabase
+        .from('orders_o')
+        .select('*, customers(first_name)')
+        .order('id_order', { ascending: false });
+
+    let container = document.getElementById('ordersList');
+    container.innerHTML = "";
+
+    data.forEach(o => {
+        let div = document.createElement('div');
+        div.className = "bg-white p-3 rounded shadow";
+
+        div.innerHTML = `
+            <div class="font-bold">فاتورة #${o.id_order}</div>
+            <div>العميل: ${o.customers?.first_name || ''}</div>
+            <div>التاريخ: ${o.date_order || ''}</div>
+            <button onclick="loadOrderDetails(${o.id_order})"
+                class="text-blue-600 mt-2">عرض التفاصيل</button>
+            <div id="details-${o.id_order}" class="mt-2"></div>
         `;
 
+        container.appendChild(div);
+    });
+}
+
+// ================= CART =================
+function addToCart() {
+    let select = document.getElementById('productSelect');
+    let qty = document.getElementById('qty').value;
+
+    let product = select.options[select.selectedIndex];
+
+    cart.push({
+        id_product: product.value,
+        name: product.text,
+        qty: qty,
+        price: product.dataset.price,
+        total: qty * product.dataset.price
+    });
+
+    renderCart();
+}
+
+function renderCart() {
+    let container = document.getElementById('cart');
+    container.innerHTML = "";
+
+    cart.forEach((item, i) => {
+        container.innerHTML += `
+            <div class="border p-2 rounded">
+                ${item.name} - ${item.qty} × ${item.price} = ${item.total}
+                <button onclick="removeItem(${i})" class="text-red-600">حذف</button>
+            </div>
+        `;
+    });
+}
+
+function removeItem(index) {
+    cart.splice(index, 1);
+    renderCart();
+}
+
+// ================= CREATE ORDER =================
+async function createOrder() {
+
+    let customer_id = document.getElementById('customerSelect').value;
+
+    let { data: order } = await supabase
+        .from('orders_o')
+        .insert([{
+            customer_id: customer_id,
+            date_order: new Date(),
+            pay_method: "cash",
+            description_order: "فاتورة جديدة"
+        }])
+        .select()
+        .single();
+
+    for (let item of cart) {
+        await supabase.from('orders_details').insert([{
+            id_order: order.id_order,
+            id_product: item.id_product,
+            qte: item.qty,
+            price: item.price,
+            total_amount: item.total,
+            id_customer: customer_id,
+            date_order: new Date()
+        }]);
     }
 
-    catch(err){
+    cart = [];
+    renderCart();
+    loadOrders();
 
-        console.error(err);
-
-        alert(err.message);
-
-    }
-
+    alert("تم حفظ الفاتورة بنجاح");
 }
 
+// ================= ORDER DETAILS =================
+async function loadOrderDetails(orderId) {
 
+    let { data } = await supabase
+        .from('orders_details')
+        .select('*, products(product_name)')
+        .eq('id_order', orderId);
 
-//======================================
-// الطباعة
-//======================================
+    let container = document.getElementById(`details-${orderId}`);
+    container.innerHTML = "";
 
-function printInvoice(){
-
-    const area=document.getElementById("printArea");
-
-    if(!area) return;
-
-    const win=window.open("");
-
-    win.document.write(`
-    <html dir="rtl">
-    <head>
-    <title>فاتورة</title>
-    </head>
-    <body>
-    ${area.innerHTML}
-    </body>
-    </html>`);
-
-    win.document.close();
-
-    win.print();
-
+    data.forEach(d => {
+        container.innerHTML += `
+            <div class="text-sm border-t p-1">
+                ${d.products?.product_name} - ${d.qte} × ${d.price} = ${d.total_amount}
+            </div>
+        `;
+    });
 }
 
-
-
-//======================================
-// PDF
-//======================================
-
-function downloadPDF(){
-
-    const area=document.getElementById("printArea");
-
-    if(!area) return;
-
-    html2pdf()
-    .set({
-
-        margin:5,
-
-        filename:"Invoice_"+currentInvoiceId+".pdf",
-
-        image:{type:"jpeg",quality:1},
-
-        html2canvas:{scale:2},
-
-        jsPDF:{unit:"mm",format:"a4",orientation:"portrait"}
-
-    })
-    .from(area)
-    .save();
-
-}
-
-
-
-//======================================
-// تشغيل الصفحة
-//======================================
-
-async function init(){
-
-    await loadMasterData();
-
-    await loadStats();
-
-    await loadInvoices();
-
-}
-
-init();
+// ================= INIT =================
+loadCustomers();
+loadProducts();
+loadOrders();
 
 </script>
 
 </body>
-
 </html>
