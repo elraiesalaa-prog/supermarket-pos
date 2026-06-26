@@ -5,60 +5,60 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>POS + إدارة الفواتير الاحترافية</title>
+<title>نظام الفواتير الاحترافي FIXED</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
 body{background:#eef2f7;font-family:Cairo}
-.card{background:#fff;border-radius:15px;box-shadow:0 10px 25px rgba(0,0,0,.08)}
+.card{background:#fff;padding:15px;border-radius:12px;box-shadow:0 5px 20px rgba(0,0,0,.1)}
+table{width:100%}
+th,td{padding:8px;text-align:center}
+tr:hover{background:#f1f5f9}
 </style>
+
 </head>
 
 <body>
 
-<!-- HEADER -->
-<header class="bg-blue-900 text-white p-4 text-center text-2xl font-bold">
-📦 نظام الفواتير الاحترافي POS
+<header class="bg-blue-900 text-white p-4 text-center text-xl font-bold">
+📦 نظام الفواتير الاحترافي (FIXED VERSION)
 </header>
 
-<div class="max-w-7xl mx-auto p-4">
+<div class="max-w-6xl mx-auto p-4">
 
-<!-- STATS -->
 <div class="grid grid-cols-4 gap-3 mb-4 text-center">
 
-<div class="card p-4">
+<div class="card">
 <div>المبيعات</div>
-<div id="totalSales" class="text-green-600 font-bold text-xl">0</div>
+<div id="sales">0</div>
 </div>
 
-<div class="card p-4">
+<div class="card">
 <div>الفواتير</div>
-<div id="invoiceCount" class="text-blue-600 font-bold text-xl">0</div>
+<div id="invCount">0</div>
 </div>
 
-<div class="card p-4">
+<div class="card">
 <div>العملاء</div>
-<div id="customersCount" class="text-orange-600 font-bold text-xl">0</div>
+<div id="cusCount">0</div>
 </div>
 
-<div class="card p-4">
+<div class="card">
 <div>المنتجات</div>
-<div id="productsCount" class="text-purple-600 font-bold text-xl">0</div>
+<div id="proCount">0</div>
 </div>
 
 </div>
 
-<!-- TABLE -->
 <div class="grid md:grid-cols-2 gap-4">
 
-<!-- INVOICES -->
-<div class="card p-3">
-<h2 class="font-bold mb-2">الفواتير</h2>
+<!-- invoices -->
+<div class="card">
+<h3 class="font-bold mb-2">الفواتير</h3>
 
-<table class="w-full text-center text-sm">
+<table>
 <thead>
 <tr class="bg-gray-100">
 <th>رقم</th>
@@ -67,17 +67,15 @@ body{background:#eef2f7;font-family:Cairo}
 </tr>
 </thead>
 
-<tbody id="invoiceTable">
-<tr><td colspan="3">تحميل...</td></tr>
-</tbody>
+<tbody id="invoices"></tbody>
 
 </table>
 </div>
 
-<!-- DETAILS -->
-<div class="card p-3">
-<h2 class="font-bold mb-2">التفاصيل</h2>
-<div id="detailsBox" class="text-gray-500">اختر فاتورة</div>
+<!-- details -->
+<div class="card">
+<h3 class="font-bold mb-2">التفاصيل</h3>
+<div id="details">اختر فاتورة</div>
 </div>
 
 </div>
@@ -85,189 +83,183 @@ body{background:#eef2f7;font-family:Cairo}
 
 <script>
 
-// ================= SUPABASE =================
+// ================= FIX SUPABASE =================
 const { createClient } = window.supabase;
 
-const supabase = createClient(
+const supabaseClient = createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
 
-// ================= CACHE =================
+// ================= DATA =================
 let customers = [];
 let products = [];
-let invoices = [];
+let orders = [];
+let details = [];
 
 let customerMap = new Map();
 let productMap = new Map();
 let detailsMap = new Map();
 
-// ================= FORMAT =================
 const money = v => Number(v||0).toLocaleString();
 
-// ================= LOAD MASTER DATA =================
+// ================= LOAD MASTER =================
 async function loadMaster(){
 
 const [{data:c},{data:p}] = await Promise.all([
-supabase.from("customers").select("*"),
-supabase.from("products").select("*")
+supabaseClient.from("customers").select("*"),
+supabaseClient.from("products").select("*")
 ]);
 
 customers = c || [];
 products = p || [];
 
-// MAPS (FAST ACCESS)
-customerMap = new Map(customers.map(c => [c.id_customer, c]));
-productMap = new Map(products.map(p => [p.id_product, p]));
-console.log("customers:", c);
-console.log("products:", p);
+customerMap = new Map(customers.map(c=>[c.id_customer,c]));
+productMap = new Map(products.map(p=>[p.id_product,p]));
+
 }
 
-// ================= LOAD DETAILS (ONE TIME ONLY) =================
+// ================= LOAD DETAILS (FAST) =================
 async function loadDetails(){
 
-const {data} = await supabase
+const {data} = await supabaseClient
 .from("orders_details")
 .select("*");
 
+details = data || [];
+
+// group by order
 detailsMap.clear();
 
-(data||[]).forEach(d=>{
+details.forEach(d=>{
 if(!detailsMap.has(d.id_order)) detailsMap.set(d.id_order,[]);
 detailsMap.get(d.id_order).push(d);
 });
 
 }
 
-// ================= STATS =================
-async function loadStats(){
+// ================= LOAD ORDERS =================
+async function loadOrders(){
 
-const [{data:orders},{data:details}] = await Promise.all([
-
-supabase.from("orders_o").select("*"),
-supabase.from("orders_details").select("total_amount")
-
-]);
-
-const total = (details||[])
-.reduce((s,r)=>s+Number(r.total_amount||0),0);
-
-document.getElementById("totalSales").innerText = money(total);
-document.getElementById("invoiceCount").innerText = orders.length;
-document.getElementById("customersCount").innerText = customers.length;
-document.getElementById("productsCount").innerText = products.length;
-
-}
-
-// ================= LOAD INVOICES =================
-async function loadInvoices(){
-
-const {data} = await supabase
+const {data} = await supabaseClient
 .from("orders_o")
 .select("*")
 .order("id_order",{ascending:false});
 
-invoices = data || [];
+orders = data || [];
 
-renderInvoices();
+renderOrders();
 
 }
 
 // ================= RENDER =================
-function renderInvoices(){
+function renderOrders(){
 
-let html="";
+let html = "";
 
-invoices.forEach(inv=>{
+orders.forEach(o=>{
 
-const cust = customerMap.get(inv.customer_id);
+const cust = customerMap.get(o.customer_id);
+const d = detailsMap.get(o.id_order)||[];
 
-const details = detailsMap.get(inv.id_order)||[];
+const total = d.reduce((s,x)=>s+Number(x.total_amount||0),0);
 
-const total = details.reduce((s,r)=>s+Number(r.total_amount||0),0);
-
-html+=`
-<tr onclick="openInvoice(${inv.id_order})" class="border-b hover:bg-blue-50 cursor-pointer">
-
-<td>${inv.id_order}</td>
+html += `
+<tr onclick="openOrder(${o.id_order})">
+<td>${o.id_order}</td>
 <td>${cust?.first_name||"-"}</td>
-<td class="text-green-600 font-bold">${money(total)}</td>
-
+<td>${money(total)}</td>
 </tr>
 `;
 
 });
 
-document.getElementById("invoiceTable").innerHTML =
-html || "<tr><td colspan='3'>لا توجد بيانات</td></tr>";
+document.getElementById("invoices").innerHTML =
+html || "<tr><td colspan='3'>لا يوجد بيانات</td></tr>";
 
 }
 
-// ================= OPEN INVOICE =================
-function openInvoice(id){
+// ================= OPEN ORDER =================
+function openOrder(id){
 
-const inv = invoices.find(i=>i.id_order===id);
-
-const cust = customerMap.get(inv.customer_id);
-
-const details = detailsMap.get(id)||[];
+const order = orders.find(o=>o.id_order===id);
+const cust = customerMap.get(order.customer_id);
+const d = detailsMap.get(id)||[];
 
 let total = 0;
 
-let rows="";
+let rows = "";
 
-details.forEach((d,i)=>{
+d.forEach((x,i)=>{
 
-const p = productMap.get(d.id_product);
+const p = productMap.get(x.id_product);
+total += Number(x.total_amount||0);
 
-total += Number(d.total_amount||0);
-
-rows+=`
+rows += `
 <tr>
 <td>${i+1}</td>
 <td>${p?.product_name||"-"}</td>
-<td>${money(d.price)}</td>
-<td>${d.qte}</td>
-<td>${money(d.total_amount)}</td>
+<td>${x.qte}</td>
+<td>${money(x.price)}</td>
+<td>${money(x.total_amount)}</td>
 </tr>
 `;
 
 });
 
-document.getElementById("detailsBox").innerHTML=`
+document.getElementById("details").innerHTML = `
 
-<div id="printArea" class="p-3">
+<div class="p-2">
 
-<h2 class="text-xl font-bold text-blue-700">
-فاتورة #${inv.id_order}
-</h2>
+<h3 class="font-bold text-blue-700">فاتورة #${id}</h3>
 
 <div>العميل: ${cust?.first_name||"-"}</div>
-<div>الهاتف: ${cust?.tel||"-"}</div>
 
-<table class="w-full mt-3 border text-center">
+<table class="mt-3 border">
 <tr class="bg-gray-100">
-<th>#</th><th>منتج</th><th>سعر</th><th>كمية</th><th>إجمالي</th>
+<th>#</th><th>منتج</th><th>كمية</th><th>سعر</th><th>إجمالي</th>
 </tr>
 ${rows}
 </table>
 
-<div class="mt-3 text-green-700 font-bold text-xl">
+<div class="mt-3 font-bold text-green-600">
 الإجمالي: ${money(total)}
 </div>
 
 </div>
+
 `;
+
+}
+
+// ================= STATS =================
+async function loadStats(){
+
+const [{data:o},{data:d}] = await Promise.all([
+supabaseClient.from("orders_o").select("*"),
+supabaseClient.from("orders_details").select("total_amount")
+]);
+
+const total = (d||[]).reduce((s,x)=>s+Number(x.total_amount||0),0);
+
+document.getElementById("sales").innerText = money(total);
+document.getElementById("invCount").innerText = o.length;
+document.getElementById("cusCount").innerText = customers.length;
+document.getElementById("proCount").innerText = products.length;
 
 }
 
 // ================= INIT =================
 async function init(){
 
+console.log("loading...");
+
 await loadMaster();
 await loadDetails();
+await loadOrders();
 await loadStats();
-await loadInvoices();
+
+console.log("done");
 
 }
 
