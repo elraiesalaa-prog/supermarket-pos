@@ -214,14 +214,14 @@ class="p-5 min-h-[600px]">
 <script>
 
 const supabase = window.supabase.createClient(
-
-"https://YOUR_PROJECT.supabase.co",
-
-"YOUR_ANON_KEY"
-
+  "https://vmxbedovoahuggfpcmyk.supabase.co",
+  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
 
+let customers = [];
+let products = [];
 let currentInvoiceId = null;
+
 
 function money(v){
 return Number(v||0).toLocaleString();
@@ -241,7 +241,31 @@ return '<span class="bg-orange-100 text-orange-700 px-2 py-1 rounded-full">آج�
 return method;
 
 }
+async function loadMasterData(){
 
+  const {data:cust,error:custErr}=await supabase
+  .from("customers")
+  .select("*");
+
+  if(custErr){
+    console.error(custErr);
+    return;
+  }
+
+  customers = cust || [];
+
+  const {data:prod,error:prodErr}=await supabase
+  .from("products")
+  .select("*");
+
+  if(prodErr){
+    console.error(prodErr);
+    return;
+  }
+
+  products = prod || [];
+
+}
 async function loadStats(){
 
 const {data:salesData}=await supabase
@@ -278,233 +302,144 @@ document.getElementById("productsCount")
 
 }
 
-async function loadInvoices(){
-
-const payFilter=
-document.getElementById("payFilter").value;
-
-let query=supabase
-.from("orders_o")
-.select(`
-id_order,
-date_order,
-pay_method,
-customer_id,
-customers(
-first_name
-)
-`)
-.order("id_order",{ascending:false});
-
-if(payFilter){
-query=query.eq("pay_method",payFilter);
-}
-
-const {data,error}=await query;
-
-if(error){
-alert(error.message);
-return;
-}
-
-let html="";
-
-for(const inv of data){
-
-const {data:details}=await supabase
-.from("orders_details")
-.select("total_amount")
-.eq("id_order",inv.id_order);
-
-const total=(details||[])
-.reduce(
-(sum,row)=>sum+Number(row.total_amount||0),
-0
-);
-
-html+=`
-
-<tr
-onclick="openInvoice(${inv.id_order})"
-class="cursor-pointer hover:bg-blue-50 border-b">
-
-<td class="p-3 font-bold text-blue-600">
-${inv.id_order}
-</td>
-
-<td class="p-3">
-${inv.customers?.first_name||'-'}
-</td>
-
-<td class="p-3">
-${new Date(inv.date_order)
-.toLocaleDateString()}
-</td>
-
-<td class="p-3">
-${payBadge(inv.pay_method)}
-</td>
-
-<td class="p-3 text-green-600 font-bold">
-${money(total)}
-</td>
-
-</tr>
-
-`;
-
-}
-
-document.getElementById("invoiceTable")
-.innerHTML=html;
-
-}
 
 async function openInvoice(id_order){
 
-currentInvoiceId=id_order;
+  currentInvoiceId = id_order;
 
-const {data:order}=await supabase
-.from("orders_o")
-.select(`
-*,
-customers(
-first_name,
-tel,
-whatsapp,
-balance
-)
-`)
-.eq("id_order",id_order)
-.single();
+  const {data:order,error:orderErr}=await supabase
+  .from("orders_o")
+  .select("*")
+  .eq("id_order",id_order)
+  .single();
 
-const {data:details}=await supabase
-.from("orders_details")
-.select(`
-*,
-products(
-product_name
-)
-`)
-.eq("id_order",id_order);
+  if(orderErr){
+    alert(orderErr.message);
+    return;
+  }
 
-let total=0;
-let rows="";
+  const customer = customers.find(
+    c => Number(c.id_customer) === Number(order.customer_id)
+  );
 
-details.forEach((item,index)=>{
+  const {data:details,error:detailsErr}=await supabase
+  .from("orders_details")
+  .select("*")
+  .eq("id_order",id_order);
 
-total+=Number(item.total_amount||0);
+  if(detailsErr){
+    alert(detailsErr.message);
+    return;
+  }
 
-rows+=`
+  let total = 0;
+  let rows = "";
 
-<tr class="border-b">
+  details.forEach((item,index)=>{
 
-<td class="p-2">${index+1}</td>
+    const product = products.find(
+      p => Number(p.id_product) === Number(item.id_product)
+    );
 
-<td class="p-2">
-${item.products?.product_name||''}
-</td>
+    total += Number(item.total_amount || 0);
 
-<td class="p-2">
-${money(item.price)}
-</td>
+    rows += `
+    <tr class="border-b">
 
-<td class="p-2">
-${item.qte}
-</td>
+      <td class="p-2">${index+1}</td>
 
-<td class="p-2 font-bold text-green-600">
-${money(item.total_amount)}
-</td>
+      <td class="p-2">
+        ${product?.product_name || item.id_product}
+      </td>
 
-</tr>
+      <td class="p-2">
+        ${money(item.price)}
+      </td>
 
-`;
+      <td class="p-2">
+        ${item.qte}
+      </td>
 
-});
+      <td class="p-2 font-bold text-green-600">
+        ${money(item.total_amount)}
+      </td>
 
-document.getElementById("invoiceDetails")
-.innerHTML=`
+    </tr>
+    `;
+  });
 
-<div id="printArea">
+  document.getElementById("invoiceDetails").innerHTML = `
 
-<div class="bg-slate-50 rounded-xl p-4 mb-4">
+  <div id="printArea">
 
-<h2 class="text-2xl font-bold text-blue-700">
-فاتورة رقم ${id_order}
-</h2>
+    <div class="bg-slate-50 rounded-xl p-4 mb-4">
 
-<div class="mt-2">
-التاريخ:
-${new Date(order.date_order)
-.toLocaleString()}
-</div>
+      <h2 class="text-2xl font-bold text-blue-700">
+        فاتورة رقم ${id_order}
+      </h2>
 
-</div>
+      <div class="mt-2">
+        ${new Date(order.date_order).toLocaleString()}
+      </div>
 
-<div class="bg-slate-50 rounded-xl p-4 mb-4">
+    </div>
 
-<div class="font-bold text-xl">
-${order.customers?.first_name||''}
-</div>
+    <div class="bg-slate-50 rounded-xl p-4 mb-4">
 
-<div>
-📞 ${order.customers?.tel||'-'}
-</div>
+      <div class="font-bold text-xl">
+        ${customer?.first_name || "-"}
+      </div>
 
-<div>
-💬 ${order.customers?.whatsapp||'-'}
-</div>
+      <div>
+        📞 ${customer?.tel || "-"}
+      </div>
 
-<div class="text-blue-700 font-bold">
-الرصيد:
-${money(order.customers?.balance)}
-</div>
+      <div>
+        💬 ${customer?.whatsapp || "-"}
+      </div>
 
-</div>
+      <div class="text-blue-700 font-bold mt-2">
+        الرصيد:
+        ${money(customer?.balance)}
+      </div>
 
-<table class="w-full text-center">
+    </div>
 
-<thead class="bg-slate-100">
+    <table class="w-full text-center">
 
-<tr>
+      <thead class="bg-slate-100">
 
-<th class="p-2">#</th>
-<th class="p-2">المنتج</th>
-<th class="p-2">السعر</th>
-<th class="p-2">الكمية</th>
-<th class="p-2">الإجمالي</th>
+        <tr>
+          <th class="p-2">#</th>
+          <th class="p-2">المنتج</th>
+          <th class="p-2">السعر</th>
+          <th class="p-2">الكمية</th>
+          <th class="p-2">الإجمالي</th>
+        </tr>
 
-</tr>
+      </thead>
 
-</thead>
+      <tbody>
+        ${rows}
+      </tbody>
 
-<tbody>
+    </table>
 
-${rows}
+    <div class="mt-5 bg-green-50 p-5 rounded-xl">
 
-</tbody>
+      <div class="text-lg">
+        الإجمالي الكلي
+      </div>
 
-</table>
+      <div class="text-3xl font-bold text-green-700">
+        ${money(total)}
+      </div>
 
-<div class="mt-5 bg-green-50 p-5 rounded-xl">
+    </div>
 
-<div class="text-lg">
-الإجمالي الكلي
-</div>
-
-<div class="text-3xl font-bold text-green-700">
-${money(total)}
-</div>
-
-</div>
-
-</div>
-
-`;
-
+  </div>
+  `;
 }
-
 function searchInvoices(){
 
 const value=
@@ -557,8 +492,15 @@ html2pdf()
 
 }
 
-loadStats();
-loadInvoices();
+(async ()=>{
+
+  await loadMasterData();
+
+  await loadStats();
+
+  await loadInvoices();
+
+})();
 
 </script>
 
