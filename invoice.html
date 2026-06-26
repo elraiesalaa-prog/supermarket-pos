@@ -380,16 +380,8 @@ class="border rounded-xl p-3">
 <script>
 const supabase = window.supabase.createClient(
   "https://vmxbedovoahuggfpcmyk.supabase.co",
-  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+  "YOUR_KEY"
 );
-
-// مثال اختبار
-async function test() {
-  const { data, error } = await supabase.from('test').select('*');
-  console.log(data, error);
-}
-
-test();
 </script>
 
 let customers = [];
