@@ -119,7 +119,8 @@ products = p || [];
 // MAPS (FAST ACCESS)
 customerMap = new Map(customers.map(c => [c.id_customer, c]));
 productMap = new Map(products.map(p => [p.id_product, p]));
-
+console.log("customers:", c);
+console.log("products:", p);
 }
 
 // ================= LOAD DETAILS (ONE TIME ONLY) =================
