@@ -376,10 +376,21 @@ class="border rounded-xl p-3">
 </div>
 
 <script>
-const supabase = createClient(
-  "https://vmxbedovoahuggfpcmyk.supabase.co",
-  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-);
+if (!window.supabase) {
+    console.error("لم يتم تحميل مكتبة Supabase.");
+} else {
+
+    const { createClient } = window.supabase;
+
+    const supabase = createClient(
+        "https://vmxbedovoahuggfpcmyk.supabase.co",
+        "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+    );
+
+    console.log("Supabase Client:", supabase);
+
+}
+
 
 let customers = [];
     
