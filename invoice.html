@@ -72,98 +72,203 @@ background:#dbeafe;
 </head>
 
 <body>
+<body class="bg-slate-100">
 
-<header class="bg-blue-900 text-white p-4 text-center text-xl font-bold">
-📦 نظام الفواتير الاحترافي (FIXED VERSION)
+<header class="bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg">
+
+<div class="max-w-7xl mx-auto flex items-center justify-between p-4">
+
+<h1 class="text-2xl font-bold">
+📦 نظام الفواتير الاحترافي
+</h1>
+
+<div class="text-sm opacity-80">
+Professional Invoice System
+</div>
+
+</div>
+
 </header>
 
-<div class="max-w-6xl mx-auto p-4">
+<div class="max-w-7xl mx-auto p-5">
 
-<div class="grid grid-cols-4 gap-3 mb-4 text-center">
+<!-- الإحصائيات -->
 
-<div class="card">
-<div>المبيعات</div>
-<div id="sales">0</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+
+<div class="bg-white rounded-xl shadow p-5 text-center">
+
+<div class="text-gray-500 mb-2">
+إجمالي المبيعات
 </div>
 
-<div class="card">
-<div>الفواتير</div>
-<div id="invCount">0</div>
-</div>
-
-<div class="card">
-<div>العملاء</div>
-<div id="cusCount">0</div>
-</div>
-
-<div class="card">
-<div>المنتجات</div>
-<div id="proCount">0</div>
+<div id="sales"
+class="text-2xl font-bold text-green-600">
+0
 </div>
 
 </div>
 
-<div class="grid md:grid-cols-2 gap-4">
+<div class="bg-white rounded-xl shadow p-5 text-center">
 
-<!-- invoices -->
-<div class="card">
-<h3 class="font-bold mb-2">الفواتير</h3>
+<div class="text-gray-500 mb-2">
+عدد الفواتير
+</div>
 
-<table>
+<div id="invCount"
+class="text-2xl font-bold text-blue-700">
+0
+</div>
+
+</div>
+
+<div class="bg-white rounded-xl shadow p-5 text-center">
+
+<div class="text-gray-500 mb-2">
+العملاء
+</div>
+
+<div id="cusCount"
+class="text-2xl font-bold text-orange-600">
+0
+</div>
+
+</div>
+
+<div class="bg-white rounded-xl shadow p-5 text-center">
+
+<div class="text-gray-500 mb-2">
+المنتجات
+</div>
+
+<div id="proCount"
+class="text-2xl font-bold text-purple-700">
+0
+</div>
+
+</div>
+
+</div>
+
+<div class="grid lg:grid-cols-2 gap-5">
+
+<!-- قائمة الفواتير -->
+
+<div class="bg-white rounded-xl shadow overflow-hidden">
+
+<div class="bg-blue-700 text-white p-4 font-bold">
+
+📋 قائمة الفواتير
+
+</div>
+
+<div class="overflow-auto">
+
+<table class="min-w-full">
+
 <thead>
-<tr class="bg-gray-100">
-<th>رقم</th>
-<th>عميل</th>
-<th>الإجمالي</th>
+
+<tr class="bg-slate-100">
+
+<th class="p-3">رقم</th>
+
+<th class="p-3">العميل</th>
+
+<th class="p-3">الإجمالي</th>
+
 </tr>
+
 </thead>
 
-<tbody id="invoices"></tbody>
+<tbody id="invoices">
+
+<tr>
+
+<td colspan="3" class="p-6 text-gray-500">
+
+جاري تحميل البيانات...
+
+</td>
+
+</tr>
+
+</tbody>
 
 </table>
-</div>
 
-<!-- details -->
-<div class="card">
-<h3 class="font-bold mb-2">التفاصيل</h3>
-<div id="details">اختر فاتورة</div>
 </div>
 
 </div>
+
+<!-- تفاصيل -->
+
+<div class="bg-white rounded-xl shadow">
+
+<div class="bg-green-700 text-white p-4 font-bold">
+
+🧾 تفاصيل الفاتورة
+
 </div>
+
+<div id="details" class="p-6 text-gray-500">
+
+اختر فاتورة لعرض تفاصيلها
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 <!-- نافذة الفاتورة -->
+
 <div id="invoiceModal"
-class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+class="fixed inset-0 hidden items-center justify-center bg-black/60 z-50">
 
-<div class="bg-white w-[95%] md:w-[700px] rounded-xl shadow-2xl overflow-hidden">
+<div class="bg-white rounded-2xl shadow-2xl w-[96%] max-w-4xl overflow-hidden">
 
-<div class="bg-blue-800 text-white p-4 flex justify-between items-center">
-<h2 class="text-xl font-bold">فاتورة البيع</h2>
+<div class="bg-gradient-to-l from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center">
+
+<h2 class="font-bold text-xl">
+
+فاتورة البيع
+
+</h2>
 
 <button
 onclick="closeInvoice()"
-class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded">
+class="bg-red-500 hover:bg-red-600 rounded px-3 py-1">
+
 ✕
+
 </button>
 
 </div>
 
 <div id="invoiceContent"
-class="p-6 max-h-[75vh] overflow-y-auto">
+
+class="bg-white max-h-[80vh] overflow-auto p-6">
+
 </div>
 
-<div class="bg-gray-100 p-4 flex justify-end gap-2">
+<div class="bg-slate-100 p-4 flex justify-end gap-3">
 
 <button
 onclick="printInvoice()"
-class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded">
+class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded">
+
 🖨 طباعة
+
 </button>
 
 <button
 onclick="closeInvoice()"
-class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded">
+class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded">
+
 إغلاق
+
 </button>
 
 </div>
@@ -335,193 +440,313 @@ w.document.close();
 // ================= LOAD MASTER =================
 async function loadMaster(){
 
-const [{data:c},{data:p}] = await Promise.all([
-supabaseClient.from("customers").select("*"),
-supabaseClient.from("products").select("*")
+try{
+
+const [customersRes,productsRes] = await Promise.all([
+
+supabaseClient
+.from("customers")
+.select("*"),
+
+supabaseClient
+.from("products")
+.select("*")
+
 ]);
 
-customers = c || [];
-products = p || [];
+if(customersRes.error) throw customersRes.error;
+if(productsRes.error) throw productsRes.error;
 
-customerMap = new Map(customers.map(c=>[c.id_customer,c]));
-productMap = new Map(products.map(p=>[p.id_product,p]));
+customers = customersRes.data || [];
+products = productsRes.data || [];
+
+customerMap.clear();
+productMap.clear();
+
+customers.forEach(c=>{
+customerMap.set(c.id_customer,c);
+});
+
+products.forEach(p=>{
+productMap.set(p.id_product,p);
+});
+
+console.log("Customers :",customers.length);
+console.log("Products :",products.length);
+
+}catch(err){
+
+console.error("LOAD MASTER ERROR :",err);
+
+alert("خطأ في تحميل العملاء أو المنتجات");
 
 }
 
-// ================= LOAD DETAILS (FAST) =================
+}
+// ================= LOAD DETAILS =================
 async function loadDetails(){
 
-const {data} = await supabaseClient
+try{
+
+const {data,error} = await supabaseClient
+
 .from("orders_details")
+
 .select("*");
+
+if(error) throw error;
 
 details = data || [];
 
-// group by order
 detailsMap.clear();
 
-details.forEach(d=>{
-if(!detailsMap.has(d.id_order)) detailsMap.set(d.id_order,[]);
-detailsMap.get(d.id_order).push(d);
-});
+details.forEach(item=>{
+
+if(!detailsMap.has(item.id_order)){
+
+detailsMap.set(item.id_order,[]);
 
 }
 
+detailsMap.get(item.id_order).push(item);
+
+});
+
+console.log("Details :",details.length);
+
+}catch(err){
+
+console.error("DETAIL ERROR :",err);
+
+alert("تعذر تحميل تفاصيل الفواتير");
+
+}
+
+}
 // ================= LOAD ORDERS =================
 async function loadOrders(){
 
-const {data} = await supabaseClient
+try{
+
+const {data,error} = await supabaseClient
+
 .from("orders_o")
+
 .select("*")
+
 .order("id_order",{ascending:false});
+
+if(error) throw error;
 
 orders = data || [];
 
+console.log("Orders :",orders.length);
+
 renderOrders();
+
+}catch(err){
+
+console.error("ORDER ERROR :",err);
+
+alert("تعذر تحميل الفواتير");
+
+}
 
 }
 
 // ================= RENDER =================
 function renderOrders(){
 
-let html = "";
+const tbody = document.getElementById("invoices");
 
-orders.forEach(o=>{
+tbody.innerHTML="";
 
-const cust = customerMap.get(o.customer_id);
-const d = detailsMap.get(o.id_order)||[];
+if(!orders.length){
 
-const total = d.reduce((s,x)=>s+Number(x.total_amount||0),0);
+tbody.innerHTML=`
+<tr>
 
-html += `
-<tr onclick="openOrder(${o.id_order})">
-<td>${o.id_order}</td>
-<td>${cust?.first_name||"-"}</td>
-<td>${money(total)}</td>
+<td colspan="3">
+
+لا توجد فواتير
+
+</td>
+
 </tr>
 `;
 
-});
-
-document.getElementById("invoices").innerHTML =
-html || "<tr><td colspan='3'>لا يوجد بيانات</td></tr>";
+return;
 
 }
 
-// ================= OPEN ORDER =================
-function openOrder(id){
+orders.forEach(order=>{
 
-const order = orders.find(o=>o.id_order===id);
+const customer=
 
-if(!order) return;
+customerMap.get(order.customer_id);
 
-const cust = customerMap.get(order.customer_id);
+const items=
 
-const d = detailsMap.get(id) || [];
+detailsMap.get(order.id_order)||[];
 
-let total = 0;
+const total=
 
-let rows = "";
+items.reduce((sum,item)=>{
 
-d.forEach((x,i)=>{
+return sum+Number(item.total_amount||0);
 
-const p = productMap.get(x.id_product);
+},0);
 
-total += Number(x.total_amount||0);
+tbody.innerHTML+=`
 
-rows += `
-<tr>
-<td>${i+1}</td>
-<td>${p?.product_name||"-"}</td>
-<td>${x.qte}</td>
-<td>${money(x.price)}</td>
-<td>${money(x.total_amount)}</td>
+<tr class="cursor-pointer hover:bg-blue-50 transition"
+
+onclick="openOrder(${order.id_order})">
+
+<td>
+
+${order.id_order}
+
+</td>
+
+<td>
+
+${customer?.first_name||"بدون اسم"}
+
+</td>
+
+<td class="font-bold text-green-600">
+
+${money(total)}
+
+</td>
+
 </tr>
+
 `;
 
 });
 
-const invoiceDate = order.created_at || order.date_order || order.date;
+}
+// ================= OPEN ORDER =================
+function openOrder(id){
 
-const invoiceDateObj = new Date(invoiceDate);
+    const order = orders.find(o => o.id_order == id);
 
-const date = invoiceDateObj.toLocaleDateString("ar-EG");
+    if(!order){
+        alert("الفاتورة غير موجودة");
+        return;
+    }
 
-const time = invoiceDateObj.toLocaleTimeString("ar-EG");
+    const cust = customerMap.get(order.customer_id);
+    const items = detailsMap.get(id) || [];
 
-document.getElementById("invoiceContent").innerHTML = `
+    let total = 0;
+    let rows = "";
 
-<div class="relative border-2 border-gray-300 rounded-lg overflow-hidden">
+    items.forEach((item,index)=>{
 
-<div class="bg-blue-800 text-white text-center p-4">
-<div class="text-center mb-4">
+        const product = productMap.get(item.id_product);
 
-<img
-src="logo.png"
-class="w-20 h-20 mx-auto"
-onerror="this.style.display='none'">
+        total += Number(item.total_amount || 0);
 
-<h1 class="text-3xl font-bold text-blue-800">
+        rows += `
+        <tr>
+            <td>${index+1}</td>
+            <td>${product?.product_name || "-"}</td>
+            <td>${item.qte}</td>
+            <td>${money(item.price)}</td>
+            <td>${money(item.total_amount)}</td>
+        </tr>
+        `;
 
-اسم المؤسسة
+    });
 
-</h1>
+    // تاريخ الفاتورة الحقيقي
+    const invoiceDate =
+        order.created_at ||
+        order.date_order ||
+        order.order_date ||
+        new Date().toISOString();
+
+    const invoiceObj = new Date(invoiceDate);
+
+    const date =
+        invoiceObj.toLocaleDateString("ar-EG");
+
+    const time =
+        invoiceObj.toLocaleTimeString("ar-EG");
+
+    document.getElementById("invoiceContent").innerHTML = `
+
+<div class="relative bg-white rounded-xl">
+
+<div class="border-b pb-4 mb-5">
+
+<div class="flex justify-between items-center">
+
+<div>
+
+<h2 class="text-3xl font-bold text-blue-800">
+
+فاتورة بيع
+
+</h2>
 
 <div class="text-gray-500">
 
-السودان
-
-</div>
-
-</div>
-<div class="absolute left-8 top-6 rotate-[-20deg]">
-
-<span class="border-4 border-green-600
-text-green-600
-text-2xl
-font-bold
-px-6
-py-2
-rounded-full">
-
-مدفوعة
-
-</span>
-
-</div>
-<h2 class="text-2xl font-bold">
-فاتورة البيع
-</h2>
-
-<div class="text-sm mt-1">
-
-رقم الفاتورة :
-<b>${id}</b>
+SALE INVOICE
 
 </div>
 
 </div>
 
-<div class="grid grid-cols-2 gap-3 p-4 text-sm">
+<div class="text-left">
+
+<div><b>رقم:</b> ${id}</div>
+
+<div><b>التاريخ:</b> ${date}</div>
+
+<div><b>الوقت:</b> ${time}</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="grid md:grid-cols-2 gap-4 mb-5">
+
+<div class="bg-blue-50 rounded-lg p-4">
+
+<div class="font-bold">
+
+العميل
+
+</div>
 
 <div>
-<b>العميل :</b>
+
 ${cust?.first_name || "-"}
+
+</div>
+
+</div>
+
+<div class="bg-green-50 rounded-lg p-4">
+
+<div class="font-bold">
+
+البائع
+
 </div>
 
 <div>
-<b>البائع :</b>
+
 ${sellerName}
+
 </div>
 
-<div>
-<b>التاريخ :</b>
-${date}
-</div>
-
-<div>
-<b>الوقت :</b>
-${time}
 </div>
 
 </div>
@@ -530,17 +755,17 @@ ${time}
 
 <thead>
 
-<tr class="bg-gray-100">
+<tr>
 
-<th class="border p-2">#</th>
+<th>#</th>
 
-<th class="border p-2">المنتج</th>
+<th>المنتج</th>
 
-<th class="border p-2">الكمية</th>
+<th>الكمية</th>
 
-<th class="border p-2">السعر</th>
+<th>السعر</th>
 
-<th class="border p-2">الإجمالي</th>
+<th>الإجمالي</th>
 
 </tr>
 
@@ -554,11 +779,15 @@ ${rows}
 
 </table>
 
-<div class="flex justify-end p-5">
+<div class="flex justify-end mt-6">
 
-<div class="bg-green-600 text-white px-8 py-4 rounded-xl shadow-lg">
+<div class="bg-green-600 text-white px-8 py-4 rounded-xl shadow">
+
+<div class="text-sm">
 
 الإجمالي
+
+</div>
 
 <div class="text-3xl font-bold">
 
@@ -569,80 +798,115 @@ ${money(total)}
 </div>
 
 </div>
-<div class="mt-6 border-t pt-4">
+
+<div class="mt-8 border-t pt-5">
 
 <div class="grid grid-cols-2 gap-8">
 
 <div class="text-center">
 
-<div class="border-t border-gray-500 mt-10"></div>
+<div class="border-t mt-12"></div>
 
-<div class="mt-2 text-sm text-gray-600">
+<div class="mt-2">
+
 توقيع البائع
+
 </div>
 
 </div>
 
 <div class="text-center">
 
-<div class="border-t border-gray-500 mt-10"></div>
+<div class="border-t mt-12"></div>
 
-<div class="mt-2 text-sm text-gray-600">
+<div class="mt-2">
+
 توقيع العميل
-</div>
 
 </div>
 
 </div>
 
-<div class="mt-8 bg-gray-100 rounded-lg p-4 text-center">
+</div>
 
-<div class="text-xl font-bold text-blue-800">
+</div>
+
+<div class="text-center mt-8">
+
 شكراً لتعاملكم معنا
-</div>
-
-<div class="text-sm text-gray-600 mt-2">
-نتمنى لكم يوماً سعيداً
-</div>
 
 </div>
-
-<div class="text-center mt-6">
-
-<img
-class="mx-auto"
-src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=Invoice-${id}">
 
 </div>
 
 `;
-`
 
-document.getElementById("invoiceModal")
-.classList.remove("hidden");
+    document
+        .getElementById("invoiceModal")
+        .classList.remove("hidden");
 
-document.getElementById("invoiceModal")
-.classList.add("flex");
+    document
+        .getElementById("invoiceModal")
+        .classList.add("flex");
 
 }
 
 // ================= STATS =================
 async function loadStats(){
 
-const [{data:o},{data:d}] = await Promise.all([
-supabaseClient.from("orders_o").select("*"),
-supabaseClient.from("orders_details").select("total_amount")
+try{
+
+const [{data:ordersData,error:e1},
+
+{data:detailsData,error:e2}] = await Promise.all([
+
+supabaseClient
+
+.from("orders_o")
+
+.select("*"),
+
+supabaseClient
+
+.from("orders_details")
+
+.select("total_amount")
+
 ]);
 
-const total = (d||[]).reduce((s,x)=>s+Number(x.total_amount||0),0);
+if(e1) throw e1;
+if(e2) throw e2;
 
-document.getElementById("sales").innerText = money(total);
-document.getElementById("invCount").innerText = o.length;
-document.getElementById("cusCount").innerText = customers.length;
-document.getElementById("proCount").innerText = products.length;
+const total=(detailsData||[])
+
+.reduce((s,x)=>
+
+s+Number(x.total_amount||0)
+
+,0);
+
+document.getElementById("sales").innerText=
+
+money(total);
+
+document.getElementById("invCount").innerText=
+
+ordersData.length;
+
+document.getElementById("cusCount").innerText=
+
+customers.length;
+
+document.getElementById("proCount").innerText=
+
+products.length;
+
+}catch(err){
+
+console.error(err);
 
 }
-
+}
 // ================= INIT =================
 async function init(){
 
