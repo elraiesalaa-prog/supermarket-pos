@@ -53,6 +53,20 @@ background:white;
 }
 
 }
+  tbody tr{
+
+cursor:pointer;
+transition:.25s;
+
+}
+
+tbody tr:hover{
+
+transform:scale(1.01);
+
+background:#dbeafe;
+
+}
 </style>
 
 </head>
@@ -427,20 +441,54 @@ rows += `
 
 });
 
-const now = new Date();
+const invoiceDate = order.created_at || order.date_order || order.date;
 
-const date =
-now.toLocaleDateString("ar-EG");
+const d = new Date(invoiceDate);
 
-const time =
-now.toLocaleTimeString("ar-EG");
+const date = d.toLocaleDateString("ar-EG");
+
+const time = d.toLocaleTimeString("ar-EG");
 
 document.getElementById("invoiceContent").innerHTML = `
 
 <div class="border-2 border-gray-300 rounded-lg overflow-hidden">
 
 <div class="bg-blue-800 text-white text-center p-4">
+<div class="text-center mb-4">
 
+<img
+src="logo.png"
+class="w-20 h-20 mx-auto"
+onerror="this.style.display='none'">
+
+<h1 class="text-3xl font-bold text-blue-800">
+
+اسم المؤسسة
+
+</h1>
+
+<div class="text-gray-500">
+
+السودان
+
+</div>
+
+</div>
+<div class="absolute left-8 top-6 rotate-[-20deg]">
+
+<span class="border-4 border-green-600
+text-green-600
+text-2xl
+font-bold
+px-6
+py-2
+rounded-full">
+
+مدفوعة
+
+</span>
+
+</div>
 <h2 class="text-2xl font-bold">
 فاتورة البيع
 </h2>
@@ -508,9 +556,11 @@ ${rows}
 
 <div class="flex justify-end p-5">
 
-<div class="bg-green-100 text-green-700 text-xl font-bold px-5 py-3 rounded">
+<div class="bg-green-600 text-white px-8 py-4 rounded-xl shadow-lg">
 
-الإجمالي :
+الإجمالي
+
+<div class="text-3xl font-bold">
 
 ${money(total)}
 
@@ -562,7 +612,13 @@ ${money(total)}
 
 </div>
 `;
+<div class="text-center mt-6">
 
+<img
+
+src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=Invoice-${id}">
+
+</div>
 document.getElementById("invoiceModal")
 .classList.remove("hidden");
 
@@ -606,6 +662,7 @@ await loadStats();
 console.log("done");
 
 }
+  init();
 </script>
 
 </body>
