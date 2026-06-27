@@ -443,15 +443,15 @@ rows += `
 
 const invoiceDate = order.created_at || order.date_order || order.date;
 
-const d = new Date(invoiceDate);
+const invoiceDateObj = new Date(invoiceDate);
 
-const date = d.toLocaleDateString("ar-EG");
+const date = invoiceDateObj.toLocaleDateString("ar-EG");
 
-const time = d.toLocaleTimeString("ar-EG");
+const time = invoiceDateObj.toLocaleTimeString("ar-EG");
 
 document.getElementById("invoiceContent").innerHTML = `
 
-<div class="border-2 border-gray-300 rounded-lg overflow-hidden">
+<div class="relative border-2 border-gray-300 rounded-lg overflow-hidden">
 
 <div class="bg-blue-800 text-white text-center p-4">
 <div class="text-center mb-4">
@@ -568,6 +568,7 @@ ${money(total)}
 
 </div>
 
+</div>
 <div class="mt-6 border-t pt-4">
 
 <div class="grid grid-cols-2 gap-8">
@@ -618,7 +619,7 @@ ${money(total)}
 
 src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=Invoice-${id}">
 
-</div>
+</div> ;
 document.getElementById("invoiceModal")
 .classList.remove("hidden");
 
