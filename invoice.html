@@ -725,44 +725,55 @@ ${money(lineTotal)}
 
     document.getElementById("invoiceContent").innerHTML = `
     <div style="
-max-width:760px;
+width:80mm;
 margin:auto;
-background:#ffffff;
-border-radius:12px;
-overflow:hidden;
-box-shadow:0 8px 25px rgba(0,0,0,.15);
-border:1px solid #e5e7eb;
+background:#fff;
 font-family:Cairo,Arial,sans-serif;
+font-size:12px;
+color:#000;
+border:1px solid #ddd;
+padding:6px;
 ">
 
 <!-- الرأس -->
 
 <div style="
-background:linear-gradient(135deg,#2563eb,#1d4ed8);
-color:#fff;
-padding:18px;
 text-align:center;
+padding:10px 0;
 ">
 
-<h2 style="
-margin:0;
-font-size:24px;
+<div style="
+font-size:22px;
 font-weight:bold;
+">
+
+مؤسسة علاء الدين
+
+</div>
+
+<div style="
+font-size:14px;
+margin-top:4px;
 ">
 
 فاتورة بيع
 
-</h2>
+</div>
 
 <div style="
-margin-top:6px;
-font-size:13px;
-opacity:.9;
+font-size:11px;
+color:#777;
 ">
 
-نظام POS المتقدم
+POS SYSTEM
 
 </div>
+
+<hr style="
+margin:8px 0;
+border:none;
+border-top:1px dashed #999;
+">
 
 </div>
 
@@ -795,62 +806,69 @@ ${sellerName}
 
 </div>
 
-<div>
+<div style="
+font-size:12px;
+line-height:1.9;
+padding:4px;
+">
 
-📄 <b>رقم الفاتورة :</b>
+رقم الفاتورة :
+<b>${id}</b>
 
-${id}
+<br>
+
+العميل :
+<b>${cust?.first_name || "-"}</b>
+
+<br>
+
+البائع :
+<b>${sellerName}</b>
+
+<br>
+
+التاريخ :
+${date}
+
+<br>
+
+الوقت :
+${time}
 
 </div>
 
-<div>
-
-📅 ${date}
-
-</div>
-
-<div>
-
-🕒 ${time}
-
-</div>
-
-</div>
+<hr style="
+margin:8px 0;
+border:none;
+border-top:1px dashed #999;
+">
 
 <!-- جدول المنتجات -->
 
 <table style="
 width:100%;
 border-collapse:collapse;
-text-align:center;
-table-layout:fixed;
+font-size:11px;
 ">
 
 <thead>
 
-<tr style="
-background:#2563eb;
-color:white;
-">
+<tr>
 
-<th style="padding:8px;border:1px solid #dbeafe;width:8%;">
-#
+<th align="right">
+الصنف
 </th>
 
-<th style="padding:8px;border:1px solid #dbeafe;width:40%;">
-المنتج
+<th>
+ك
 </th>
 
-<th style="padding:8px;border:1px solid #dbeafe;width:17%;">
-السعر
+<th>
+س
 </th>
 
-<th style="padding:8px;border:1px solid #dbeafe;width:15%;">
-الكمية
-</th>
-
-<th style="padding:8px;border:1px solid #dbeafe;width:20%;">
-الإجمالي
+<th>
+ج
 </th>
 
 </tr>
@@ -864,7 +882,6 @@ ${rows}
 </tbody>
 
 </table>
-
 <!-- الإجمالي -->
 
 <div style="
@@ -875,108 +892,55 @@ background:#f8fafc;
 border-top:1px solid #e5e7eb;
 ">
 
-<div style="
-background:#2563eb;
-color:white;
-padding:12px 28px;
-border-radius:10px;
-font-size:22px;
-font-weight:bold;
-box-shadow:0 5px 15px rgba(37,99,235,.30);
+<hr style="
+margin:8px 0;
+border:none;
+border-top:1px dashed #999;
 ">
-
-الإجمالي :
-
-${money(total)}
-
-</div>
-
-</div>
-<!-- التوقيعات -->
 
 <div style="
 display:flex;
 justify-content:space-between;
-padding:25px 35px;
-font-size:13px;
-border-top:1px solid #eee;
-">
-
-<div style="
-width:180px;
-text-align:center;
-">
-
-<div style="
-height:45px;
-"></div>
-
-<div style="
-border-top:1px solid #999;
-padding-top:6px;
-">
-
-توقيع البائع
-
-</div>
-
-</div>
-
-<div style="
-width:180px;
-text-align:center;
-">
-
-<div style="
-height:45px;
-"></div>
-
-<div style="
-border-top:1px solid #999;
-padding-top:6px;
-">
-
-توقيع العميل
-
-</div>
-
-</div>
-
-</div>
-
-<!-- التذييل -->
-
-<div style="
-background:#f8fafc;
-border-top:1px solid #e5e7eb;
-padding:15px;
-text-align:center;
-">
-
-<div style="
 font-size:16px;
 font-weight:bold;
-color:#2563eb;
+padding:5px 0;
 ">
 
-شكراً لتعاملكم معنا 🌹
+<span>
+
+الإجمالي
+
+</span>
+
+<span>
+
+${money(total)}
+
+</span>
 
 </div>
+
+<hr style="
+margin:8px 0;
+border:none;
+border-top:1px dashed #999;
+">
+<!-- التوقيعات -->
 
 <div style="
-margin-top:6px;
-font-size:12px;
-color:#666;
+text-align:center;
+font-size:11px;
+line-height:1.8;
+padding-top:8px;
 ">
 
-نتمنى لكم يوماً سعيداً
+شكراً لتعاملكم معنا
+
+<br>
+
+نتمنى لكم يوماً سعيداً 🌹
 
 </div>
-
-</div>
-
-</div>
-
 `;
 
 const modal = document.getElementById("invoiceModal");
