@@ -723,175 +723,30 @@ ${money(lineTotal)}
     const time =
         invoiceObj.toLocaleTimeString("ar-EG");
 
-   document.getElementById("invoiceContent").innerHTML = `
+   document.getElementById("invoiceContent").innerHTML=`
 
-<div style="
-width:80mm;
-margin:auto;
-background:#fff;
-font-family:Cairo,Arial,sans-serif;
-font-size:12px;
-color:#000;
-padding:8px;
-">
+  <h2 style="text-align:center;font-size:22px">
+  فاتورة رقم ${id_order}
+  </h2>
 
-<!-- الرأس -->
+  <table style="width:100%;border-collapse:collapse;text-align:center">
 
-<div style="text-align:center;">
+  <tr style="background:#2563eb;color:white">
+  <th>#</th>
+  <th>المنتج</th>
+  <th>السعر</th>
+  <th>الكمية</th>
+  <th>الإجمالي</th>
+  </tr>
 
-<div style="
-font-size:22px;
-font-weight:bold;
-">
-مؤسسة علاء الدين
-</div>
+  ${rows}
 
-<div style="
-font-size:14px;
-margin-top:3px;
-font-weight:bold;
-">
-فاتورة بيع
-</div>
+  </table>
 
-<div style="
-font-size:11px;
-color:#666;
-">
-POS SYSTEM
-</div>
-
-</div>
-
-<hr style="
-margin:8px 0;
-border:none;
-border-top:1px dashed #999;
-">
-
-<!-- بيانات الفاتورة -->
-
-<div style="
-line-height:1.9;
-font-size:12px;
-">
-
-<div>
-رقم الفاتورة :
-<b>${id}</b>
-</div>
-
-<div>
-العميل :
-<b>${cust?.first_name || "-"}</b>
-</div>
-
-<div>
-البائع :
-<b>${sellerName}</b>
-</div>
-
-<div>
-التاريخ :
-${date}
-</div>
-
-<div>
-الوقت :
-${time}
-</div>
-
-</div>
-
-<hr style="
-margin:8px 0;
-border:none;
-border-top:1px dashed #999;
-">
-
-<!-- جدول المنتجات -->
-
-<table style="
-width:100%;
-border-collapse:collapse;
-font-size:11px;
-">
-
-<thead>
-
-<tr>
-
-<th style="
-text-align:right;
-padding:4px;
-border-bottom:1px solid #999;
-">
-الصنف
-</th>
-
-<th style="
-padding:4px;
-border-bottom:1px solid #999;
-">
-ك
-</th>
-
-<th style="
-padding:4px;
-border-bottom:1px solid #999;
-">
-س
-</th>
-
-<th style="
-padding:4px;
-border-bottom:1px solid #999;
-">
-ج
-</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-${rows}
-
-</tbody>
-
-</table>
-
-<hr style="
-margin:8px 0;
-border:none;
-border-top:1px dashed #999;
-">
-
-<!-- الإجمالي -->
-
-<div style="
-display:flex;
-justify-content:space-between;
-font-size:15px;
-font-weight:bold;
-">
-
-<span>
-الإجمالي
-</span>
-
-<span>
-${money(total)}
-</span>
-
-</div>
-
-<hr style="
-margin:8px 0;
-border:none;
-border-top:1px dashed #999;
-">
+  <h3 style="margin-top:20px;color:#2563eb">
+  الإجمالي : ${total}
+  </h3>
+  `;
 
 <!-- التذييل -->
 
