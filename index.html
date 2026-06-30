@@ -418,15 +418,17 @@ async function login() {
             .eq("pwd", password)
             .single();
 
-        if (error || !data) {
-            alert("بيانات الدخول غير صحيحة");
-            return;
-        }
+       if (error || !data) {
+    alert("بيانات الدخول غير صحيحة")
+    return
+}
 
-        // حفظ بيانات المستخدم الحالي
-        localStorage.setItem("userId", data.id);
-        localStorage.setItem("user", data.fullname);
-        localStorage.setItem("role", data.usertype);
+// حفظ بيانات المستخدم الحالي
+localStorage.setItem("userId", data.id);
+localStorage.setItem("userName", data.fullname);
+localStorage.setItem("userRole", data.usertype);
+
+const type = (data.usertype || "").toLowerCase();
 
         switch ((data.usertype || "").trim()) {
 
