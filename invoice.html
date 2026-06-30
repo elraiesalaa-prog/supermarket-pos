@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>نظام الفواتير الاحترافي FIXED</title>
-const sellerName = localStorage.getItem("user") || "غير معروف";
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -285,7 +285,7 @@ const supabaseClient = createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
-
+const sellerName = localStorage.getItem("user") || "غير معروف";
 // ================= DATA =================
 let customers = [];
 let products = [];
