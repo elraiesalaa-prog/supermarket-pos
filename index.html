@@ -411,22 +411,33 @@ async function login() {
 
     try {
 
-        const { data, error } = await supabaseClient
-            .from("tb_users")
-            .select("*")
-            .eq("id", username)
-            .eq("pwd", password)
-            .single();
+        cconst { data, error } = await supabaseClient
+    .from("tb_users")
+    .select("*")
+    .eq("username", username)
+    .eq("pwd", password)
+    .maybeSingle();
 
-       if (error || !data) {
-    alert("بيانات الدخول غير صحيحة")
-    return
+if (error) {
+    console.error(error);
+    alert("حدث خطأ أثناء تسجيل الدخول");
+    return;
+}
+
+if (!data) {
+    alert("اسم المستخدم أو كلمة المرور غير صحيحة");
+    return;
 }
 
 // حفظ بيانات المستخدم الحالي
+localStorage.setItem("user", data.fullname);
+localStorage.setItem("role", data.usertype);
+
 localStorage.setItem("userId", data.id);
 localStorage.setItem("userName", data.fullname);
 localStorage.setItem("userRole", data.usertype);
+
+
 
 const type = (data.usertype || "").toLowerCase();
 
