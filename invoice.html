@@ -270,7 +270,9 @@ class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded">
 إغلاق
 
 </button>
-
+<button onclick="logout()">
+تسجيل الخروج
+</button>
 </div>
 
 </div>
@@ -285,7 +287,18 @@ const supabaseClient = createClient(
 "https://vmxbedovoahuggfpcmyk.supabase.co",
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
-const sellerName = localStorage.getItem("user") || "غير معروف";
+
+  // ================= المستخدم الحالي =================
+const currentUserId =
+localStorage.getItem("userId") || "";
+
+const currentUserName =
+localStorage.getItem("userName") || "غير معروف";
+
+const currentUserRole =
+localStorage.getItem("userRole") || "";
+
+const sellerName = currentUserName;
 // ================= DATA =================
 let customers = [];
 let products = [];
@@ -945,6 +958,15 @@ console.log("done");
 
 }
   init();
+  function logout(){
+
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userRole");
+
+    window.location.href = "index.html";
+
+}
 </script>
 
 </body>
