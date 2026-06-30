@@ -941,19 +941,17 @@ console.error(err);
 // ================= INIT =================
 async function init(){
 
-console.log("loading...");
+    console.log("loading...");
 
-await loadCurrentUser();
+    await loadMaster();
 
-await loadMaster();
+    await loadDetails();
 
-await loadDetails();
+    await loadOrders();
 
-await loadOrders();
+    await loadStats();
 
-await loadStats();
-
-console.log("done");
+    console.log("done");
 
 }
   init();
