@@ -290,15 +290,16 @@ const supabaseClient = createClient(
 
   // ================= المستخدم الحالي =================
 const currentUserId =
-localStorage.getItem("userId") || "";
+    localStorage.getItem("userId") || "";
 
 const currentUserName =
-localStorage.getItem("userName") || "غير معروف";
+    localStorage.getItem("userName") || "غير معروف";
 
 const currentUserRole =
-localStorage.getItem("userRole") || "";
+    localStorage.getItem("userRole") || "";
 
 const sellerName = currentUserName;
+
 // ================= DATA =================
 let customers = [];
 let products = [];
@@ -309,9 +310,7 @@ let customerMap = new Map();
 let productMap = new Map();
 let detailsMap = new Map();
 
-const money = v => Number(v||0).toLocaleString();
-let sellerName = "المستخدم الحالي";
-
+const money = v => Number(v || 0).toLocaleString();
 
 function closeInvoice(){
 
