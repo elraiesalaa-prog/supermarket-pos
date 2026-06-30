@@ -299,29 +299,6 @@ let detailsMap = new Map();
 const money = v => Number(v||0).toLocaleString();
 let sellerName = "المستخدم الحالي";
 
-async function loadCurrentUser(){
-
-try{
-
-const {data} = await supabaseClient.auth.getUser();
-
-if(data.user){
-
-sellerName =
-data.user.user_metadata?.full_name ||
-data.user.user_metadata?.name ||
-data.user.email ||
-"المستخدم الحالي";
-
-}
-
-}catch(e){
-
-console.log(e);
-
-}
-
-}
 
 function closeInvoice(){
 
