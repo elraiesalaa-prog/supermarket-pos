@@ -104,10 +104,11 @@ class="bg-indigo-600 text-white w-full py-2 rounded">
 <script>
 
 
+const { createClient } = window.supabase;
 
-const supabase = window.supabase.createClient(
-    "https://vmxbedovoahuggfpcmyk.supabase.co",
-    "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+const supabaseClient = createClient(
+"https://vmxbedovoahuggfpcmyk.supabase.co",
+"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
 
 //============================
