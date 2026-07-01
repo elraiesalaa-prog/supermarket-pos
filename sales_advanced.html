@@ -2,122 +2,500 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نظام POS متقدم v3</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="Cairo-Regular.js"></script>
+
+<style>
+  body { font-family: 'Cairo', Arial, sans-serif; }
+</style>
+
 </head>
 
-<body class="bg-gray-100 p-3 md:p-6">
+<body class="bg-gray-100 p-6">
 
 <div class="max-w-7xl mx-auto">
-  <h1 class="text-2xl md:text-3xl font-bold text-center mb-6">نظام POS متقدم v3</h1>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+<h1 class="text-3xl font-bold text-center mb-6">نظام POS متقدم v3</h1>
 
-    <!-- العملاء -->
-    <div class="bg-white p-4 rounded shadow">
-      <h2 class="font-bold mb-3">العميل</h2>
-      <select id="customer" class="border p-2 w-full mb-3"></select>
-      <select id="pay_method" class="border p-2 w-full mb-3">
-        <option value="cash">نقد</option>
-        <option value="bank">تحويل</option>
-        <option value="later">آجل</option>
-      </select>
-      <input id="seal_man" class="border p-2 w-full" readonly />
-    </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-    <!-- المنتجات -->
-    <div class="bg-white p-4 rounded shadow">
-      <h2 class="font-bold mb-3">المنتجات</h2>
-      <select id="product" class="border p-2 w-full mb-3"></select>
-      <div class="flex flex-col sm:flex-row gap-2 mb-3">
-        <input id="price" class="border p-2 w-full" readonly />
-        <input id="stock" class="border p-2 w-full" readonly />
-      </div>
-      <input id="qte" type="number" placeholder="الكمية" class="border p-2 w-full mb-3">
-      <button onclick="addItem()" class="bg-blue-600 text-white w-full py-2 rounded">
-        إضافة للسلة
-      </button>
-    </div>
+<div class="bg-white p-4 rounded shadow">
 
-    <!-- الإجمالي -->
-    <div class="bg-white p-4 rounded shadow">
-      <h2 class="font-bold mb-3">الإجمالي</h2>
-      <div class="text-xl font-bold mb-4">
-        الإجمالي : <span id="total">0</span>
-      </div>
-      <div class="flex flex-col gap-2">
-        <button onclick="showInvoiceModal()" class="bg-yellow-600 text-white w-full py-2 rounded">
-          عرض الفاتورة
-        </button>
-        <button id="saveBtn" onclick="saveInvoice()" class="bg-green-600 text-white w-full py-2 rounded">
-          إتمام البيع
-        </button>
-      </div>
-    </div>
+<h2 class="font-bold mb-3">العميل</h2>
 
-  </div>
+<select id="customer" class="border p-2 w-full mb-3"></select>
 
-  <!-- السلة -->
-  <div class="bg-white mt-6 p-4 rounded shadow overflow-x-auto">
-    <table class="w-full text-center min-w-[500px]">
-      <thead class="bg-gray-200">
-        <tr>
-          <th>المنتج</th>
-          <th>السعر</th>
-          <th>الكمية</th>
-          <th>المجموع</th>
-          <th>حذف</th>
-        </tr>
-      </thead>
-      <tbody id="cart"></tbody>
-    </table>
-  </div>
+<select id="pay_method" class="border p-2 w-full mb-3">
+<option value="cash">نقد</option>
+<option value="bank">تحويل</option>
+<option value="later">آجل</option>
+</select>
+
+<input id="seal_man" class="border p-2 w-full" readonly/>
 
 </div>
 
-<!-- نافذة الفاتورة -->
-<div id="invoiceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-  <div class="bg-white p-4 md:p-6 rounded shadow w-11/12 sm:w-3/4 max-w-3xl overflow-auto">
-    <h2 class="text-xl font-bold mb-4 text-center">فاتورة البيع</h2>
+<div class="bg-white p-4 rounded shadow">
 
-    <div class="overflow-x-auto">
-      <table class="w-full text-center border min-w-[400px]">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="border p-2">المنتج</th>
-            <th class="border p-2">السعر</th>
-            <th class="border p-2">الكمية</th>
-            <th class="border p-2">المجموع</th>
-          </tr>
-        </thead>
-        <tbody id="invoiceTable"></tbody>
-      </table>
+<h2 class="font-bold mb-3">المنتجات</h2>
+
+<select id="product" class="border p-2 w-full mb-3"></select>
+
+<div class="flex gap-2 mb-3">
+<input id="price" class="border p-2 w-full" placeholder="السعر" readonly/>
+<input id="stock" class="border p-2 w-full" placeholder="المخزون" readonly/>
+</div>
+
+<input id="qte" type="number" placeholder="الكمية" class="border p-2 w-full mb-3">
+
+<button onclick="addItem()" class="bg-blue-600 text-white w-full py-2 rounded font-bold hover:bg-blue-700 transition">
+إضافة للسلة
+</button>
+
+</div>
+
+<div class="bg-white p-4 rounded shadow">
+
+<h2 class="font-bold mb-3">الإجمالي</h2>
+
+<div class="text-xl font-bold mb-4">
+الإجمالي : <span id="total">0</span>
+</div>
+
+<div class="flex flex-col gap-2">
+
+<button onclick="showInvoiceModal()" class="bg-yellow-600 text-white w-full py-2 rounded font-bold hover:bg-yellow-700 transition">
+عرض الفاتورة
+</button>
+
+<button id="saveBtn" onclick="saveInvoice()" class="bg-green-600 text-white w-full py-2 rounded font-bold hover:bg-green-700 transition">
+إتمام البيع
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="bg-white mt-6 p-4 rounded shadow">
+
+<table class="w-full text-center">
+
+<thead class="bg-gray-200">
+<tr>
+<th class="p-2">المنتج</th>
+<th class="p-2">السعر</th>
+<th class="p-2">الكمية</th>
+<th class="p-2">المجموع</th>
+<th class="p-2">حذف</th>
+</tr>
+</thead>
+
+<tbody id="cart"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div id="invoiceModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+
+<div class="bg-white rounded-2xl shadow-2xl w-[96%] max-w-4xl overflow-hidden">
+
+<div class="bg-gradient-to-l from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center">
+
+<h2 class="font-bold text-xl">
+فاتورة البيع
+</h2>
+
+<button onclick="closeInvoice()" class="bg-red-500 hover:bg-red-600 rounded px-3 py-1 text-white">
+✕
+</button>
+
+</div>
+
+<div id="invoiceContent" class="bg-white max-h-[70vh] overflow-auto p-6">
     </div>
 
-    <div class="text-xl font-bold mt-4 text-left">
-      الإجمالي : <span id="invoiceTotal">0</span>
-    </div>
+<div class="bg-slate-100 p-4 flex justify-end gap-3 border-t">
 
-    <div class="flex flex-col sm:flex-row justify-center gap-4 mt-4">
-      <button onclick="printPDF()" class="bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto">
-        طباعة PDF
-      </button>
-      <button onclick="closeInvoice()" class="bg-red-600 text-white px-4 py-2 rounded w-full sm:w-auto">
-        إغلاق
-      </button>
-    </div>
-  </div>
+<button onclick="printInvoice()" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2 rounded font-bold transition">
+🖨 طباعة
+</button>
+
+<button onclick="closeInvoice()" class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded font-bold transition">
+إغلاق
+</button>
+
+</div>
+
+</div>
+
 </div>
 
 <script>
-/* كل وظائف الصفحة كما هي مع Supabase وجافاسكريبت */
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+const supabase = window.supabase.createClient(
+"https://vmxbedovoahuggfpcmyk.supabase.co",
+"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+)
+
+const currentUserName = "Alaadin Adam"
+document.getElementById("seal_man").value = currentUserName
+
+let products = []
+let cart = []
+const money = v => Number(v || 0).toLocaleString();
+
+/* تحميل العملاء */
+
+async function loadCustomers(){
+
+const {data,error} = await supabase
+.from("customers")
+.select("id_customer,first_name")
+
+if(error){ alert(error.message); return }
+
+let select = document.getElementById("customer")
+select.innerHTML = ""
+
+data.forEach(c=>{
+let op = document.createElement("option")
+op.value = c.id_customer
+op.textContent = c.first_name
+select.appendChild(op)
+})
+
+}
+
+/* تحميل المنتجات */
+
+async function loadProducts(){
+
+const {data,error} = await supabase
+.from("products")
+.select("id_product,product_name,seal_price,qte_in_stock")
+
+if(error){ alert(error.message); return }
+
+products = data
+
+let select = document.getElementById("product")
+select.innerHTML = ""
+
+data.forEach(p=>{
+let op = document.createElement("option")
+op.value = p.id_product
+op.textContent = p.product_name
+select.appendChild(op)
+})
+
+select.addEventListener("change",showProduct)
+
+showProduct()
+
+}
+
+/* عرض المنتج */
+
+function showProduct(){
+
+let id = document.getElementById("product").value
+let p = products.find(x=>x.id_product==id)
+
+if(!p) return
+
+document.getElementById("price").value = p.seal_price
+document.getElementById("stock").value = p.qte_in_stock
+
+}
+
+/* عرض السلة */
+
+function renderCart(){
+
+let table = document.getElementById("cart")
+table.innerHTML = ""
+
+let total = 0
+
+cart.forEach((i,index)=>{
+
+total += i.total
+
+table.innerHTML += `
+<tr class="border-b hover:bg-gray-50">
+<td class="p-2">${i.name}</td>
+<td class="p-2">${money(i.price)}</td>
+<td class="p-2">${i.qte}</td>
+<td class="p-2 font-bold">${money(i.total)}</td>
+<td class="p-2">
+<button onclick="removeItem(${index})" class="text-red-600 hover:text-red-800">حذف</button>
+</td>
+</tr>
+`
+
+})
+
+document.getElementById("total").innerText = money(total)
+
+}
+
+/* إضافة للسلة */
+
+window.addItem = function(){
+
+let productId = document.getElementById("product").value
+let qte = parseFloat(document.getElementById("qte").value)
+
+let product = products.find(p=>p.id_product==productId)
+
+if(!qte || qte<=0){
+alert("ادخل الكمية")
+return
+}
+
+if(qte > product.qte_in_stock){
+alert("الكمية أكبر من المخزون")
+return
+}
+
+cart.push({
+id_product:productId,
+name:product.product_name,
+price:product.seal_price,
+qte:qte,
+total:qte*product.seal_price
+})
+
+renderCart()
+document.getElementById("qte").value = "" // تصفير حقل الكمية للتسهيل
+
+}
+
+/* حذف من السلة */
+
+window.removeItem = function(index){
+cart.splice(index,1)
+renderCart()
+}
+
+/* عرض الفاتورة بالشكل المطابق لصفحة invoice.html */
+
+window.showInvoiceModal = function(){
+
+if(cart.length == 0){
+alert("السلة فارغة، يرجى إضافة منتجات أولاً لعرض الفاتورة")
+return
+}
+
+let selectCustomer = document.getElementById("customer")
+let customerName = selectCustomer.options[selectCustomer.selectedIndex]?.text || "بدون اسم"
+let sellerName = document.getElementById("seal_man").value
+
+let total = 0
+let rows = ""
+
+cart.forEach(i => {
+total += i.total
+rows += `
+<tr>
+<td style="padding:7px; border-bottom:1px solid #eee; text-align:right;">${i.name}</td>
+<td style="text-align:center; border-bottom:1px solid #eee;">${i.qte}</td>
+<td style="text-align:center; border-bottom:1px solid #eee;">${money(i.price)}</td>
+<td style="text-align:center; font-weight:bold; color:#2563eb; border-bottom:1px solid #eee;">${money(i.total)}</td>
+</tr>
+`
+})
+
+// إعداد التاريخ والوقت الحاليين
+const now = new Date()
+const dateStr = now.toLocaleDateString("ar-EG")
+const timeStr = now.toLocaleTimeString("ar-EG")
+
+// بناء الهيكل المتطابق تماماً مع صفحة الفاتورة الكلاسيكية
+document.getElementById("invoiceContent").innerHTML = `
+<div style="display:flex; justify-content:center; padding:15px; background:#eef2f7;">
+
+<div style="width:80mm; background:#fff; border:2px solid #2563eb; border-radius:12px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.18); font-family:Cairo,Arial,sans-serif; font-size:12px; color:#222;">
+
+<div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:12px; text-align:center;">
+<div style="font-size:22px; font-weight:bold;">مؤسسة علاء الدين</div>
+<div style="font-size:14px; margin-top:3px;">فاتورة بيع</div>
+<div style="font-size:11px; opacity:.9;">POS SYSTEM</div>
+</div>
+
+<div style="padding:10px; background:#f8fafc; border-bottom:1px solid #ddd; line-height:1.9;">
+<div style="display:flex; justify-content:space-between;">
+<span><b>رقم:</b> قيد الانتظار</span>
+<span>${dateStr}</span>
+</div>
+<div style="margin-top:4px;">👤 <b>العميل :</b> ${customerName}</div>
+<div>🛒 <b>البائع :</b> ${sellerName}</div>
+<div>🕒 ${timeStr}</div>
+</div>
+
+<table style="width:100%; border-collapse:collapse; font-size:11px;">
+<thead>
+<tr style="background:#2563eb; color:#fff;">
+<th style="padding:6px;">الصنف</th>
+<th style="padding:6px;">الكمية</th>
+<th style="padding:6px;">السعر</th>
+<th style="padding:6px;">الجملة</th>
+</tr>
+</thead>
+<tbody>
+${rows}
+</tbody>
+</table>
+
+<div style="padding:10px; background:#f8fafc; border-top:1px solid #ddd;">
+<div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:10px; border-radius:8px; font-size:16px; font-weight:bold;">
+<span>الإجمالي</span>
+<span>${money(total)}</span>
+</div>
+</div>
+
+<div style="padding:12px; text-align:center; font-size:11px; color:#666; border-top:1px dashed #ccc;">
+شكراً لتعاملكم معنا 🌹<br>نتمنى لكم يوماً سعيداً
+</div>
+
+</div>
+</div>
+`
+
+// إظهار النافذة المنبثقة للـ Modal
+const modal = document.getElementById("invoiceModal")
+modal.classList.remove("hidden")
+modal.classList.add("flex")
+
+}
+
+/* إغلاق الفاتورة */
+
+window.closeInvoice = function(){
+document.getElementById("invoiceModal").classList.add("hidden")
+document.getElementById("invoiceModal").classList.remove("flex")
+}
+
+/* دالة الطباعة الاحترافية المطابقة لـ invoice.html */
+
+window.printInvoice = function(){
+const content = document.getElementById("invoiceContent").innerHTML;
+const w = window.open("", "_blank");
+
+w.document.write(`
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>فاتورة</title>
+<style>
+body{ font-family:Cairo,Arial; padding:25px; direction:rtl; }
+table{ width:100%; border-collapse:collapse; margin-top:15px; }
+th{ background:#1e40af; color:#fff; padding:10px; border:1px solid #ccc; }
+td{ padding:8px; border:1px solid #ccc; text-align:center; }
+@media print{ body{ margin:0; } }
+</style>
+</head>
+<body>
+${content}
+<script>
+window.onload=function(){
+window.print();
+window.close();
+}
+<\/script>
+</body>
+</html>
+`);
+
+w.document.close();
+}
+
+/* حفظ الفاتورة */
+
+window.saveInvoice = async function(){
+
+if(cart.length==0){
+alert("السلة فارغة")
+return
+}
+
+let btn = document.getElementById("saveBtn")
+btn.disabled = true
+
+let customer = document.getElementById("customer").value
+let pay_method = document.getElementById("pay_method").value
+let seal_man = document.getElementById("seal_man").value
+
+const {data,error} = await supabase
+.from("orders_o")
+.insert([{
+customer_id:customer,
+date_order:new Date(),
+pay_method:pay_method,
+seal_man:seal_man
+}]).select()
+
+if(error){
+alert(error.message)
+btn.disabled=false
+return
+}
+
+let orderId = data[0].id_order
+
+for(let item of cart){
+
+await supabase
+.from("orders_details")
+.insert([{
+id_product:item.id_product,
+id_order:orderId,
+qte:item.qte,
+price:item.price,
+descount:0,
+amount:item.total,
+total_amount:item.total,
+id_customer:customer,
+date_order:new Date(),
+pay_method:pay_method,
+description_order:"",
+seal_man:seal_man,
+first_name:""
+}])
+
+}
+
+alert("تمت عملية البيع بنجاح")
+
+cart=[]
+renderCart()
+
+await loadProducts()
+
+btn.disabled=false
+
+}
+
+/* تحميل البيانات الأولي */
+
+await loadCustomers()
+await loadProducts()
+
+})
+
 </script>
 
 </body>
