@@ -164,74 +164,260 @@ window.showInvoicesList = async function(){
 }
   window.openInvoice = async function(id_order){
 
-  const {data,error}=await supabase
-  .from("orders_details")
-  .select("*")
-  .eq("id_order",id_order);
+    // قراءة تفاصيل الفاتورة
+    const { data: details, error } = await supabase
+    .from("orders_details")
+    .select("*")
+    .eq("id_order", id_order);
 
-  if(error){
-    alert("خطأ في قراءة الفاتورة");
-    return;
-  }
+    if(error){
+        alert("خطأ في قراءة الفاتورة");
+        console.log(error);
+        return;
+    }
 
-  let rows="";
-  let total=0;
+    // قراءة بيانات الفاتورة
+    const { data: order } = await supabase
+    .from("orders_o")
+    .select("*")
+    .eq("id_order", id_order)
+    .single();
 
-  data.forEach((i,index)=>{
+    const customerName =
+        document.getElementById("customer").selectedOptions[0]?.text ||
+        "غير معروف";
 
-    total+=Number(i.total_amount);
+    const sellerName =
+        order?.seal_man ||
+        localStorage.getItem("userName") ||
+        "غير معروف";
 
-    rows+=`
-    <tr>
-    <td style="border:1px solid #ddd;padding:6px">${index+1}</td>
-    <td style="border:1px solid #ddd;padding:6px">${i.id_product}</td>
-    <td style="border:1px solid #ddd;padding:6px">${i.price}</td>
-    <td style="border:1px solid #ddd;padding:6px">${i.qte}</td>
-    <td style="border:1px solid #ddd;padding:6px">${i.total_amount}</td>
-    </tr>
-    `;
-  });
+    const date =
+        new Date(order?.date_order || new Date())
+        .toLocaleDateString("ar-EG");
 
-  document.getElementById("invoiceContent").innerHTML=`
+    const time =
+        new Date(order?.date_order || new Date())
+        .toLocaleTimeString("ar-EG");
 
-  <h2 style="text-align:center;font-size:22px">
-  فاتورة رقم ${id_order}
-  </h2>
+    let rows = "";
+    let total = 0;
 
-  <table style="width:100%;border-collapse:collapse;text-align:center">
+    let total = 0;
+let rows = "";
 
-  <tr style="background:#2563eb;color:white">
-  <th>#</th>
-  <th>المنتج</th>
-  <th>السعر</th>
-  <th>الكمية</th>
-  <th>الإجمالي</th>
-  </tr>
+details.forEach((item,index)=>{
 
-  ${rows}
+    const product =
+        products.find(p => p.id_product == item.id_product);
 
-  </table>
+    const qty =
+        item.qte ??
+        item.quantity ??
+        item.qty ??
+        0;
 
-  <h3 style="margin-top:20px;color:#2563eb">
-  الإجمالي : ${total}
-  </h3>
-  `;
+    const price =
+        Number(item.price || 0);
 
-  document.getElementById("invoiceModal")
-  .classList.remove("hidden");
+    const lineTotal =
+        Number(item.total_amount || 0);
+
+    total += lineTotal;
+
+    rows += `
+<tr>
+
+<td style="
+padding:6px;
+text-align:right;
+border-bottom:1px dashed #ccc;
+">
+${product?.product_name || "-"}
+</td>
+
+<td style="
+text-align:center;
+border-bottom:1px dashed #ccc;
+">
+${qty}
+</td>
+
+<td style="
+text-align:center;
+border-bottom:1px dashed #ccc;
+">
+${money(price)}
+</td>
+
+<td style="
+text-align:left;
+font-weight:bold;
+border-bottom:1px dashed #ccc;
+">
+${money(lineTotal)}
+</td>
+
+</tr>
+`;
+
+});
+
+    }
+
+    document.getElementById("invoiceContent").innerHTML = `
+
+<div style="
+width:80mm;
+margin:auto;
+background:white;
+border:1px solid #d1d5db;
+border-radius:10px;
+padding:8px;
+box-shadow:0 3px 10px rgba(0,0,0,.15);
+font-family:Cairo,Arial;
+font-size:12px;
+">
+
+<div style="
+text-align:center;
+padding-bottom:8px;
+border-bottom:1px dashed #999;
+">
+
+<div style="
+font-size:20px;
+font-weight:bold;
+color:#2563eb;
+">
+مؤسسة علاء الدين
+</div>
+
+<div style="
+font-size:14px;
+font-weight:bold;
+margin-top:3px;
+">
+فاتورة بيع
+</div>
+
+<div style="
+font-size:11px;
+color:#666;
+">
+POS SYSTEM
+</div>
+
+</div>
+
+<div style="
+margin-top:8px;
+line-height:1.8;
+">
+
+<div><b>رقم الفاتورة :</b> ${id_order}</div>
+
+<div><b>العميل :</b> ${customerName}</div>
+
+<div><b>البائع :</b> ${sellerName}</div>
+
+<div><b>التاريخ :</b> ${date}</div>
+
+<div><b>الوقت :</b> ${time}</div>
+
+</div>
+
+<hr style="
+border:none;
+border-top:1px dashed #999;
+margin:8px 0;
+">
+
+<table style="
+width:100%;
+border-collapse:collapse;
+font-size:11px;
+">
+
+<thead>
+
+<tr style="
+background:#2563eb;
+color:white;
+">
+
+<th style="padding:5px">الصنف</th>
+
+<th style="padding:5px">ك</th>
+
+<th style="padding:5px">س</th>
+
+<th style="padding:5px">ج</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+${rows}
+
+</tbody>
+
+</table>
+
+<hr style="
+border:none;
+border-top:1px dashed #999;
+margin:8px 0;
+">
+
+<div style="
+display:flex;
+justify-content:space-between;
+font-size:15px;
+font-weight:bold;
+">
+
+<span>الإجمالي</span>
+
+<span>${total}</span>
+
+</div>
+
+<hr style="
+border:none;
+border-top:1px dashed #999;
+margin:8px 0;
+">
+
+<div style="
+text-align:center;
+font-size:11px;
+color:#666;
+line-height:1.8;
+">
+
+شكراً لتعاملكم معنا 🌹
+
+<br>
+
+نتمنى لكم يوماً سعيداً
+
+</div>
+
+</div>
+`;
+
+    document
+    .getElementById("invoiceModal")
+    .classList.remove("hidden");
+
+    document
+    .getElementById("invoiceModal")
+    .classList.add("flex");
 
 }
-  
-const supabase = window.supabase.createClient(
-  "https://vmxbedovoahuggfpcmyk.supabase.co",
-  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-);
-
-const currentUserName = "Alaadin Adam";
-document.getElementById("seal_man").value = currentUserName;
-
-let products = [];
-let cart = [];
 
 // تحميل العملاء
 async function loadCustomers() {
@@ -356,256 +542,224 @@ window.removeItem = function(index){
 }
 
 // عرض الفاتورة
-window.showInvoiceModal = function(){
+window.showInvoiceModal = function () {
 
-  if(cart.length === 0){
-    alert("السلة فارغة");
-    return;
-  }
+    if (cart.length === 0) {
+        alert("السلة فارغة");
+        return;
+    }
 
-  let customerName =
-  document.getElementById("customer").selectedOptions[0].text;
+    const customerName =
+        document.getElementById("customer").selectedOptions[0].text;
 
-  let total =
-  document.getElementById("total").innerText;
+    const sellerName =
+        localStorage.getItem("userName") || "غير معروف";
 
-  let rows = "";
+    const now = new Date();
 
-  cart.forEach((i,index)=>{
+    const date = now.toLocaleDateString("ar-EG");
 
-    rows += `
-    <tr>
+    const time = now.toLocaleTimeString("ar-EG");
 
-      <td style="
-      border:1px solid #cbd5e1;
-      padding:6px;
-      font-size:12px;
-      ">
-      ${index + 1}
-      </td>
+    let total = 0;
 
-      <td style="
-      border:1px solid #cbd5e1;
-      padding:6px;
-      font-size:12px;
-      white-space:normal;
-      word-break:break-word;
-      line-height:1.5;
-      ">
-      ${i.name}
-      </td>
+    let rows = "";
 
-      <td style="
-      border:1px solid #cbd5e1;
-      padding:6px;
-      font-size:12px;
-      ">
-      ${i.price}
-      </td>
+    cart.forEach((item, index) => {
 
-      <td style="
-      border:1px solid #cbd5e1;
-      padding:6px;
-      font-size:12px;
-      ">
-      ${i.qte}
-      </td>
+        total += Number(item.total);
 
-      <td style="
-      border:1px solid #cbd5e1;
-      padding:6px;
-      font-size:12px;
-      font-weight:bold;
-      color:#1d4ed8;
-      ">
-      ${i.total}
-      </td>
+        rows += `
+<tr>
 
-    </tr>
-    `;
+<td style="padding:6px;border-bottom:1px dashed #ccc">
+${item.name}
+</td>
 
-  });
+<td style="text-align:center;border-bottom:1px dashed #ccc">
+${item.qte}
+</td>
 
-  document.getElementById("invoiceContent").innerHTML = `
+<td style="text-align:center;border-bottom:1px dashed #ccc">
+${item.price}
+</td>
 
-  <div style="
-  border:2px solid #2563eb;
-  border-radius:14px;
-  overflow:hidden;
-  font-family:tahoma;
-  background:white;
-  width:100%;
-  ">
+<td style="text-align:left;border-bottom:1px dashed #ccc;font-weight:bold">
+${item.total}
+</td>
 
-    <!-- الرأس -->
+</tr>
+`;
 
-    <div style="
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
-    color:white;
-    padding:12px;
-    text-align:center;
-    ">
+    });
 
-      <h2 style="
-      margin:0;
-      font-size:20px;
-      ">
-      فاتورة بيع
-      </h2>
+    document.getElementById("invoiceContent").innerHTML = `
 
-      <div style="
-      margin-top:4px;
-      font-size:11px;
-      ">
-      نظام POS متقدم
-      </div>
+<div style="
+width:80mm;
+margin:auto;
+background:#fff;
+border:1px solid #d1d5db;
+border-radius:10px;
+padding:8px;
+box-shadow:0 3px 10px rgba(0,0,0,.15);
+font-family:Cairo,Arial;
+font-size:12px;
+">
 
-    </div>
+<div style="
+text-align:center;
+padding-bottom:8px;
+border-bottom:1px dashed #999;
+">
 
-    <!-- معلومات -->
+<div style="
+font-size:20px;
+font-weight:bold;
+color:#2563eb;
+">
 
-    <div style="
-    display:flex;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    gap:6px;
-    padding:10px;
-    background:#f8fafc;
-    border-bottom:1px solid #ddd;
-    font-size:12px;
-    ">
+مؤسسة علاء الدين
 
-      <div>
-      👤 <strong>${customerName}</strong>
-      </div>
+</div>
 
-      <div>
-      📅 ${new Date().toLocaleDateString()}
-      </div>
+<div style="
+font-size:14px;
+font-weight:bold;
+margin-top:3px;
+">
 
-      <div>
-      🕒 ${new Date().toLocaleTimeString()}
-      </div>
+فاتورة بيع
 
-    </div>
+</div>
 
-    <!-- الجدول -->
+<div style="
+font-size:11px;
+color:#777;
+">
 
-    <div style="
-    width:100%;
-    overflow:hidden;
-    ">
+POS SYSTEM
 
-      <table style="
-      width:100%;
-      border-collapse:collapse;
-      text-align:center;
-      table-layout:fixed;
-      ">
+</div>
 
-        <thead>
+</div>
 
-          <tr style="
-          background:#2563eb;
-          color:white;
-          ">
+<div style="
+margin-top:8px;
+line-height:1.8;
+">
 
-            <th style="
-            border:1px solid #dbeafe;
-            padding:6px;
-            font-size:12px;
-            width:8%;
-            ">
-            #
-            </th>
+<div><b>العميل :</b> ${customerName}</div>
 
-            <th style="
-            border:1px solid #dbeafe;
-            padding:6px;
-            font-size:12px;
-            width:40%;
-            ">
-            المنتج
-            </th>
+<div><b>البائع :</b> ${sellerName}</div>
 
-            <th style="
-            border:1px solid #dbeafe;
-            padding:6px;
-            font-size:12px;
-            width:17%;
-            ">
-            السعر
-            </th>
+<div><b>التاريخ :</b> ${date}</div>
 
-            <th style="
-            border:1px solid #dbeafe;
-            padding:6px;
-            font-size:12px;
-            width:15%;
-            ">
-            الكمية
-            </th>
+<div><b>الوقت :</b> ${time}</div>
 
-            <th style="
-            border:1px solid #dbeafe;
-            padding:6px;
-            font-size:12px;
-            width:20%;
-            ">
-            الإجمالي
-            </th>
+</div>
 
-          </tr>
+<hr style="border:none;border-top:1px dashed #999;margin:8px 0">
 
-        </thead>
+<table style="
+width:100%;
+border-collapse:collapse;
+font-size:11px;
+">
 
-        <tbody>
+<thead>
 
-        ${rows}
+<tr style="
+background:#2563eb;
+color:white;
+">
 
-        </tbody>
+<th style="padding:5px">
+الصنف
+</th>
 
-      </table>
+<th style="padding:5px">
+ك
+</th>
 
-    </div>
+<th style="padding:5px">
+س
+</th>
 
-    <!-- الإجمالي -->
+<th style="padding:5px">
+ج
+</th>
 
-    <div style="
-    padding:14px;
-    text-align:left;
-    font-size:18px;
-    font-weight:bold;
-    color:#2563eb;
-    border-top:1px solid #ddd;
-    background:#f8fafc;
-    ">
+</tr>
 
-      الإجمالي:
-      ${total}
+</thead>
 
-    </div>
+<tbody>
 
-    <!-- التذييل -->
+${rows}
 
-    <div style="
-    text-align:center;
-    padding:10px;
-    color:#666;
-    font-size:11px;
-    border-top:1px solid #eee;
-    ">
+</tbody>
 
-      شكراً لتعاملكم معنا
+</table>
 
-    </div>
+<hr style="
+border:none;
+border-top:1px dashed #999;
+margin:8px 0;
+">
 
-  </div>
+<div style="
+display:flex;
+justify-content:space-between;
+font-size:15px;
+font-weight:bold;
+">
 
-  `;
+<span>
 
-  document.getElementById("invoiceModal")
-  .classList.remove("hidden");
+الإجمالي
+
+</span>
+
+<span>
+
+${total}
+
+</span>
+
+</div>
+
+<hr style="
+border:none;
+border-top:1px dashed #999;
+margin:8px 0;
+">
+
+<div style="
+text-align:center;
+font-size:11px;
+color:#666;
+line-height:1.8;
+">
+
+شكراً لتعاملكم معنا 🌹
+
+<br>
+
+نتمنى لكم يوماً سعيداً
+
+</div>
+
+</div>
+`;
+
+    document
+        .getElementById("invoiceModal")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("invoiceModal")
+        .classList.add("flex");
 
 };
 // إغلاق نافذة الفاتورة
@@ -615,20 +769,108 @@ window.closeInvoiceModal = function(){
 
 // طباعة الفاتورة
 window.printInvoice = function(){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({orientation:"p",unit:"mm",format:"a4"});
-  doc.setFontSize(14);
-  doc.text("فاتورة المبيعات",105,10,null,null,"center");
-  let y=20;
-  cart.forEach(i=>{
-    doc.text(`${i.name} - ${i.qte} × ${i.price} = ${i.total}`,10,y);
-    y+=7;
-  });
-  doc.text(`الإجمالي: ${document.getElementById("total").innerText}`,10,y+5);
-  doc.save("invoice.pdf");
-  closeInvoiceModal();
+
+    const invoice =
+        document.getElementById("invoiceContent").innerHTML;
+
+    const win = window.open("", "_blank");
+
+    win.document.write(`
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>فاتورة</title>
+
+<style>
+
+*{
+box-sizing:border-box;
 }
 
+body{
+
+margin:0;
+padding:8px;
+direction:rtl;
+background:white;
+font-family:Cairo,Arial,sans-serif;
+
+}
+
+@page{
+
+size:80mm auto;
+margin:3mm;
+
+}
+
+table{
+
+width:100%;
+border-collapse:collapse;
+font-size:11px;
+
+}
+
+th,td{
+
+padding:5px;
+
+}
+
+hr{
+
+border:none;
+border-top:1px dashed #999;
+
+}
+
+@media print{
+
+body{
+
+width:80mm;
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+${invoice}
+
+<script>
+
+window.onload=function(){
+
+window.print();
+
+setTimeout(function(){
+
+window.close();
+
+},300);
+
+}
+
+<\/script>
+
+</body>
+
+</html>
+`);
+
+    win.document.close();
+
+}
 // حفظ الفاتورة وتحديث المخزون في Supabase
 window.saveInvoice = async function(){
   if(cart.length===0){ alert("السلة فارغة"); return; }
@@ -657,29 +899,60 @@ window.saveInvoice = async function(){
 
  alert("تمت عملية البيع بنجاح");
 
-// عرض الفاتورة بعد الحفظ مباشرة
+// حفظ رقم الفاتورة الحالي
+const currentInvoiceNo = orderId;
+
+// حفظ نسخة من السلة الحالية
+const invoiceCart = JSON.parse(JSON.stringify(cart));
+
+// الاحتفاظ بالسلة الحالية مؤقتاً
+const oldCart = cart;
+
+// عرض الفاتورة برقمها الحقيقي
 showInvoiceModal();
 
-// حفظ نسخة مؤقتة من السلة الحالية
-const oldCart = [...cart];
+// إضافة رقم الفاتورة داخل الفاتورة
+const info = document.querySelector("#invoiceContent div:nth-child(2)");
 
-// تفريغ السلة بعد إغلاق الفاتورة
+if(info){
+
+    info.innerHTML = `
+<div><b>رقم الفاتورة :</b> ${currentInvoiceNo}</div>
+<div><b>العميل :</b> ${
+document.getElementById("customer").selectedOptions[0].text
+}</div>
+<div><b>البائع :</b> ${
+localStorage.getItem("userName") || "غير معروف"
+}</div>
+<div><b>التاريخ :</b> ${
+new Date().toLocaleDateString("ar-EG")
+}</div>
+<div><b>الوقت :</b> ${
+new Date().toLocaleTimeString("ar-EG")
+}</div>
+`;
+
+}
+
+// إعادة تعريف زر الإغلاق
 const oldClose = window.closeInvoiceModal;
 
 window.closeInvoiceModal = function(){
 
-  document.getElementById("invoiceModal")
-  .classList.add("hidden");
+    document
+    .getElementById("invoiceModal")
+    .classList.add("hidden");
 
-  // إعادة الدالة الأصلية
-  window.closeInvoiceModal = oldClose;
+    window.closeInvoiceModal = oldClose;
 
-  // تفريغ السلة بعد الانتهاء من عرض الفاتورة
-  cart = [];
-  renderCart();
-  loadProducts();
+    cart = [];
+
+    renderCart();
+
+    loadProducts();
 
 }
+  
   await loadProducts();
 }
 
