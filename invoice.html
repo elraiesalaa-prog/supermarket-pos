@@ -634,26 +634,38 @@ function openOrder(id){
     let total = 0;
     let rows = "";
 
-    items.forEach((item,index)=>{
+    items.forEach((item, index) => {
+    const product = productMap.get(item.id_product);
 
-        const product = productMap.get(item.id_product);
+    // جلب الكمية المخزنة في التفاصيل فوراُ
+    const qty = item.qte ?? item.quantity ?? item.qty ?? 0;
 
-        const qty =
-            item.qte ??
-            item.quantity ??
-            item.qty ??
-            0;
+    // قراءة السعر المحفوظ في قاعدة البيانات وقت البيع (وليس سعر المنتج الحالي)
+    const price = Number(item.price || 0);
 
-        const price =
-            Number(item.price || 0);
+    // قراءة الإجمالي المحفوظ في قاعدة البيانات وقت البيع
+    const lineTotal = Number(item.total_amount || item.amount || (qty * price));
 
-        const lineTotal =
-            Number(item.total_amount || 0);
+    total += lineTotal;
 
-        total += lineTotal;
+    rows += `
+    <tr>
+        <td style="padding:7px; border-bottom:1px solid #eee; text-align:right;">
+            ${product?.product_name || "منتج غير مدرج حالياً"}
+        </td>
+        <td style="text-align:center; border-bottom:1px solid #eee;">
+            ${qty}
+        </td>
+        <td style="text-align:center; border-bottom:1px solid #eee;">
+            ${money(price)}
+        </td>
+        <td style="text-align:center; font-weight:bold; color:#2563eb; border-bottom:1px solid #eee;">
+            ${money(lineTotal)}
+        </td>
+    </tr>
+    `;
+});
 
-       rows += `
-<tr>
 
 <td style="
 padding:7px;
