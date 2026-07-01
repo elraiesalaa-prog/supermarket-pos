@@ -106,9 +106,9 @@ class="bg-indigo-600 text-white w-full py-2 rounded">
 
 const { createClient } = window.supabase;
 
-const supabaseClient = createClient(
-"https://vmxbedovoahuggfpcmyk.supabase.co",
-"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+const supabase = createClient(
+  "https://vmxbedovoahuggfpcmyk.supabase.co",
+  "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
 
 //============================
@@ -742,39 +742,6 @@ async function saveInvoice(){
    //============================
 
 
-            //============================
-            // تحديث المخزون
-            //============================
-
-            const product =
-            products.find(p=>p.id_product==item.id_product);
-
-            if(product){
-
-                const {error:updateError} =
-                await supabase
-
-                .from("products")
-
-                .update({
-
-                    qte_in_stock:product.qte_in_stock
-
-                })
-
-                .eq("id_product",item.id_product);
-
-                if(updateError){
-
-                    console.error(updateError);
-
-                    throw updateError;
-
-                }
-
-            }
-
-        }
 // عرض الفاتورة
         //============================
 
@@ -904,18 +871,6 @@ window.close();
 // إغلاق الفاتورة
 //============================
 
-function closeInvoiceModal(){
-
-    document
-    .getElementById("invoiceModal")
-    .classList.add("hidden");
-
-    document
-    .getElementById("invoiceModal")
-    .classList.remove("flex");
-
-}
-
 //============================
 // فتح فاتورة محفوظة
 //============================
@@ -928,78 +883,6 @@ function openOrder(id){
 }
 
 //============================
-// تحميل الفواتير السابقة
-//============================
-
-async function loadInvoices(){
-
-    const {data,error} =
-    await supabase
-
-    .from("orders_o")
-
-    .select("*")
-
-    .order("id_order",{ascending:false});
-
-    if(error){
-
-        console.error(error);
-
-        return;
-
-    }
-
-    const tbody =
-    document.getElementById("invoiceListBody");
-
-    if(!tbody) return;
-
-    tbody.innerHTML = "";
-
-    for(const order of data){
-
-        const customer =
-        customers.find(c=>
-        c.id_customer==order.customer_id);
-
-        tbody.innerHTML += `
-
-<tr>
-
-<td class="border p-2">
-
-${order.id_order}
-
-</td>
-
-<td class="border p-2">
-
-${customer?.first_name || "-"}
-
-</td>
-
-<td class="border p-2 text-center">
-
-<button
-
-class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-
-onclick="openOrder('${order.id_order}')">
-
-عرض
-
-</button>
-
-</td>
-
-</tr>
-
-`;
-
-    }
-
-}
 // تحميل الفواتير السابقة
 //============================
 
