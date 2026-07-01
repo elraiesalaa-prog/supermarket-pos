@@ -149,12 +149,29 @@ const supabase = window.supabase.createClient(
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 )
 
-const currentUserName = "Alaadin Adam"
-document.getElementById("seal_man").value = currentUserName
+ // ================= المستخدم الحالي =================
+const currentUserId =
+    localStorage.getItem("userId") || "";
 
-let products = []
-let cart = []
+const currentUserName =
+    localStorage.getItem("userName") || "غير معروف";
 
+const currentUserRole =
+    localStorage.getItem("userRole") || "";
+
+const sellerName = currentUserName;
+
+// ================= DATA =================
+let customers = [];
+let products = [];
+let orders = [];
+let details = [];
+
+let customerMap = new Map();
+let productMap = new Map();
+let detailsMap = new Map();
+
+const money = v => Number(v || 0).toLocaleString();
 /* تحميل العملاء */
 
 async function loadCustomers(){
