@@ -112,14 +112,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 // SUPABASE
 //==========================
 
+<script>
+
 const supabase = window.supabase.createClient(
-"https://vmxbedovoahuggfpcmyk.supabase.co",
-"sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+    "https://vmxbedovoahuggfpcmyk.supabase.co",
+    "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
 
-//==========================
+//============================
 // المستخدم الحالي
-//==========================
+//============================
 
 const currentUserId =
 localStorage.getItem("userId") || "";
@@ -132,21 +134,21 @@ localStorage.getItem("userRole") || "";
 
 const sellerName = currentUserName;
 
-//==========================
+//============================
 // المتغيرات العامة
-//==========================
+//============================
 
 let cart = [];
 
-let products = [];
-
 let customers = [];
+
+let products = [];
 
 let currentInvoiceNo = null;
 
-//==========================
+//============================
 // أدوات مساعدة
-//==========================
+//============================
 
 function money(value){
 
@@ -166,38 +168,33 @@ function nowTime(){
 
 }
 
-//==========================
+//============================
 // إغلاق نافذة الفاتورة
-//==========================
+//============================
 
-window.closeInvoiceModal = function(){
+function closeInvoiceModal(){
 
-    const modal =
-    document.getElementById("invoiceModal");
-
-    modal.classList.add("hidden");
-
-    modal.classList.remove("flex");
+    document
+    .getElementById("invoiceModal")
+    .classList.add("hidden");
 
 }
 
-//==========================
-// إغلاق قائمة الفواتير
-//==========================
+//============================
+// إغلاق نافذة الفواتير
+//============================
 
-window.closeInvoicesList = function(){
+function closeInvoicesList(){
 
-    const modal =
-    document.getElementById("invoiceListModal");
-
-    modal.classList.add("hidden");
-
-    modal.classList.remove("flex");
+    document
+    .getElementById("invoiceListModal")
+    .classList.add("hidden");
 
 }
-//==========================
+
+//============================
 // تحميل العملاء
-//==========================
+//============================
 
 async function loadCustomers(){
 
@@ -206,16 +203,19 @@ async function loadCustomers(){
 
     select.innerHTML = "";
 
-    const { data, error } = await supabase
+    const {data,error} = await supabase
+
     .from("customers")
+
     .select("id_customer,first_name")
+
     .order("first_name");
 
     if(error){
 
         console.error(error);
 
-        alert("خطأ في تحميل العملاء");
+        alert("تعذر تحميل العملاء");
 
         return;
 
@@ -223,16 +223,16 @@ async function loadCustomers(){
 
     customers = data || [];
 
-    customers.forEach(customer=>{
+    customers.forEach(c=>{
 
         const option =
         document.createElement("option");
 
         option.value =
-        customer.id_customer;
+        c.id_customer;
 
         option.textContent =
-        customer.first_name;
+        c.first_name;
 
         select.appendChild(option);
 
@@ -240,9 +240,9 @@ async function loadCustomers(){
 
 }
 
-//==========================
+//============================
 // تحميل المنتجات
-//==========================
+//============================
 
 async function loadProducts(){
 
@@ -251,16 +251,19 @@ async function loadProducts(){
 
     select.innerHTML = "";
 
-    const { data, error } = await supabase
+    const {data,error} = await supabase
+
     .from("products")
+
     .select("*")
+
     .order("product_name");
 
     if(error){
 
         console.error(error);
 
-        alert("خطأ في تحميل المنتجات");
+        alert("تعذر تحميل المنتجات");
 
         return;
 
@@ -289,9 +292,9 @@ async function loadProducts(){
 
 }
 
-//==========================
+//============================
 // عرض بيانات المنتج
-//==========================
+//============================
 
 function showProduct(){
 
@@ -303,9 +306,9 @@ function showProduct(){
 
     if(!product){
 
-        document.getElementById("price").value = "";
+        document.getElementById("price").value="";
 
-        document.getElementById("stock").value = "";
+        document.getElementById("stock").value="";
 
         return;
 
@@ -318,63 +321,16 @@ function showProduct(){
     product.qte_in_stock;
 
 }
-
-//==========================
-// تحديث كمية داخل السلة
-//==========================
-
-window.updateQty = function(index,value){
-
-    value = Number(value);
-
-    if(value <= 0){
-
-        alert("الكمية غير صحيحة");
-
-        return;
-
-    }
-
-    const item = cart[index];
-
-    const product =
-    products.find(p=>p.id_product==item.id_product);
-
-    if(!product) return;
-
-    const oldQty = item.qte;
-
-    const diff = value - oldQty;
-
-    if(diff > product.qte_in_stock){
-
-        alert("الكمية المطلوبة أكبر من المخزون");
-
-        return;
-
-    }
-
-    product.qte_in_stock -= diff;
-
-    item.qte = value;
-
-    item.total = value * item.price;
-
-    renderCart();
-
-    showProduct();
-
-}
-   //==========================
+   //============================
 // عرض السلة
-//==========================
+//============================
 
 function renderCart(){
 
-    const table =
+    const tbody =
     document.getElementById("cart");
 
-    table.innerHTML = "";
+    tbody.innerHTML = "";
 
     let total = 0;
 
@@ -382,39 +338,50 @@ function renderCart(){
 
         total += Number(item.total);
 
-        table.innerHTML += `
-<tr class="border-b hover:bg-gray-50">
+        tbody.innerHTML += `
 
-<td class="p-2">
+<tr>
+
+<td class="border p-2 text-center">
+
+${index+1}
+
+</td>
+
+<td class="border p-2">
+
 ${item.name}
+
 </td>
 
-<td class="p-2">
+<td class="border p-2 text-center">
+
 ${money(item.price)}
+
 </td>
 
-<td class="p-2">
+<td class="border p-2 text-center">
 
 <input
 type="number"
 min="1"
 value="${item.qte}"
-class="w-16 border rounded text-center"
+style="width:60px;text-align:center"
 onchange="updateQty(${index},this.value)">
 
 </td>
 
-<td class="p-2 font-bold text-blue-700">
+<td class="border p-2 text-center font-bold text-blue-700">
 
 ${money(item.total)}
 
 </td>
 
-<td class="p-2">
+<td class="border p-2 text-center">
 
 <button
-onclick="removeItem(${index})"
-class="text-red-600 hover:text-red-800">
+class="bg-red-600 text-white px-2 py-1 rounded"
+onclick="removeItem(${index})">
 
 حذف
 
@@ -423,6 +390,7 @@ class="text-red-600 hover:text-red-800">
 </td>
 
 </tr>
+
 `;
 
     });
@@ -432,27 +400,24 @@ class="text-red-600 hover:text-red-800">
 
 }
 
-//==========================
-// إضافة منتج للسلة
-//==========================
+//============================
+// إضافة منتج
+//============================
 
-window.addItem = function(){
+function addItem(){
 
-    const id =
+    const productId =
     document.getElementById("product").value;
 
     const qty =
     Number(document.getElementById("qte").value);
 
-    const price =
-    Number(document.getElementById("price").value);
-
     const product =
-    products.find(p=>p.id_product==id);
+    products.find(p=>p.id_product==productId);
 
     if(!product){
 
-        alert("المنتج غير موجود");
+        alert("اختر منتجاً");
 
         return;
 
@@ -466,15 +431,7 @@ window.addItem = function(){
 
     }
 
-    if(price<=0){
-
-        alert("السعر غير صحيح");
-
-        return;
-
-    }
-
-    if(qty>product.qte_in_stock){
+    if(qty>Number(product.qte_in_stock)){
 
         alert("الكمية المطلوبة أكبر من المخزون");
 
@@ -482,12 +439,15 @@ window.addItem = function(){
 
     }
 
+    const price =
+    Number(product.seal_price);
+
     const exist =
-    cart.find(x=>x.id_product==id);
+    cart.find(x=>x.id_product==productId);
 
     if(exist){
 
-        if(exist.qte + qty > product.qte_in_stock){
+        if(exist.qte + qty > Number(product.qte_in_stock)){
 
             alert("الكمية أكبر من المخزون");
 
@@ -504,7 +464,7 @@ window.addItem = function(){
 
         cart.push({
 
-            id_product:id,
+            id_product:product.id_product,
 
             name:product.product_name,
 
@@ -520,21 +480,86 @@ window.addItem = function(){
 
     product.qte_in_stock -= qty;
 
-    renderCart();
+    document.getElementById("qte").value = "";
 
     showProduct();
 
-    document.getElementById("qte").value = "";
+    renderCart();
 
 }
 
-//==========================
-// حذف منتج من السلة
-//==========================
+//============================
+// تعديل الكمية
+//============================
 
-window.removeItem = function(index){
+function updateQty(index,newQty){
 
-    const item = cart[index];
+    newQty = Number(newQty);
+
+    if(newQty<=0){
+
+        return;
+
+    }
+
+    const item =
+    cart[index];
+
+    const product =
+    products.find(p=>p.id_product==item.id_product);
+
+    if(!product){
+
+        return;
+
+    }
+
+    const oldQty =
+    item.qte;
+
+    const diff =
+    newQty - oldQty;
+
+    if(diff>0){
+
+        if(diff>Number(product.qte_in_stock)){
+
+            alert("الكمية غير متوفرة");
+
+            renderCart();
+
+            return;
+
+        }
+
+        product.qte_in_stock -= diff;
+
+    }else{
+
+        product.qte_in_stock += Math.abs(diff);
+
+    }
+
+    item.qte =
+    newQty;
+
+    item.total =
+    item.price * newQty;
+
+    showProduct();
+
+    renderCart();
+
+}
+
+//============================
+// حذف منتج
+//============================
+
+function removeItem(index){
+
+    const item =
+    cart[index];
 
     const product =
     products.find(p=>p.id_product==item.id_product);
@@ -547,16 +572,186 @@ window.removeItem = function(index){
 
     cart.splice(index,1);
 
-    renderCart();
-
     showProduct();
 
-}
-                          //==========================
-// عرض الفاتورة
-//==========================
+    renderCart();
 
-window.showInvoiceModal = function(orderNo, customerName){
+}
+   //============================
+// حفظ الفاتورة
+//============================
+
+async function saveInvoice(){
+
+    if(cart.length===0){
+
+        alert("السلة فارغة");
+
+        return;
+
+    }
+
+    const customerId =
+    document.getElementById("customer").value;
+
+    if(!customerId){
+
+        alert("اختر العميل");
+
+        return;
+
+    }
+
+    try{
+
+        //============================
+        // حفظ رأس الفاتورة
+        //============================
+
+        const {data:order,error:orderError} =
+        await supabase
+
+        .from("orders_o")
+
+        .insert({
+
+            customer_id:customerId,
+
+            user_id:currentUserId,
+
+            created_at:new Date().toISOString()
+
+        })
+
+        .select()
+
+        .single();
+
+        if(orderError){
+
+            console.error(orderError);
+
+            throw orderError;
+
+        }
+
+        currentInvoiceNo =
+        order.id_order;
+
+        //============================
+        // حفظ تفاصيل الفاتورة
+        //============================
+
+        for(const item of cart){
+
+            const {error:detailError} =
+            await supabase
+
+            .from("orders_details")
+
+            .insert({
+
+                id_order:order.id_order,
+
+                id_product:item.id_product,
+
+                qte:item.qte,
+
+                price:item.price,
+
+                total_amount:item.total
+
+            });
+
+            if(detailError){
+
+                console.error(detailError);
+
+                throw detailError;
+
+            }
+
+            //============================
+            // تحديث المخزون
+            //============================
+
+            const product =
+            products.find(p=>p.id_product==item.id_product);
+
+            if(product){
+
+                const {error:updateError} =
+                await supabase
+
+                .from("products")
+
+                .update({
+
+                    qte_in_stock:product.qte_in_stock
+
+                })
+
+                .eq("id_product",item.id_product);
+
+                if(updateError){
+
+                    console.error(updateError);
+
+                    throw updateError;
+
+                }
+
+            }
+
+        }
+
+        //============================
+        // اسم العميل
+        //============================
+
+        const customer =
+        customers.find(c=>c.id_customer==customerId);
+
+        //============================
+        // عرض الفاتورة
+        //============================
+
+        showInvoiceModal(
+
+            order.id_order,
+
+            customer?.first_name || "غير معروف"
+
+        );
+
+        //============================
+        // إعادة تعيين السلة
+        //============================
+
+        cart = [];
+
+        renderCart();
+
+        await loadProducts();
+
+        document.getElementById("qte").value="";
+
+    }
+
+    catch(err){
+
+        console.error(err);
+
+        alert("حدث خطأ أثناء حفظ الفاتورة");
+
+    }
+
+}
+   //============================
+// عرض الفاتورة
+//============================
+
+function showInvoiceModal(invoiceNo, customerName){
 
     let total = 0;
     let rows = "";
@@ -566,40 +761,44 @@ window.showInvoiceModal = function(orderNo, customerName){
         total += Number(item.total);
 
         rows += `
+
 <tr>
 
 <td style="
+padding:5px;
+border-bottom:1px dashed #ccc;
 text-align:right;
-padding:5px 2px;
-border-bottom:1px dashed #bbb;
 ">
 ${item.name}
 </td>
 
 <td style="
+padding:5px;
 text-align:center;
-border-bottom:1px dashed #bbb;
+border-bottom:1px dashed #ccc;
 ">
 ${item.qte}
 </td>
 
 <td style="
+padding:5px;
 text-align:center;
-border-bottom:1px dashed #bbb;
+border-bottom:1px dashed #ccc;
 ">
 ${money(item.price)}
 </td>
 
 <td style="
+padding:5px;
 text-align:center;
 font-weight:bold;
-color:#2563eb;
-border-bottom:1px dashed #bbb;
+border-bottom:1px dashed #ccc;
 ">
 ${money(item.total)}
 </td>
 
 </tr>
+
 `;
 
     });
@@ -610,39 +809,46 @@ ${money(item.total)}
 width:80mm;
 margin:auto;
 background:#fff;
-border:1px solid #ddd;
-border-radius:12px;
-padding:10px;
-box-shadow:0 3px 10px rgba(0,0,0,.15);
 font-family:Cairo,Arial,sans-serif;
 font-size:12px;
+color:#000;
+padding:8px;
+border:1px solid #d8d8d8;
+border-radius:12px;
+box-shadow:0 2px 10px rgba(0,0,0,.15);
 ">
 
-<div style="
-text-align:center;
-">
+<!-- الرأس -->
+
+<div style="text-align:center;">
 
 <div style="
 font-size:22px;
 font-weight:bold;
 color:#2563eb;
 ">
+
 مؤسسة علاء الدين
+
 </div>
 
 <div style="
-font-size:14px;
+font-size:15px;
 font-weight:bold;
 margin-top:3px;
 ">
+
 فاتورة بيع
+
 </div>
 
 <div style="
 font-size:11px;
 color:#777;
 ">
+
 POS SYSTEM
+
 </div>
 
 </div>
@@ -652,35 +858,47 @@ margin:8px 0;
 border:none;
 border-top:1px dashed #999;
 ">
+
+<!-- البيانات -->
 
 <div style="
-line-height:1.9;
 font-size:12px;
+line-height:1.9;
 ">
 
 <div>
+
 رقم الفاتورة :
-<b>${orderNo}</b>
+<b>${invoiceNo}</b>
+
 </div>
 
 <div>
+
 العميل :
 <b>${customerName}</b>
+
 </div>
 
 <div>
+
 البائع :
 <b>${sellerName}</b>
+
 </div>
 
 <div>
+
 التاريخ :
 ${today()}
+
 </div>
 
 <div>
+
 الوقت :
 ${nowTime()}
+
 </div>
 
 </div>
@@ -690,6 +908,8 @@ margin:8px 0;
 border:none;
 border-top:1px dashed #999;
 ">
+
+<!-- جدول الأصناف -->
 
 <table style="
 width:100%;
@@ -701,19 +921,32 @@ font-size:11px;
 
 <tr>
 
-<th align="right">
+<th style="
+text-align:right;
+padding:4px;
+border-bottom:1px solid #999;
+">
 الصنف
 </th>
 
-<th>
+<th style="
+padding:4px;
+border-bottom:1px solid #999;
+">
 ك
 </th>
 
-<th>
+<th style="
+padding:4px;
+border-bottom:1px solid #999;
+">
 س
 </th>
 
-<th>
+<th style="
+padding:4px;
+border-bottom:1px solid #999;
+">
 ج
 </th>
 
@@ -777,170 +1010,33 @@ line-height:1.8;
 </div>
 
 </div>
+
 `;
 
-    document
-    .getElementById("invoiceModal")
-    .classList.remove("hidden");
+    const modal =
+    document.getElementById("invoiceModal");
 
-    document
-    .getElementById("invoiceModal")
-    .classList.add("flex");
+    modal.classList.remove("hidden");
 
-}
-   //==========================
-// حفظ الفاتورة
-//==========================
-
-window.saveInvoice = async function(){
-
-    if(cart.length===0){
-
-        alert("السلة فارغة");
-
-        return;
-
-    }
-
-    const customerId =
-    document.getElementById("customer").value;
-
-    if(!customerId){
-
-        alert("اختر العميل");
-
-        return;
-
-    }
-
-    const customer =
-    customers.find(c=>c.id_customer==customerId);
-
-    try{
-
-        //====================
-        // حفظ رأس الفاتورة
-        //====================
-
-        const {data:order,error:orderError} =
-        await supabase
-        .from("orders_o")
-        .insert({
-
-            customer_id:customerId,
-
-            user_id:currentUserId,
-
-            created_at:new Date().toISOString()
-
-        })
-        .select()
-        .single();
-
-        if(orderError) throw orderError;
-
-        currentInvoiceNo =
-        order.id_order;
-
-        //====================
-        // حفظ التفاصيل
-        //====================
-
-        for(const item of cart){
-
-            const detailError =
-            await supabase
-            .from("orders_details")
-            .insert({
-
-                id_order:order.id_order,
-
-                id_product:item.id_product,
-
-                qte:item.qte,
-
-                price:item.price,
-
-                total_amount:item.total
-
-            });
-
-            if(detailError.error)
-                throw detailError.error;
-
-            //====================
-            // تحديث المخزون
-            //====================
-
-            const product =
-            products.find(p=>p.id_product==item.id_product);
-
-            if(product){
-
-                const newQty =
-                Number(product.qte_in_stock);
-
-                const updateError =
-                await supabase
-                .from("products")
-                .update({
-
-                    qte_in_stock:newQty
-
-                })
-                .eq("id_product",item.id_product);
-
-                if(updateError.error)
-                    throw updateError.error;
-
-            }
-
-        }
-
-        //====================
-        // تحديث الشاشة
-        //====================
-
-        renderCart();
-
-        await loadProducts();
-
-        cart=[];
-
-        renderCart();
-
-        showInvoiceModal(
-
-            order.id_order,
-
-            customer?.first_name || "غير معروف"
-
-        );
-
-    }
-    catch(err){
-
-        console.error(err);
-
-        alert("حدث خطأ أثناء حفظ الفاتورة");
-
-    }
+    modal.classList.add("flex");
 
 }
-   //==========================
+   //============================
 // طباعة الفاتورة
-//==========================
+//============================
 
-window.printInvoice = function(){
+function printInvoice(){
 
-    const content =
+    const invoice =
     document.getElementById("invoiceContent").innerHTML;
 
-    const w =
-    window.open("","_blank","width=420,height=700");
+    const win =
+    window.open("","","width=420,height=700");
 
-    w.document.write(`
+    win.document.write(`
+
 <!DOCTYPE html>
+
 <html lang="ar" dir="rtl">
 
 <head>
@@ -956,8 +1052,8 @@ body{
 margin:0;
 padding:8px;
 font-family:Cairo,Arial,sans-serif;
-direction:rtl;
 background:#fff;
+direction:rtl;
 
 }
 
@@ -974,7 +1070,7 @@ margin:3mm;
 
 <body>
 
-${content}
+${invoice}
 
 <script>
 
@@ -991,21 +1087,53 @@ window.close();
 </body>
 
 </html>
+
 `);
 
-    w.document.close();
+    win.document.close();
 
-};
+}
 
-//==========================
+//============================
+// إغلاق الفاتورة
+//============================
+
+function closeInvoiceModal(){
+
+    document
+    .getElementById("invoiceModal")
+    .classList.add("hidden");
+
+    document
+    .getElementById("invoiceModal")
+    .classList.remove("flex");
+
+}
+
+//============================
+// فتح فاتورة محفوظة
+//============================
+
+function openOrder(id){
+
+    window.location.href =
+    "invoice.html?id=" + id;
+
+}
+
+//============================
 // تحميل الفواتير السابقة
-//==========================
+//============================
 
 async function loadInvoices(){
 
-    const {data,error} = await supabase
+    const {data,error} =
+    await supabase
+
     .from("orders_o")
+
     .select("*")
+
     .order("id_order",{ascending:false});
 
     if(error){
@@ -1017,29 +1145,41 @@ async function loadInvoices(){
     }
 
     const tbody =
-    document.getElementById("invoiceList");
+    document.getElementById("invoiceListBody");
 
     if(!tbody) return;
 
-    tbody.innerHTML="";
+    tbody.innerHTML = "";
 
     for(const order of data){
 
         const customer =
-        customers.find(c=>c.id_customer==order.customer_id);
+        customers.find(c=>
+        c.id_customer==order.customer_id);
 
         tbody.innerHTML += `
+
 <tr>
 
-<td>${order.id_order}</td>
+<td class="border p-2">
 
-<td>${customer?.first_name || "-"}</td>
+${order.id_order}
 
-<td>
+</td>
+
+<td class="border p-2">
+
+${customer?.first_name || "-"}
+
+</td>
+
+<td class="border p-2 text-center">
 
 <button
-class="bg-blue-600 text-white px-3 py-1 rounded"
-onclick="openOrder(${order.id_order})">
+
+class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+
+onclick="openOrder('${order.id_order}')">
 
 عرض
 
@@ -1048,26 +1188,16 @@ onclick="openOrder(${order.id_order})">
 </td>
 
 </tr>
+
 `;
 
     }
 
 }
 
-//==========================
-// فتح فاتورة سابقة
-//==========================
-
-window.openOrder = async function(id){
-
-    window.location.href =
-    "invoice.html?id="+id;
-
-};
-
-//==========================
+//============================
 // البداية
-//==========================
+//============================
 
 async function init(){
 
@@ -1081,9 +1211,9 @@ async function init(){
 
 }
 
-init();
+document.addEventListener("DOMContentLoaded",init);
 
-}); // نهاية DOMContentLoaded
+</script>
 
 </script>
 </body>
