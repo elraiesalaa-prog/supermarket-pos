@@ -270,9 +270,7 @@ class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded">
 إغلاق
 
 </button>
-<button onclick="logout()">
-تسجيل الخروج
-</button>
+
 </div>
 
 </div>
@@ -288,18 +286,6 @@ const supabaseClient = createClient(
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
 );
 
-  // ================= المستخدم الحالي =================
-const currentUserId =
-    localStorage.getItem("userId") || "";
-
-const currentUserName =
-    localStorage.getItem("userName") || "غير معروف";
-
-const currentUserRole =
-    localStorage.getItem("userRole") || "";
-
-const sellerName = currentUserName;
-
 // ================= DATA =================
 let customers = [];
 let products = [];
@@ -310,7 +296,32 @@ let customerMap = new Map();
 let productMap = new Map();
 let detailsMap = new Map();
 
-const money = v => Number(v || 0).toLocaleString();
+const money = v => Number(v||0).toLocaleString();
+let sellerName = "المستخدم الحالي";
+
+async function loadCurrentUser(){
+
+try{
+
+const {data} = await supabaseClient.auth.getUser();
+
+if(data.user){
+
+sellerName =
+data.user.user_metadata?.full_name ||
+data.user.user_metadata?.name ||
+data.user.email ||
+"المستخدم الحالي";
+
+}
+
+}catch(e){
+
+console.log(e);
+
+}
+
+}
 
 function closeInvoice(){
 
@@ -733,7 +744,9 @@ function openOrder(id){
     const modal = document.getElementById("invoiceModal");
     modal.classList.remove("hidden");
     modal.classList.add("flex");
-} ================= STATS =================
+}
+
+// ================= STATS =================
 async function loadStats(){
 
 try{
@@ -792,29 +805,22 @@ console.error(err);
 // ================= INIT =================
 async function init(){
 
-    console.log("loading...");
+console.log("loading...");
 
-    await loadMaster();
+await loadCurrentUser();
 
-    await loadDetails();
+await loadMaster();
 
-    await loadOrders();
+await loadDetails();
 
-    await loadStats();
+await loadOrders();
 
-    console.log("done");
+await loadStats();
+
+console.log("done");
 
 }
   init();
-  function logout(){
-
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userRole");
-
-    window.location.href = "index.html";
-
-}
 </script>
 
 </body>
