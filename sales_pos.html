@@ -183,9 +183,14 @@ window.showInvoicesList = async function(){
     .eq("id_order", id_order)
     .single();
 
-    const customerName =
-        document.getElementById("customer").selectedOptions[0]?.text ||
-        "غير معروف";
+   const { data: customer } = await supabase
+.from("customers")
+.select("first_name")
+.eq("id_customer", order.customer_id)
+.single();
+
+const customerName =
+customer?.first_name || "غير معروف";
 
     const sellerName =
         order?.seal_man ||
@@ -203,8 +208,7 @@ window.showInvoicesList = async function(){
     let rows = "";
     let total = 0;
 
-    let total = 0;
-let rows = "";
+ 
 
 details.forEach((item,index)=>{
 
@@ -263,7 +267,7 @@ ${money(lineTotal)}
 
 });
 
-    }
+    
 
     document.getElementById("invoiceContent").innerHTML = `
 
