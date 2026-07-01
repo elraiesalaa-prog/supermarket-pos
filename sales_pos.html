@@ -396,69 +396,68 @@ w.document.close();
 }
 
 /* حفظ الفاتورة */
+/* حفظ الفاتورة */
 window.saveInvoice = async function(){
-if(cart.length==0){
-alert("السلة فارغة")
-return
-}
+    if(cart.length == 0){
+        alert("السلة فارغة");
+        return;
+    }
 
-let btn = document.getElementById("saveBtn")
-btn.disabled = true
+    let btn = document.getElementById("saveBtn");
+    btn.disabled = true;
 
-let customer = document.getElementById("customer").value
-let pay_method = document.getElementById("pay_method").value
-let seal_man = document.getElementById("seal_man").value
+    let customer = document.getElementById("customer").value;
+    let pay_method = document.getElementById("pay_method").value;
+    let seal_man = document.getElementById("seal_man").value;
+    const currentDateTime = new Date().toISOString(); // وقت موحد وثابت للفاتورة وتفاصيلها
 
-const {data,error} = await supabase
-.from("orders_o")
-.insert([{
-customer_id:customer,
-date_order:new Date(),
-pay_method:pay_method,
-seal_man:seal_man
-}]).select()
+    // 1. إدخال رأس الفاتورة
+    const {data, error} = await supabase
+        .from("orders_o")
+        .insert([{
+            customer_id: customer,
+            date_order: currentDateTime,
+            pay_method: pay_method,
+            seal_man: seal_man
+        }]).select();
 
-if(error){
-alert(error.message)
-btn.disabled=false
-return
-}
+    if(error){
+        alert(error.message);
+        btn.disabled = false;
+        return;
+    }
 
-let orderId = data[0].id_order
+    let orderId = data[0].id_order;
 
-for(let item of cart){
-await supabase
-.from("orders_details")
-.insert([{
-id_product:item.id_product,
-id_order:orderId,
-qte:item.qte,
-price:item.price,
-descount:0,
-amount:item.total,
-total_amount:item.total,
-id_customer:customer,
-date_order:new Date(),
-pay_method:pay_method,
-description_order:"",
-seal_man:seal_man,
-first_name:""
-}])
-}
+    // 2. إدخال تفاصيل المنتجات بالأسعار الحالية الثابتة في السلة
+    for(let item of cart){
+        await supabase
+            .from("orders_details")
+            .insert([{
+                id_product: item.id_product,
+                id_order: orderId,
+                qte: item.qte,                // الكمية الثابتة من السلة
+                price: item.price,            // سعر البيع الثابت من السلة (لن يتأثر بتغيير سعر المنتج لاحقاً)
+                descount: 0,
+                amount: item.total,           // المجموع الثابت للسطر
+                total_amount: item.total,     // المجموع الثابت للسطر
+                id_customer: customer,
+                date_order: currentDateTime,
+                pay_method: pay_method,
+                description_order: "",
+                seal_man: seal_man,
+                first_name: ""
+            }]);
+    }
 
-alert("تمت عملية البيع بنجاح")
-cart=[]
-renderCart()
-await loadProducts()
-btn.disabled=false
-}
-
-/* تحميل البيانات الأولي */
-await loadCustomers()
-await loadProducts()
-
-})
-
+    alert(`تمت عملية البيع بنجاح! رقم الفاتورة: ${orderId}`);
+    
+    // تصفير السلة وإعادة التحديث
+    cart = [];
+    renderCart();
+    await loadProducts();
+    btn.disabled = false;
+};
 </script>
 
 </body>
