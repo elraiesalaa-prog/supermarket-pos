@@ -68,7 +68,13 @@
 
 <div class="flex flex-col gap-2">
 
-<button onclick="showInvoiceModal()" class="bg-yellow-600 text-white w-full py-2 rounded">
+const total = cart.reduce((sum, i) => sum + i.total, 0);
+
+document.getElementById("invoiceContentContainer").innerHTML =
+    buildInvoiceHTML(order.id_order, customer?.first_name || "غير معروف", cart, total);
+
+document.getElementById("invoiceModal").classList.remove("hidden");
+document.getElementById("invoiceModal").classList.add("flex");
 عرض الفاتورة
 </button>
 
@@ -322,7 +328,46 @@ document.getElementById("invoiceModal").classList.remove("hidden")
 window.closeInvoice = function(){
 document.getElementById("invoiceModal").classList.add("hidden")
 }
+function buildInvoiceHTML(orderId, customerName, items, total) {
+    return `
+<div id="invoiceContent" style="font-family:Cairo,Arial;direction:rtl;padding:10px">
 
+    <h2 style="text-align:center">فاتورة مبيعات</h2>
+
+    <p>رقم الفاتورة: ${orderId}</p>
+    <p>العميل: ${customerName}</p>
+    <p>البائع: ${sellerName}</p>
+    <p>التاريخ: ${today()}</p>
+    <hr>
+
+    <table width="100%" border="1" cellspacing="0" cellpadding="5">
+        <thead>
+            <tr>
+                <th>المنتج</th>
+                <th>السعر</th>
+                <th>الكمية</th>
+                <th>الإجمالي</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${items.map(i => `
+                <tr>
+                    <td>${i.name}</td>
+                    <td>${money(i.price)}</td>
+                    <td>${i.qte}</td>
+                    <td>${money(i.total)}</td>
+                </tr>
+            `).join("")}
+        </tbody>
+    </table>
+
+    <h3 style="text-align:left;margin-top:10px">
+        الإجمالي: ${money(total)}
+    </h3>
+
+</div>
+`;
+}
 /* حفظ الفاتورة */
 
 window.saveInvoice = async function(){
