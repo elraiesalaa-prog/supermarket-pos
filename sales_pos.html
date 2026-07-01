@@ -103,7 +103,7 @@ class="bg-indigo-600 text-white w-full py-2 rounded">
 
 <script>
 
-<script>
+
 
 const supabase = window.supabase.createClient(
     "https://vmxbedovoahuggfpcmyk.supabase.co",
@@ -739,98 +739,7 @@ async function saveInvoice(){
 
 }
    //============================
-// حفظ الفاتورة
-//============================
 
-async function saveInvoice(){
-
-    if(cart.length===0){
-
-        alert("السلة فارغة");
-
-        return;
-
-    }
-
-    const customerId =
-    document.getElementById("customer").value;
-
-    if(!customerId){
-
-        alert("اختر العميل");
-
-        return;
-
-    }
-
-    try{
-
-        //============================
-        // حفظ رأس الفاتورة
-        //============================
-
-        const {data:order,error:orderError} =
-        await supabase
-
-        .from("orders_o")
-
-        .insert({
-
-            customer_id:customerId,
-
-            user_id:currentUserId,
-
-            created_at:new Date().toISOString()
-
-        })
-
-        .select()
-
-        .single();
-
-        if(orderError){
-
-            console.error(orderError);
-
-            throw orderError;
-
-        }
-
-        currentInvoiceNo =
-        order.id_order;
-
-        //============================
-        // حفظ تفاصيل الفاتورة
-        //============================
-
-        for(const item of cart){
-
-            const {error:detailError} =
-            await supabase
-
-            .from("orders_details")
-
-            .insert({
-
-                id_order:order.id_order,
-
-                id_product:item.id_product,
-
-                qte:item.qte,
-
-                price:item.price,
-
-                total_amount:item.total
-
-            });
-
-            if(detailError){
-
-                console.error(detailError);
-
-                throw detailError;
-
-            }
 
             //============================
             // تحديث المخزون
@@ -865,7 +774,16 @@ async function saveInvoice(){
             }
 
         }
+// عرض الفاتورة
+        //============================
 
+        showInvoiceModal(
+
+            order.id_order,
+
+            customer?.first_name || "غير معروف"
+
+        );
         //============================
         // اسم العميل
         //============================
@@ -1081,7 +999,80 @@ onclick="openOrder('${order.id_order}')">
     }
 
 }
+// تحميل الفواتير السابقة
+//============================
 
+async function loadInvoices(){
+
+    const {data,error} =
+    await supabase
+
+    .from("orders_o")
+
+    .select("*")
+
+    .order("id_order",{ascending:false});
+
+    if(error){
+
+        console.error(error);
+
+        return;
+
+    }
+
+    const tbody =
+    document.getElementById("invoiceListBody");
+
+    if(!tbody) return;
+
+    tbody.innerHTML = "";
+
+    for(const order of data){
+
+        const customer =
+        customers.find(c=>
+        c.id_customer==order.customer_id);
+
+        tbody.innerHTML += `
+
+<tr>
+
+<td class="border p-2">
+
+${order.id_order}
+
+</td>
+
+<td class="border p-2">
+
+${customer?.first_name || "-"}
+
+</td>
+
+<td class="border p-2 text-center">
+
+<button
+
+class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+
+onclick="openOrder('${order.id_order}')">
+
+عرض
+
+</button>
+
+</td>
+
+</tr>
+
+`;
+
+    }
+
+}
+
+//============================
 //============================
 // البداية
 //============================
