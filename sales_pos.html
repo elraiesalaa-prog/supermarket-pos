@@ -458,6 +458,12 @@ window.saveInvoice = async function(){
     await loadProducts();
     btn.disabled = false;
 };
+
+/* تحميل البيانات الأولي */
+await loadCustomers()
+await loadProducts()
+
+})
 </script>
 
 </body>
