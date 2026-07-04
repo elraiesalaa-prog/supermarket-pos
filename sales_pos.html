@@ -196,12 +196,12 @@ op.textContent = p.product_name
 select.appendChild(op)
 })
 
-select.addEventListener("change",showProduct)
-showProduct()
+select.addEventListener("change", window.showProduct)
+window.showProduct()
 }
 
-/* عرض المنتج */
-function showProduct(){
+/* عرض المنتج - تم ربطها بالـ window ليتم التعرف عليها عند التغيير */
+window.showProduct = function(){
 let id = document.getElementById("product").value
 let p = products.find(x=>x.id_product==id)
 
@@ -211,8 +211,8 @@ document.getElementById("price").value = p.seal_price
 document.getElementById("stock").value = p.qte_in_stock
 }
 
-/* عرض السلة */
-function renderCart(){
+/* عرض السلة - تم ربطها بالـ window */
+window.renderCart = function(){
 let table = document.getElementById("cart")
 table.innerHTML = ""
 
@@ -236,13 +236,12 @@ table.innerHTML += `
 document.getElementById("total").innerText = money(total)
 }
 
-/* إضافة للسلة */
 /* إضافة للسلة بالسعر المعدل الحالي */
 window.addItem = function(){
     let productId = document.getElementById("product").value;
     let qte = parseFloat(document.getElementById("qte").value);
     
-    // قراءة السعر الحالي من حقل الإدخال (حتى لو تم تعديله يدوياً)
+    // قراءة السعر الحالي من حقل الإدخال مباشرة (حتى لو تم تعديله يدوياً)
     let currentPrice = parseFloat(document.getElementById("price").value);
 
     let product = products.find(p => p.id_product == productId);
@@ -262,17 +261,22 @@ window.addItem = function(){
         return;
     }
 
-    // إضافة المنتج إلى السلة معتمدين على السعر المعدل الحالي وحساب المجموع بناءً عليه
     cart.push({
         id_product: productId,
         name: product.product_name,
-        price: currentPrice,          // السعر المكتوب حالياً في الحقل
+        price: currentPrice,          
         qte: qte,
-        total: qte * currentPrice     // المجموع المحسوب بدقة بناءً على السعر المعدل
+        total: qte * currentPrice     
     });
 
-    renderCart();
+    window.renderCart();
     document.getElementById("qte").value = "";
+}
+
+/* حذف من السلة */
+window.removeItem = function(index){
+cart.splice(index,1)
+window.renderCart()
 }
 
 /* عرض الفاتورة بالشكل المطابق لصفحة invoice.html */
@@ -399,8 +403,7 @@ window.close();
 w.document.close();
 }
 
-/* حفظ الفاتورة */
-/* حفظ الفاتورة */
+/* حفظ الفاتورة الموحدة وتفاصيلها الثابتة */
 window.saveInvoice = async function(){
     if(cart.length == 0){
         alert("السلة فارغة");
@@ -413,7 +416,7 @@ window.saveInvoice = async function(){
     let customer = document.getElementById("customer").value;
     let pay_method = document.getElementById("pay_method").value;
     let seal_man = document.getElementById("seal_man").value;
-    const currentDateTime = new Date().toISOString(); // وقت موحد وثابت للفاتورة وتفاصيلها
+    const currentDateTime = new Date().toISOString(); 
 
     // 1. إدخال رأس الفاتورة
     const {data, error} = await supabase
@@ -433,18 +436,18 @@ window.saveInvoice = async function(){
 
     let orderId = data[0].id_order;
 
-    // 2. إدخال تفاصيل المنتجات بالأسعار الحالية الثابتة في السلة
+    // 2. إدخال تفاصيل المنتجات بالأسعار والكميات الحالية من السلة لضمان تجميدها
     for(let item of cart){
         await supabase
             .from("orders_details")
             .insert([{
                 id_product: item.id_product,
                 id_order: orderId,
-                qte: item.qte,                // الكمية الثابتة من السلة
-                price: item.price,            // سعر البيع الثابت من السلة (لن يتأثر بتغيير سعر المنتج لاحقاً)
+                qte: item.qte,                
+                price: item.price,            
                 descount: 0,
-                amount: item.total,           // المجموع الثابت للسطر
-                total_amount: item.total,     // المجموع الثابت للسطر
+                amount: item.total,           
+                total_amount: item.total,     
                 id_customer: customer,
                 date_order: currentDateTime,
                 pay_method: pay_method,
@@ -456,13 +459,11 @@ window.saveInvoice = async function(){
 
     alert(`تمت عملية البيع بنجاح! رقم الفاتورة: ${orderId}`);
     
-    // تصفير السلة وإعادة التحديث
     cart = [];
-    renderCart();
+    window.renderCart();
     await loadProducts();
     btn.disabled = false;
 };
-
 
 /* تحميل البيانات الأولي */
 await loadCustomers()
