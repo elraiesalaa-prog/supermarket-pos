@@ -237,38 +237,42 @@ document.getElementById("total").innerText = money(total)
 }
 
 /* إضافة للسلة */
+/* إضافة للسلة بالسعر المعدل الحالي */
 window.addItem = function(){
-let productId = document.getElementById("product").value
-let qte = parseFloat(document.getElementById("qte").value)
+    let productId = document.getElementById("product").value;
+    let qte = parseFloat(document.getElementById("qte").value);
+    
+    // قراءة السعر الحالي من حقل الإدخال (حتى لو تم تعديله يدوياً)
+    let currentPrice = parseFloat(document.getElementById("price").value);
 
-let product = products.find(p=>p.id_product==productId)
+    let product = products.find(p => p.id_product == productId);
 
-if(!qte || qte<=0){
-alert("ادخل الكمية")
-return
-}
+    if(!qte || qte <= 0){
+        alert("ادخل الكمية");
+        return;
+    }
 
-if(qte > product.qte_in_stock){
-alert("الكمية أكبر من المخزون")
-return
-}
+    if(isNaN(currentPrice) || currentPrice < 0){
+        alert("يرجى إدخال سعر بيع صحيح");
+        return;
+    }
 
-cart.push({
-id_product:productId,
-name:product.product_name,
-price:product.seal_price,
-qte:qte,
-total:qte*product.seal_price
-})
+    if(qte > product.qte_in_stock){
+        alert("الكمية أكبر من المخزون");
+        return;
+    }
 
-renderCart()
-document.getElementById("qte").value = ""
-}
+    // إضافة المنتج إلى السلة معتمدين على السعر المعدل الحالي وحساب المجموع بناءً عليه
+    cart.push({
+        id_product: productId,
+        name: product.product_name,
+        price: currentPrice,          // السعر المكتوب حالياً في الحقل
+        qte: qte,
+        total: qte * currentPrice     // المجموع المحسوب بدقة بناءً على السعر المعدل
+    });
 
-/* حذف من السلة */
-window.removeItem = function(index){
-cart.splice(index,1)
-renderCart()
+    renderCart();
+    document.getElementById("qte").value = "";
 }
 
 /* عرض الفاتورة بالشكل المطابق لصفحة invoice.html */
