@@ -43,11 +43,11 @@ class="w-full border px-3 py-2 rounded text-sm md:text-base">
 <tr>
 <th class="p-2">اسم المنتج</th>
 
-<th class="p-2">تكلفة المنتج</th>
+
 <th class="p-2">تكلفة الوحدة</th>
 <th class="p-2">سعر البيع</th>
 <th class="p-2">ربح الوحدة</th>
-<th class="p-2">ربح المنتج</th>
+
 </tr>
 </thead>
 
@@ -92,7 +92,7 @@ const search = document.getElementById("searchInput").value.toLowerCase();
 
 let table = "";
 
-reportData
+reportDat
 .filter(row =>
 (row["اسم المنتج"] || "").toLowerCase().includes(search)
 )
@@ -102,12 +102,12 @@ table += `
 <tr class="border">
 <td>${row["اسم المنتج"]}</td>
 
-<td>${row["تكلفة المنتج"]}</td>
+
 <td>${Number(row["تكلفة الوحدة"] || 0).toFixed(2)}</td>
 <td>${row["سعر بيع الوحدة"]}</td>
 <td>${Number(row["ربح الوحدة"] || 0).toFixed(2)}</td>
 <td class="font-bold text-green-600">
-${Number(row["ربح المنتج"] || 0).toFixed(2)}
+
 </td>
 </tr>
 `;
