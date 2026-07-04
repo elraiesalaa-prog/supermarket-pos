@@ -6,7 +6,7 @@
 <meta charset="UTF-8">
 <title>نظام POS متقدم v3</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script> 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -47,7 +47,7 @@
 <select id="product" class="border p-2 w-full mb-3"></select>
 
 <div class="flex gap-2 mb-3">
-<input id="price"placeholder="سعر البيع"type="number"step="0.01"class="border p-2 w-full"/>
+<input id="price" class="border p-2 w-full" placeholder="السعر" readonly/>
 <input id="stock" class="border p-2 w-full" placeholder="المخزون" readonly/>
 </div>
 
@@ -139,6 +139,8 @@
 </div>
 
 </div>
+
+<script>
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -449,13 +451,20 @@ window.saveInvoice = async function(){
     }
 
     alert(`تمت عملية البيع بنجاح! رقم الفاتورة: ${orderId}`);
-     
+    
     // تصفير السلة وإعادة التحديث
     cart = [];
     renderCart();
     await loadProducts();
-    btn.disabled = false; 
+    btn.disabled = false;
 };
+
+
+/* تحميل البيانات الأولي */
+await loadCustomers()
+await loadProducts()
+
+})
 
 </script>
 
