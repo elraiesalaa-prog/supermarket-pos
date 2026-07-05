@@ -34,7 +34,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-red-50 p-4 rounded-lg border border-red-200 mb-6 text-sm">
                 <div><b>رقم الفاتورة:</b> <span id="info_id" class="text-red-700 font-bold"></span></div>
                 <div><b>تاريخ البيع:</b> <span id="info_date"></span></div>
-                <div><b>العميل:</b> <span id="info_customer"></span></div>
+                <div><b>العميل:</b> <span id="info_customer" class="font-bold text-blue-700"></span></div>
                 <div><b>طريقة الدفع:</b> <span id="info_method"></span></div>
                 <div><b>البائع:</b> <span id="info_seller" class="font-bold"></span></div>
                 <div class="md:text-left text-lg font-bold text-red-600">
@@ -83,6 +83,7 @@
         let currentOrder = null;
         let currentDetails = [];
         let productMap = new Map();
+        let customerMap = new Map(); // خارطة لتخزين أسماء العملاء
 
         // جلب الفاتورة وتفاصيلها عند البحث
         async function searchInvoice() {
@@ -123,6 +124,13 @@
                 productsData.forEach(p => productMap.set(p.id_product, p));
             }
 
+            // 4. جلب أسماء العملاء للمطابقة وعرض الاسم بدل الرقم
+            const { data: customersData } = await supabaseClient.from("customers").select("id_customer, first_name");
+            customerMap.clear();
+            if (customersData) {
+                customersData.forEach(c => customerMap.set(c.id_customer, c.first_name));
+            }
+
             currentOrder = orderData;
             currentDetails = detailsData;
 
@@ -134,9 +142,12 @@
             document.getElementById("noDataPlaceholder").classList.add("hidden");
             document.getElementById("invoiceSection").classList.remove("hidden");
 
+            // استخراج اسم العميل بناءً على الـ customer_id المخزن في الفاتورة
+            const clientName = customerMap.get(currentOrder.customer_id) || "عميل غير معروف (رقم " + currentOrder.customer_id + ")";
+
             document.getElementById("info_id").innerText = currentOrder.id_order;
             document.getElementById("info_date").innerText = new Date(currentOrder.date_order).toLocaleString("ar-EG");
-            document.getElementById("info_customer").innerText = "عميل رقم (" + currentOrder.customer_id + ")";
+            document.getElementById("info_customer").innerText = clientName;
             document.getElementById("info_method").innerText = currentOrder.pay_method === "cash" ? "نقدي" : currentOrder.pay_method === "bank" ? "تحويل" : "آجل";
             document.getElementById("info_seller").innerText = currentOrder.seal_man || "غير معروف";
 
@@ -175,18 +186,17 @@
             currentDetails = [];
         }
 
-        // 1️⃣ إرجاع صنف واحد محدد (تعديل تفاصيل الفاتورة والمخزون)
+        // 1️⃣ إرجاع صنف واحد محدد وتعديل المخزون
         async function returnSingleItem(index) {
             const item = currentDetails[index];
             const prod = productMap.get(item.id_product);
 
             if (!confirm(`هل أنت متأكد من رغبتك في إرجاع هذا الصنف وتعديل المخزون؟`)) return;
 
-            // أ. حساب الكمية الجديدة في المستودع (المخزون الحالي + الكمية المرجعة)
             const currentStock = prod ? Number(prod.qte_in_stock || 0) : 0;
             const newStock = currentStock + Number(item.qte);
 
-            // ب. تحديث المخزون في جدول المنتجات
+            // تحديث جدول المنتجات
             const { error: stockErr } = await supabaseClient
                 .from("products")
                 .update({ qte_in_stock: newStock })
@@ -197,22 +207,21 @@
                 return;
             }
 
-            // ج. حذف السطر من تفاصيل الفاتورة
+            // حذف البند من تفاصيل الفاتورة
             await supabaseClient
                 .from("orders_details")
                 .delete()
-                .eq("id", item.id); // يفترض وجود عمود معرف فرعي (id) في التفاصيل، أو المطابقة بالمنتج والأمر معاً كالتالي:
-                // .eq("id_order", item.id_order).eq("id_product", item.id_product);
+                .eq("id_order", item.id_order)
+                .eq("id_product", item.id_product);
 
             alert("تم إرجاع المنتج بنجاح وتحديث كمية المستودع المستهدفة.");
-            searchInvoice(); // إعادة تحميل الفاتورة المحدثة
+            searchInvoice(); 
         }
 
-        // 2️⃣ إلغاء وحذف الفاتورة كاملة (إرجاع المخزون لكل المنتجات وتصفير الفاتورة)
+        // 2️⃣ إلغاء وحذف الفاتورة كاملة وإرجاع المخزون
         async function cancelWholeInvoice() {
             if (!confirm("⚠️ تحذير: هل أنت متأكد من إلغاء الفاتورة بالكامل؟ سيتم إعادة جميع كميات المنتجات إلى المخزن وحذف الفاتورة نهائياً.")) return;
 
-            // أ. الدوران على كل المنتجات في الفاتورة لإرجاع كمياتها للمخزن
             for (let item of currentDetails) {
                 const prod = productMap.get(item.id_product);
                 const currentStock = prod ? Number(prod.qte_in_stock || 0) : 0;
@@ -224,13 +233,11 @@
                     .eq("id_product", item.id_product);
             }
 
-            // ب. حذف تفاصيل الفاتورة من قاعدة البيانات
             await supabaseClient
                 .from("orders_details")
                 .delete()
                 .eq("id_order", currentOrder.id_order);
 
-            // ج. حذف رأس الفاتورة من قاعدة البيانات
             const { error: deleteOrderErr } = await supabaseClient
                 .from("orders_o")
                 .delete()
