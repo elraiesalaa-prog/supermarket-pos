@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تقرير رأس المال والمخزون</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,7 +14,6 @@
 
     <div class="max-w-6xl mx-auto bg-white shadow-xl rounded-xl p-4 md:p-6">
         
-        <!-- العناوين وزر العودة -->
         <div class="flex flex-col md:flex-row justify-between items-center border-b pb-4 mb-6 gap-3">
             <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                 💰 تقرير ومؤشر رأس المال الحالي
@@ -25,7 +24,6 @@
             </button>
         </div>
 
-        <!-- كروت الإحصائيات السريعة -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-gradient-to-br from-emerald-500 to-green-600 text-white p-4 rounded-xl shadow-md">
                 <div class="text-sm opacity-90">إجمالي رأس المال بالمستودع</div>
@@ -36,18 +34,16 @@
                 <div id="totalItemsCount" class="text-2xl font-bold mt-1">0</div>
             </div>
             <div class="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4 rounded-xl shadow-md">
-                <div class="text-sm opacity-90">عدد الأصناف المتوفرة</div>
+                <div class="text-sm opacity-90">عدد الأصناف المتوفرة بالمخزن</div>
                 <div id="productsCount" class="text-2xl font-bold mt-1">0</div>
             </div>
         </div>
 
-        <!-- شريط البحث السريع -->
         <div class="mb-4">
             <input type="text" id="searchBox" placeholder="🔍 ابحث عن منتج معين لتصفية التقرير..." onkeyup="filterReport()"
                    class="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-400 outline-none text-sm shadow-sm">
         </div>
 
-        <!-- جدول البيانات المدروس -->
         <div class="overflow-x-auto border rounded-xl shadow-sm bg-white">
             <table class="w-full text-center border-collapse text-sm">
                 <thead class="bg-slate-800 text-white sticky top-0">
@@ -62,8 +58,7 @@
                     </tr>
                 </thead>
                 <tbody id="reportTableBody" class="divide-y text-gray-700">
-                    <!-- تُولد البيانات تلقائياً هنا -->
-                </tbody>
+                    </tbody>
             </table>
         </div>
 
@@ -99,38 +94,47 @@
             let html = "";
             let overallCapital = 0;
             let overallStockItems = 0;
+            let availableProductsCount = 0; // متغير جديد لحساب الأصناف التي مخزونها أكبر من صفر فقط
 
             list.forEach(p => {
                 let payPrice = Number(p.pay_price) || 0;
-                let pieceQte = Number(p.pice_qte) || 1; // تفادي القسمة على صفر إذا كان الحقل فارغاً
+                let pieceQte = Number(p.pice_qte) || 1; 
                 let stock = Number(p.qte_in_stock) || 0;
 
-                // 1. حساب تكلفة القطعة الواحدة بدقة
+                // حساب تكلفة القطعة الواحدة
                 let unitCost = payPrice / pieceQte;
 
-                // 2. حساب رأس مال المنتج المتبقي حالياً في المخزن
+                // حساب رأس مال المنتج المتبقي حالياً في المخزن
                 let productCapital = unitCost * stock;
 
                 // جمع الإجماليات للكروت العلوية
                 overallCapital += productCapital;
                 overallStockItems += stock;
 
+                // 💡 شرط جديد: زيادة العداد فقط إذا كان المنتج متوفرًا في المخزن (أكبر من 0)
+                if (stock > 0) {
+                    availableProductsCount++;
+                }
+
                 html += `
-                <tr class="hover:bg-slate-50 transition">
+                <tr class="hover:bg-slate-50 transition ${stock === 0 ? 'bg-red-50/50 opacity-60' : ''}">
                     <td class="p-3 text-gray-400 font-mono">${p.id_product}</td>
-                    <td class="p-3 text-right font-medium text-gray-900">${p.product_name || 'بدون اسم'}</td>
+                    <td class="p-3 text-right font-medium text-gray-900">
+                        ${p.product_name || 'بدون اسم'} 
+                        ${stock === 0 ? '<span class="text-xs text-red-600 bg-red-100 px-2 py-0.5 rounded mr-2 font-bold">منتهي</span>' : ''}
+                    </td>
                     <td class="p-3 text-gray-500">${formatMoney(payPrice)}</td>
                     <td class="p-3 text-gray-500">${pieceQte} صنف/قطعة</td>
                     <td class="p-3 bg-slate-50 font-semibold text-gray-700">${formatMoney(unitCost)}</td>
-                    <td class="p-3 font-bold text-emerald-600">${stock}</td>
+                    <td class="p-3 font-bold ${stock === 0 ? 'text-red-600' : 'text-emerald-600'}">${stock}</td>
                     <td class="p-3 bg-emerald-50 font-bold text-emerald-900">${formatMoney(productCapital)}</td>
                 </tr>`;
             });
 
-            // تحديث كروت الإحصائيات في الأعلى
+            // تحديث كروت الإحصائيات في الأعلى بالقيم الجديدة والمصفاة
             document.getElementById("totalCapital").innerText = formatMoney(overallCapital);
             document.getElementById("totalItemsCount").innerText = overallStockItems.toLocaleString();
-            document.getElementById("productsCount").innerText = list.length;
+            document.getElementById("productsCount").innerText = availableProductsCount; // العداد المصفى
 
             document.getElementById("reportTableBody").innerHTML = html;
         }
