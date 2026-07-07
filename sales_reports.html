@@ -1,198 +1,219 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تفاصيل المنتجات</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل المنتجات</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-
 <body class="bg-blue-50 p-3 md:p-6">
 
 <div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-4 md:p-6">
 
-<h1 class="text-xl md:text-3xl font-bold text-center text-blue-700 mb-4 md:mb-6">
-تفاصيل المنتجات
-</h1>
+    <h1 class="text-xl md:text-3xl font-bold text-center text-blue-700 mb-2">
+        تفاصيل المنتجات
+    </h1>
+    <p class="text-center text-xs md:text-sm text-gray-500 mb-6">📊 التكلفة والربحية محسوبة بعد دمج نصيب القطعة من المنصرفات الكمية العادلة</p>
 
-<div class="mb-4 flex justify-start">
-<button onclick="printPDF()" 
-class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-5 md:py-2 rounded-lg shadow-md w-full md:w-auto font-bold transition">
-🖨️ طباعة PDF
-</button>
-</div>
+    <div class="mb-4 flex flex-wrap gap-2 justify-between items-center">
+        <button onclick="printPDF()" 
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-5 md:py-2 rounded-lg shadow-md w-full md:w-auto font-bold transition">
+            🖨️ طباعة تقرير PDF الحقيقي
+        </button>
+        <button onclick="history.back()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition w-full md:w-auto">
+            رجوع
+        </button>
+    </div>
 
-<div class="mb-4">
-<input id="searchInput" type="text"
-placeholder="بحث باسم المنتج..."
-class="w-full border px-3 py-2 rounded text-sm md:text-base">
-</div>
+    <div class="mb-4">
+        <input id="searchInput" type="text" placeholder="🔍 بحث باسم المنتج..." class="w-full border px-3 py-2 rounded text-sm md:text-base outline-none focus:ring-2 focus:ring-blue-400">
+    </div>
 
-<div class="overflow-x-auto">
-<table class="w-full border text-center text-sm md:text-base">
-
-<thead class="bg-blue-600 text-white">
-<tr>
-<th class="p-2">اسم المنتج</th>
-<th class="p-2">تكلفة الوحدة</th>
-<th class="p-2">سعر البيع</th>
-<th class="p-2">ربح الوحدة</th>
-</tr>
-</thead>
-
-<tbody id="tableBody"></tbody>
-
-</table>
-</div>
+    <div class="overflow-x-auto border rounded-lg shadow-sm">
+        <table class="w-full border text-center text-sm md:text-base">
+            <thead class="bg-blue-600 text-white">
+                <tr>
+                    <th class="p-3 text-right">اسم المنتج</th>
+                    <th class="p-3 bg-blue-700">التكلفة الحقيقية للوحدة (شراء + منصرف)</th>
+                    <th class="p-3">سعر البيع للوحدة</th>
+                    <th class="p-3 bg-emerald-600">صافي ربح الوحدة</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody" class="bg-white divide-y divide-gray-100">
+                <tr>
+                    <td colspan="4" class="p-4 text-gray-400">جاري دمج المنصرفات وتحليل التكلفة الفردية...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
 </div>
 
 <script>
-
 // ================== Supabase ==================
 const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
 const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let reportData = [];
+let productCostsMap = new Map();
 
-// تحميل البيانات
+// تحميل البيانات وإعادة احتساب المنصرفات لكل قطعة
 async function loadReport() {
+    // 1. جلب التكاليف الإجمالية الموزعة بناء على الكمية المشتراة من الجدول الأساسي لتجنب قصور العرض (View)
+    const { data: baseProducts, error: err1 } = await supabaseClient
+        .from("products")
+        .select("product_name, coasts_value, pice_qte");
+    
+    if (baseProducts) {
+        baseProducts.forEach(p => {
+            let totalCostsValue = Number(p.coasts_value) || 0;
+            let pieceQte = Number(p.pice_qte) || 1; 
+            
+            // حساب نصيب القطعة الواحدة الفردية من المنصرف العام
+            let unitDistributedCost = totalCostsValue / pieceQte;
 
-const { data, error } = await supabaseClient
-.from("products_report")
-.select("*");
+            productCostsMap.set(p.product_name, unitDistributedCost);
+        });
+    }
 
-if (error) {
-console.error(error);
-alert("خطأ: " + error.message);
-return;
+    // 2. جلب تقرير تفاصيل المنتجات الحالي
+    const { data, error } = await supabaseClient
+        .from("products_report")
+        .select("*");
+
+    if (error) {
+        console.error(error);
+        alert("خطأ: " + error.message);
+        return;
+    }
+
+    // 3. معالجة وتحديث مصفوفة البيانات لإضافة نصيب المنصرف للتكلفة الافتراضية
+    reportData = (data || []).map(row => {
+        let pName = row["اسم المنتج"];
+        let initialUnitCost = Number(row["تكلفة الوحدة"] || 0);
+        let unitSellPrice = Number(row["سعر بيع الوحدة"] || 0);
+        
+        // جلب التكلفة الإضافية للقطعة من الخارطة المحسوبة
+        let addedUnitCoast = productCostsMap.get(pName) || 0;
+        
+        // التكلفة الحقيقية الفردية الجديدة = تكلفة الشراء الأساسية + نصيب التكلفة الموزعة كمياً
+        let finalRealUnitCost = initialUnitCost + addedUnitCoast;
+        
+        // إعادة حساب ربح القطعة الفعلي والنهائي
+        let finalRealUnitProfit = unitSellPrice - finalRealUnitCost;
+
+        return {
+            ...row,
+            "تكلفة الوحدة": finalRealUnitCost,
+            "ربح الوحدة": finalRealUnitProfit
+        };
+    });
+
+    renderTable();
 }
 
-reportData = data;
-renderTable();
-
-}
-
-// عرض البيانات بالأعمدة الـ 4 المحددة فقط
+// عرض البيانات بالأعمدة الـ 4 المحددة بالتحديثات المحاسبية الحقيقية
 function renderTable() {
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    let table = "";
 
-const search = document.getElementById("searchInput").value.toLowerCase();
+    reportData
+        .filter(row => (row["اسم المنتج"] || "").toLowerCase().includes(search))
+        .forEach(row => {
+            table += `
+            <tr class="border hover:bg-gray-50 transition">
+                <td class="p-3 text-right font-medium text-gray-900">${row["اسم المنتج"]}</td>
+                <td class="p-3 font-semibold text-slate-800 bg-slate-50">${Number(row["تكلفة الوحدة"]).toFixed(2)}</td>
+                <td class="p-3 font-semibold text-blue-600">${Number(row["سعر بيع الوحدة"]).toFixed(2)}</td>
+                <td class="p-3 font-bold text-emerald-600 bg-emerald-50/50">${Number(row["ربح الوحدة"]).toFixed(2)}</td>
+            </tr>`;
+        });
 
-let table = "";
-
-reportData
-.filter(row =>
-(row["اسم المنتج"] || "").toLowerCase().includes(search)
-)
-.forEach(row => {
-
-table += `
-<tr class="border hover:bg-gray-50 transition">
-<td class="p-2">${row["اسم المنتج"]}</td>
-<td class="p-2">${Number(row["تكلفة الوحدة"] || 0).toFixed(2)}</td>
-<td class="p-2">${row["سعر بيع الوحدة"]}</td>
-<td class="p-2 font-bold text-blue-600">${Number(row["ربح الوحدة"] || 0).toFixed(2)}</td>
-</tr>
-`;
-
-});
-
-document.getElementById("tableBody").innerHTML = table;
-
+    document.getElementById("tableBody").innerHTML = table;
 }
 
-// البحث
-document.getElementById("searchInput")
-.addEventListener("input", renderTable);
+// البحث الفوري
+document.getElementById("searchInput").addEventListener("input", renderTable);
 
-// تشغيل
+// بدء تشغيل المعالجة الحية
 loadReport();
 
-// ================== PDF المحدث بالأعمدة الـ 4 المحددة فقط ==================
+// ================== PDF المحدث بالأعمدة الـ 4 شامل المنصرفات ==================
 window.printPDF = async function () {
+    if (reportData.length === 0) return alert("لا توجد بيانات جاهزة للطباعة حالياً");
 
-const { data, error } = await supabaseClient
-.from('products_report')
-.select('*');
+    const container = document.createElement("div");
+    container.setAttribute("dir", "rtl");
+    container.style.fontFamily = "Tahoma";
+    container.style.padding = "15px";
 
-if (error) {
-alert("خطأ في تحميل البيانات");
-return;
-}
+    const title = document.createElement("h2");
+    title.innerText = "تقرير تفاصيل تكاليف وأرباح المنتجات الحقيقية";
+    title.style.textAlign = "center";
+    title.style.marginBottom = "5px";
+    title.style.color = "#1e3a8a";
+    container.appendChild(title);
 
-const container = document.createElement("div");
-container.setAttribute("dir", "rtl");
-container.style.fontFamily = "Tahoma";
-container.style.padding = "10px";
+    const subTitle = document.createElement("p");
+    subTitle.innerText = "شامل التكلفة الإضافية الموزعة نسبياً على مستوى القطعة الحرة";
+    subTitle.style.textAlign = "center";
+    subTitle.style.fontSize = "10px";
+    subTitle.style.color = "#6b7280";
+    subTitle.style.marginBottom = "15px";
+    container.appendChild(subTitle);
 
-const title = document.createElement("h2");
-title.innerText = "تقرير تفاصيل المنتجات";
-title.style.textAlign = "center";
-title.style.marginBottom = "15px";
-container.appendChild(title);
+    const table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+    table.style.textAlign = "center";
+    table.style.fontSize = "11px";
 
-const table = document.createElement("table");
-table.style.width = "100%";
-table.style.borderCollapse = "collapse";
-table.style.textAlign = "center";
-table.style.fontSize = "12px";
+    const headers = ["اسم المنتج", "التكلفة الكلية للوحدة", "سعر البيع", "صافي ربح الوحدة"];
 
-// الأعمدة الأربعة فقط
-const headers = ["اسم المنتج", "تكلفة الوحدة", "سعر البيع", "ربح الوحدة"];
+    let html = "<thead><tr>";
+    headers.forEach(h => {
+        html += `<th style="border:1px solid #cbd5e1;padding:8px;background:#1d4ed8;color:#fff;font-weight:bold;">${h}</th>`;
+    });
+    html += "</tr></thead><tbody>";
 
-let html = "<thead><tr>";
+    reportData.forEach(r => {
+        html += `
+        <tr>
+            <td style="border:1px solid #e2e8f0;padding:6px;text-align:right;font-weight:500;">${r["اسم المنتج"]}</td>
+            <td style="border:1px solid #e2e8f0;padding:6px;background:#f8fafc;">${Number(r["تكلفة الوحدة"]).toFixed(2)}</td>
+            <td style="border:1px solid #e2e8f0;padding:6px;color:#2563eb;">${Number(r["سعر بيع الوحدة"]).toFixed(2)}</td>
+            <td style="border:1px solid #e2e8f0;padding:6px;font-weight:bold;color:#059669;background:#f0fdf4;">${Number(r["ربح الوحدة"]).toFixed(2)}</td>
+        </tr>`;
+    });
 
-headers.forEach(h => {
-html += `
-<th style="border:1px solid #000;padding:6px;background:#007bff;color:#fff;">
-${h}
-</th>`;
-});
+    html += "</tbody>";
+    table.innerHTML = html;
+    container.appendChild(table);
 
-html += "</tr></thead><tbody>";
+    // حساب إجمالي صافي أرباح الوحدات بعد خصم المصاريف الحركية الكلية
+    let totalProfit = reportData.reduce((sum, r) => sum + Number(r["ربح الوحدة"] || 0), 0);
 
-data.forEach(r => {
-html += `
-<tr>
-<td style="border:1px solid #000;padding:5px;text-align:right;">${r["اسم المنتج"]}</td>
-<td style="border:1px solid #000;padding:5px;">${Number(r["تكلفة الوحدة"] || 0).toFixed(2)}</td>
-<td style="border:1px solid #000;padding:5px;">${r["سعر بيع الوحدة"]}</td>
-<td style="border:1px solid #000;padding:5px;font-weight:bold;color:#007bff;">${Number(r["ربح الوحدة"] || 0).toFixed(2)}</td>
-</tr>
-`;
-});
+    const totalDiv = document.createElement("div");
+    totalDiv.innerText = "إجمالي صافي أرباح الوحدات الفعلي: " + totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    totalDiv.style.textAlign = "right";
+    totalDiv.style.marginTop = "20px";
+    totalDiv.style.fontSize = "14px";
+    totalDiv.style.fontWeight = "bold";
+    totalDiv.style.color = "#047857";
 
-html += "</tbody>";
-table.innerHTML = html;
-container.appendChild(table);
+    container.appendChild(totalDiv);
 
-// تم تغيير حساب إجمالي الأرباح ليعتمد على مجموع أرباح الوحدات الظاهرة بدلاً من ربح المنتج الكلي
-let totalProfit = data.reduce((sum, r) => sum + Number(r["ربح الوحدة"] || 0), 0);
-
-const totalDiv = document.createElement("div");
-totalDiv.innerText = "إجمالي أرباح الوحدات: " + totalProfit.toFixed(2);
-totalDiv.style.textAlign = "right";
-totalDiv.style.marginTop = "15px";
-totalDiv.style.fontWeight = "bold";
-
-container.appendChild(totalDiv);
-
-html2pdf().set({
-margin: 0.5,
-filename: "تقرير_المنتجات_المختصر.pdf",
-image: { type: "jpeg", quality: 1 },
-html2canvas: { scale: 3 },
-jsPDF: { unit: "cm", format: "a4", orientation: "portrait" } // تم تحويل الاتجاه إلى رأسي (portrait) لأن 4 أعمدة لا تحتاج عرض أفقي
-}).from(container).save();
-
+    html2pdf().set({
+        margin: 0.5,
+        filename: "تقرير_المنتجات_بالتكلفة_الحقيقية.pdf",
+        image: { type: "jpeg", quality: 1 },
+        html2canvas: { scale: 3 },
+        jsPDF: { unit: "cm", format: "a4", orientation: "portrait" }
+    }).from(container).save();
 }; 
-
 </script>
 
 </body>
