@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>توزيع التكاليف على الطلبيات</title>
+    <title>توزيع التكاليف العادل (بالكميات)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -11,9 +11,10 @@
 
 <div class="max-w-7xl mx-auto bg-white shadow-xl rounded-xl p-4 md:p-6">
 
-    <h1 class="text-xl md:text-3xl font-bold text-center text-blue-700 mb-6">
+    <h1 class="text-xl md:text-3xl font-bold text-center text-blue-700 mb-2">
         تقرير توزيع التكاليف على الطلبيات
     </h1>
+    <p class="text-center text-xs md:text-sm text-gray-500 mb-6">⚙️ النظام الحالي: التوزيع النسبي العادل بناءً على حجم الكمية المشتراة (Quantity-Based)</p>
 
     <div class="flex flex-wrap gap-2 justify-between mb-4">
         <button onclick="history.back()" class="bg-gray-600 text-white px-3 py-2 rounded w-full md:w-auto">رجوع</button>
@@ -21,7 +22,7 @@
     </div>
 
     <div class="mb-4">
-        <input id="searchInput" type="text" onkeyup="renderTable()" placeholder="🔍 بحث سريع برقم الطلبية، البيان، أو النوع..." class="w-full border px-3 py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="searchInput" type="text" onkeyup="renderTable()" placeholder="🔍 بحث سريع برقم الطلبية، البيان..." class="w-full border px-3 py-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-400">
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
@@ -31,12 +32,12 @@
         </div>
 
         <div>
-            <label class="font-bold text-gray-500">رقم المنتج (اختياري - إن وجد)</label>
-            <input id="product_num" type="number" placeholder="اتركه فارغاً للتوزيع على الطلبية كاملة" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
+            <label class="font-bold text-gray-500">رقم المنتج (اختياري)</label>
+            <input id="product_num" type="number" placeholder="اتركه فارغاً للتوزيع الكمي على الطلبية" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
         </div>
 
         <div>
-            <label class="font-bold text-gray-700">القيمة المالية لهذا المنصرف <span class="text-red-500">*</span></label>
+            <label class="font-bold text-gray-700">القيمة المالية للمنصرف <span class="text-red-500">*</span></label>
             <input id="coast_value" type="number" class="w-full border rounded p-2 focus:ring-2 focus:ring-blue-400 outline-none">
         </div>
 
@@ -61,15 +62,9 @@
     </div>
 
     <div class="flex flex-wrap gap-2 mb-6">
-        <button id="addBtn" onclick="addCoast()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-bold w-full md:w-auto shadow-sm">
-            ➕ إضافة منصرف جديد
-        </button>
-        <button id="updateBtn" onclick="updateCoast()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded font-bold w-full md:w-auto shadow-sm hidden">
-            💾 حفظ التعديل الحركي
-        </button>
-        <button onclick="clearForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded w-full md:w-auto">
-            جديد / مسح الحقول
-        </button>
+        <button id="addBtn" onclick="addCoast()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-bold w-full md:w-auto shadow-sm">➕ إضافة منصرف</button>
+        <button id="updateBtn" onclick="updateCoast()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded font-bold w-full md:w-auto shadow-sm hidden">💾 حفظ التعديل</button>
+        <button onclick="clearForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded w-full md:w-auto">جديد</button>
         <a href="index.html" class="bg-blue-600 text-white px-5 py-2 rounded text-center w-full md:w-auto font-bold">الرئيسية</a>
     </div>
 
@@ -77,13 +72,10 @@
         <table class="w-full border text-center min-w-[1000px] text-sm">
             <thead class="bg-blue-600 text-white">
                 <tr>
-                    <th class="p-3">رقم المنصرف (ID)</th>
+                    <th class="p-3">رقم المنصرف</th>
                     <th class="p-3">رقم الطلبية</th>
-                    <th class="p-3 bg-blue-700 text-amber-300">قيمة هذا المنصرف</th>
-                    <th class="p-3">إجمالي منصرفات الطلبية</th>
-                    <th class="p-3">عدد أصنافها</th>
-                    <th class="p-3 bg-slate-700">نصيب الصنف بالتساوي</th>
-                    <th class="p-3">المنتج المستهدف</th>
+                    <th class="p-3 bg-blue-700 text-amber-300">قيمة المنصرف</th>
+                    <th class="p-3">إجمالي مصاريف الطلبية</th>
                     <th class="p-3">النوع</th>
                     <th class="p-3 text-right">البيان</th>
                     <th class="p-3">التاريخ</th>
@@ -96,8 +88,8 @@
     </div>
 
     <div class="mt-6 text-center">
-        <button onclick="distributeCosts()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-lg shadow-md transition w-full md:w-auto text-base">
-            ⚙️ تفعيل توزيع التكاليف على مخزون الطلبيات الحية
+        <button onclick="distributeCostsQuantityBased()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-lg shadow-md transition w-full md:w-auto text-base">
+            ⚖️ تشغيل التوزيع النسبي العادل (حسب حجم التجزئة الكلي)
         </button>
     </div>
 
@@ -113,207 +105,132 @@ let coastsData = [];
 const addBtn = document.getElementById("addBtn");
 const updateBtn = document.getElementById("updateBtn");
 
-// تحميل التكاليف من السيرفر
 async function loadCoasts(){
     const { data } = await supabaseClient.from("coasts").select("*").order("coast_id",{ascending:false});
     coastsData = data || [];
     await renderTable();
 }
 
-// جلب عدد الأصناف الفريدة المرتبطة برقم الطلبية
-async function getProductCount(req_id){
-    if(!req_id) return 0;
-    const { count } = await supabaseClient
-        .from("products")
-        .select("*", { count: "exact", head: true })
-        .eq("req_id", req_id);
-    return count || 0;
-}
-
-// عرض البيانات بالجدول ديناميكياً بدون دمج قيم الصفوف فردياً
 async function renderTable(){
     const searchTerm = document.getElementById("searchInput").value.toLowerCase();
     let table = "";
 
-    // إنشاء خارطة لحساب إجماليات كل طلبية مسبقاً لعرضها بدقة
     const orderTotals = {};
     coastsData.forEach(c => {
-        if(c.req_id) {
-            orderTotals[c.req_id] = (orderTotals[c.req_id] || 0) + Number(c.coast_value || 0);
-        }
+        if(c.req_id) orderTotals[c.req_id] = (orderTotals[c.req_id] || 0) + Number(c.coast_value || 0);
     });
 
     for(const row of coastsData) {
-        // تصفية البحث الفوري
-        if(
-            (row.req_id || "").toLowerCase().includes(searchTerm) ||
-            (row.coast_discription || "").toLowerCase().includes(searchTerm) ||
-            (row.c_type || "").toLowerCase().includes(searchTerm)
-        ){
-            const productCount = await getProductCount(row.req_id);
+        if((row.req_id || "").toLowerCase().includes(searchTerm) || (row.coast_discription || "").toLowerCase().includes(searchTerm)){
             const totalOrderCost = orderTotals[row.req_id] || 0;
-            const perProductCost = productCount > 0 ? (totalOrderCost / productCount).toFixed(2) : 0;
 
             table += `
             <tr class="hover:bg-gray-50 transition">
-                <td class="p-3 text-gray-400 font-mono font-bold">${row.coast_id}</td>
+                <td class="p-3 text-gray-400 font-mono">${row.coast_id}</td>
                 <td class="p-3 font-bold text-blue-700">${row.req_id || "---"}</td>
                 <td class="p-3 font-bold text-emerald-600 bg-emerald-50/50">${Number(row.coast_value).toLocaleString()}</td>
                 <td class="p-3 font-semibold text-gray-700 bg-gray-50">${totalOrderCost.toLocaleString()}</td>
-                <td class="p-3 text-xs">${productCount} أصناف</td>
-                <td class="p-3 bg-slate-100 font-bold text-slate-800">${perProductCost}</td>
-                <td class="p-3 text-xs text-gray-500">${row.product_num ? '📦 المنتج: ' + row.product_num : '📂 كامل الشحنة'}</td>
-                <td class="p-3"><span class="px-2 py-0.5 rounded bg-slate-100 text-xs">${row.c_type}</span></td>
+                <td class="p-3 text-xs"><span class="px-2 py-0.5 rounded bg-slate-100">${row.c_type}</span></td>
                 <td class="p-3 text-right max-w-xs truncate">${row.coast_discription || ""}</td>
                 <td class="p-3 text-xs text-gray-500">${row.co_date || ""}</td>
-                <td class="p-3"><button onclick="editRow(${row.coast_id})" class="bg-yellow-400 hover:bg-yellow-500 text-xs px-2 py-1 rounded font-bold">تعديل</button></td>
-                <td class="p-3"><button onclick="deleteRow(${row.coast_id})" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded font-bold">حذف</button></td>
+                <td class="p-3"><button onclick="editRow(${row.coast_id})" class="bg-yellow-400 text-xs px-2 py-1 rounded font-bold">تعديل</button></td>
+                <td class="p-3"><button onclick="deleteRow(${row.coast_id})" class="bg-red-600 text-white text-xs px-2 py-1 rounded font-bold">حذف</button></td>
             </tr>`;
         }
     }
     document.getElementById("tableBody").innerHTML = table;
 }
 
-// دالة الإضافة الصحيحة والحفظ في الجدول فورياً
 async function addCoast(){
     const req = document.getElementById("req_id").value.trim();
     const value = document.getElementById("coast_value").value;
+    if(!req || !value) return alert("يرجى ملء رقم الطلبية والقيمة");
 
-    if(!req || !value) {
-        alert("يرجى ملء الحقول الإلزامية: رقم الطلبية والقيمة المالية");
-        return;
-    }
-
-    const type = document.getElementById("c_type").value;
-    const desc = document.getElementById("coast_discription").value;
-    const date = document.getElementById("co_date").value;
-    const product_num = document.getElementById("product_num").value.trim() || null;
-
-    const { error } = await supabaseClient.from("coasts").insert([{ 
-        coast_value: Number(value), 
-        c_type: type, 
-        coast_discription: desc, 
-        co_date: date, 
-        req_id: req, 
-        product_num: product_num ? Number(product_num) : null 
+    await supabaseClient.from("coasts").insert([{ 
+        coast_value: Number(value), c_type: document.getElementById("c_type").value, 
+        coast_discription: document.getElementById("coast_discription").value, 
+        co_date: document.getElementById("co_date").value, req_id: req, 
+        product_num: document.getElementById("product_num").value.trim() || null 
     }]);
-
-    if(error) {
-        alert("حدث خطأ أثناء حفظ البيانات الجديدة: " + error.message);
-    } else {
-        alert("تم حفظ المنصرف الجديد بنجاح!");
-        clearForm();
-        await loadCoasts();
-    }
+    clearForm(); await loadCoasts();
 }
 
-// تجهيز الحقول للتعديل وإظهار زر الحفظ المخفي
 async function editRow(id){
     editID = id;
-    const { data, error } = await supabaseClient.from("coasts").select("*").eq("coast_id", id).single();
-
-    if(error) return alert("فشل في جلب بيانات السجل المستهدف");
-
+    const { data } = await supabaseClient.from("coasts").select("*").eq("coast_id", id).single();
     document.getElementById("coast_value").value = data.coast_value;
     document.getElementById("c_type").value = data.c_type;
     document.getElementById("coast_discription").value = data.coast_discription;
     document.getElementById("co_date").value = data.co_date;
     document.getElementById("req_id").value = data.req_id;
     document.getElementById("product_num").value = data.product_num || "";
-
-    addBtn.classList.add("hidden");
-    updateBtn.classList.remove("hidden");
+    addBtn.classList.add("hidden"); updateBtn.classList.remove("hidden");
 }
 
-// دالة تحديث البيانات المعدلة وحفظها بالسيرفر
 async function updateCoast(){
-    if(!editID) return alert("الرجاء اختيار سجل لتعديله أولاً");
-
-    const req = document.getElementById("req_id").value.trim();
-    const value = document.getElementById("coast_value").value;
-    const type = document.getElementById("c_type").value;
-    const desc = document.getElementById("coast_discription").value;
-    const date = document.getElementById("co_date").value;
-    const product_num = document.getElementById("product_num").value.trim() || null;
-
-    const { error } = await supabaseClient.from("coasts")
-        .update({ 
-            coast_value: Number(value), 
-            c_type: type, 
-            coast_discription: desc, 
-            co_date: date, 
-            req_id: req, 
-            product_num: product_num ? Number(product_num) : null 
-        })
-        .eq("coast_id", editID);
-
-    if(error) {
-        alert("فشل تحديث البيانات: " + error.message);
-    } else {
-        alert("تم تعديل السجل وحفظ التحديثات بنجاح!");
-        clearForm();
-        await loadCoasts();
-    }
+    if(!editID) return;
+    await supabaseClient.from("coasts").update({ 
+        coast_value: Number(document.getElementById("coast_value").value), c_type: document.getElementById("c_type").value, 
+        coast_discription: document.getElementById("coast_discription").value, co_date: document.getElementById("co_date").value, 
+        req_id: document.getElementById("req_id").value.trim(), product_num: document.getElementById("product_num").value.trim() || null 
+    }).eq("coast_id", editID);
+    clearForm(); await loadCoasts();
 }
 
-// حذف سجل التكلفة
 async function deleteRow(id){
-    if(!confirm("هل أنت متأكد من حذف هذا المنصرف نهائياً؟")) return;
+    if(!confirm("حذف نهائي؟")) return;
     await supabaseClient.from("coasts").delete().eq("coast_id", id);
     await loadCoasts();
 }
 
-// تصفية مدخلات الاستمارة وإعادة وضع الأزرار الافتراضي
 function clearForm(){
     editID = null;
-    document.getElementById("coast_value").value = "";
-    document.getElementById("coast_discription").value = "";
-    document.getElementById("co_date").value = "";
-    document.getElementById("req_id").value = "";
-    document.getElementById("product_num").value = "";
-    
-    addBtn.classList.remove("hidden");
-    updateBtn.classList.add("hidden");
+    document.getElementById("coast_value").value = ""; document.getElementById("coast_discription").value = "";
+    document.getElementById("co_date").value = ""; document.getElementById("req_id").value = ""; document.getElementById("product_num").value = "";
+    addBtn.classList.remove("hidden"); updateBtn.classList.add("hidden");
 }
 
-// دالة التوزيع الذكية الكلية للتكاليف على جدول المنتجات
-async function distributeCosts(){
+// 🚀 الدالة العادلة الجديدة المبنية على إجمالي عدد قطع المنتجات التابعة للطلبية
+async function distributeCostsQuantityBased(){
     const { data: coasts } = await supabaseClient.from("coasts").select("req_id, coast_value");
-    if(!coasts || coasts.length === 0) return alert("لا توجد بيانات منصرفات لتوزيعها حالياً");
+    if(!coasts || coasts.length === 0) return alert("لا توجد منصرفات");
 
     const reqIDs = [...new Set(coasts.map(c => c.req_id).filter(Boolean))];
 
     for(const req of reqIDs){
-        const totalCost = coasts
-            .filter(c => c.req_id === req)
-            .reduce((sum, c) => sum + Number(c.coast_value || 0), 0);
+        // 1. حساب إجمالي المال المنصرف على هذه الطلبية
+        const totalCost = coasts.filter(c => c.req_id === req).reduce((sum, c) => sum + Number(c.coast_value || 0), 0);
 
-        const { count } = await supabaseClient
-            .from("products")
-            .select("*", { count: "exact", head: true })
-            .eq("req_id", req);
+        // 2. جلب كافة منتجات هذه الطلبية لمعرفة مجموع قطعها (pice_qte)
+        const { data: products } = await supabaseClient.from("products").select("id_product, pice_qte").eq("req_id", req);
+        if(!products || products.length === 0) continue;
 
-        const productCount = count || 0;
-        if(productCount === 0) continue;
+        // 3. حساب إجمالي عدد القطع الفعلي في الشحنة بالكامل
+        const totalPiecesInOrder = products.reduce((sum, p) => sum + (Number(p.pice_qte) || 1), 0);
+        
+        if(totalPiecesInOrder === 0) continue;
 
-        const costPerProduct = totalCost / productCount;
+        // 4. تكلفة القطعة الواحدة من المصاريف العامة للطلبية
+        const costPerSinglePiece = totalCost / totalPiecesInOrder;
 
-        await supabaseClient
-            .from("products")
-            .update({ coasts_value: costPerProduct })
-            .eq("req_id", req);
+        // 5. تحديث كل منتج بنصيبه العادل بناءً على كمية تجزئته الخاصة
+        for(const prod of products) {
+            let productPieces = Number(prod.pice_qte) || 1;
+            // نصيب هذا المنتج بالكامل = تكلفة القطعة الواحدة × عدد قطع هذا المنتج
+            let finalProductCoastsValue = costPerSinglePiece * productPieces;
+
+            await supabaseClient
+                .from("products")
+                .update({ coasts_value: finalProductCoastsValue })
+                .eq("id_product", prod.id_product);
+        }
     }
 
-    alert("🚀 تم تجميع كافة بنود المنصرفات وتوزيع الإجمالي على المنتجات بنجاح!");
+    alert("⚖️ تم تطبيق نظام التوزيع النسبي الكمي بنجاح! السلع الرخيصة أصبحت محمية الآن.");
 }
 
-// تحميل أولي للبيانات
 loadCoasts();
-
-function logout(){
-    window.location.href="index.html";
-}
+function logout(){ window.location.href="index.html"; }
 </script>
-
 </body>
 </html>
