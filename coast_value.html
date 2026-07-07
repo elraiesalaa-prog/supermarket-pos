@@ -61,9 +61,15 @@
     </div>
 
     <div class="flex flex-wrap gap-2 mb-6">
-        <button id="addBtn" onclick="addCoast()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-bold w-full md:w-auto">إضافة منصرف</button>
-        <button id="updateBtn" onclick="updateCoast()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded font-bold w-full md:w-auto">تعديل</button>
-        <button onclick="clearForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded w-full md:w-auto">جديد / مسح</button>
+        <button id="addBtn" onclick="addCoast()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-bold w-full md:w-auto shadow-sm">
+            ➕ إضافة منصرف جديد
+        </button>
+        <button id="updateBtn" onclick="updateCoast()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded font-bold w-full md:w-auto shadow-sm hidden">
+            💾 حفظ التعديل الحركي
+        </button>
+        <button onclick="clearForm()" class="bg-gray-500 hover:bg-gray-600 text-white px-5 py-2 rounded w-full md:w-auto">
+            جديد / مسح الحقول
+        </button>
         <a href="index.html" class="bg-blue-600 text-white px-5 py-2 rounded text-center w-full md:w-auto font-bold">الرئيسية</a>
     </div>
 
@@ -103,11 +109,15 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 let editID = null;
 let coastsData = [];
+const addBtn = document.getElementById("addBtn");
 const updateBtn = document.getElementById("updateBtn");
 
-// تحميل التكاليف
+// تحميل التكاليف من السيرفر
 async function loadCoasts(){
-    const { data } = await supabaseClient.from("coasts").select("*").order("coast_id",{ascending:false});
+    const { data, error } = await supabaseClient.from("coasts").select("*").order("coast_id",{ascending:false});
+    if(error) {
+        console.error("Error loading data:", error.message);
+    }
     coastsData = data || [];
     await renderTable();
 }
@@ -127,14 +137,12 @@ async function renderTable(){
     const searchTerm = document.getElementById("searchInput").value.toLowerCase();
     let table = "";
 
-    // استخراج أرقام الطلبيات الفريدة المتوفرة بسجل التكاليف
     const reqIDs = [...new Set(coastsData.map(c => c.req_id).filter(Boolean))];
 
     for(const req_id of reqIDs){
         const productCount = await getProductCount(req_id);
         const group = coastsData.filter(c => c.req_id === req_id);
         
-        // حساب إجمالي التكاليف المربوطة بهذه الطلبية
         const totalCost = group.reduce((sum,c)=> sum + Number(c.coast_value || 0), 0);
         const perProductCost = productCount > 0 ? (totalCost / productCount).toFixed(2) : 0;
 
@@ -164,13 +172,13 @@ async function renderTable(){
     document.getElementById("tableBody").innerHTML = table;
 }
 
-// إضافة منصرف جديد
+// دالة الإضافة الصحيحة والحفظ في الجدول فورياً
 async function addCoast(){
     const req = document.getElementById("req_id").value.trim();
     const value = document.getElementById("coast_value").value;
 
     if(!req || !value) {
-        alert("يرجى ملء الحقول الإلزامية: رقم الطلبية والقيمة");
+        alert("يرجى ملء الحقول الإلزامية: رقم الطلبية والقيمة المالية");
         return;
     }
 
@@ -179,7 +187,7 @@ async function addCoast(){
     const date = document.getElementById("co_date").value;
     const product_num = document.getElementById("product_num").value.trim() || null;
 
-    await supabaseClient.from("coasts").insert([{ 
+    const { error } = await supabaseClient.from("coasts").insert([{ 
         coast_value: Number(value), 
         c_type: type, 
         coast_discription: desc, 
@@ -188,14 +196,21 @@ async function addCoast(){
         product_num: product_num ? Number(product_num) : null 
     }]);
 
-    clearForm();
-    loadCoasts();
+    if(error) {
+        alert("حدث خطأ أثناء حفظ البيانات الجديدة: " + error.message);
+    } else {
+        alert("تم حفظ المنصرف الجديد بنجاح في قاعدة البيانات!");
+        clearForm();
+        await loadCoasts();
+    }
 }
 
-// تجهيز الحقول للتعديل
+// تجهيز الحقول للتعديل وإظهار زر الحفظ المخفي
 async function editRow(id){
     editID = id;
-    const { data } = await supabaseClient.from("coasts").select("*").eq("coast_id", id).single();
+    const { data, error } = await supabaseClient.from("coasts").select("*").eq("coast_id", id).single();
+
+    if(error) return alert("فشل في جلب بيانات السجل المستهدف");
 
     document.getElementById("coast_value").value = data.coast_value;
     document.getElementById("c_type").value = data.c_type;
@@ -204,10 +219,12 @@ async function editRow(id){
     document.getElementById("req_id").value = data.req_id;
     document.getElementById("product_num").value = data.product_num || "";
 
-    updateBtn.textContent = "حفظ التعديل الحالي";
+    // إدارة التغييرات المرئية للأزرار
+    addBtn.classList.add("hidden");
+    updateBtn.classList.remove("hidden");
 }
 
-// حفظ التعديلات
+// دالة تحديث البيانات المعدلة وحفظها بالسيرفر
 async function updateCoast(){
     if(!editID) return alert("الرجاء اختيار سجل لتعديله من الجدول أولاً");
 
@@ -218,7 +235,7 @@ async function updateCoast(){
     const date = document.getElementById("co_date").value;
     const product_num = document.getElementById("product_num").value.trim() || null;
 
-    await supabaseClient.from("coasts")
+    const { error } = await supabaseClient.from("coasts")
         .update({ 
             coast_value: Number(value), 
             c_type: type, 
@@ -229,19 +246,23 @@ async function updateCoast(){
         })
         .eq("coast_id", editID);
 
-    updateBtn.textContent = "تعديل";
-    clearForm();
-    loadCoasts();
+    if(error) {
+        alert("فشل تحديث البيانات: " + error.message);
+    } else {
+        alert("تم تعديل السجل وحفظ التحديثات بنجاح!");
+        clearForm();
+        await loadCoasts();
+    }
 }
 
 // حذف سجل التكلفة
 async function deleteRow(id){
-    if(!confirm("هل أنت متأكد من حذف سجل هذا المنصرف؟")) return;
+    if(!confirm("هل أنت متأكد من حذف سجل هذا المنصرف نهائياً؟")) return;
     await supabaseClient.from("coasts").delete().eq("coast_id", id);
-    loadCoasts();
+    await loadCoasts();
 }
 
-// تصفية مدخلات الاستمارة
+// تصفية مدخلات الاستمارة وإعادة وضع الأزرار الافتراضي
 function clearForm(){
     editID = null;
     document.getElementById("coast_value").value = "";
@@ -249,7 +270,9 @@ function clearForm(){
     document.getElementById("co_date").value = "";
     document.getElementById("req_id").value = "";
     document.getElementById("product_num").value = "";
-    updateBtn.textContent = "تعديل";
+    
+    addBtn.classList.remove("hidden");
+    updateBtn.classList.add("hidden");
 }
 
 // دالة التوزيع الذكية والمحسّنة للتكاليف على جدول المنتجات
@@ -260,12 +283,10 @@ async function distributeCosts(){
     const reqIDs = [...new Set(coasts.map(c => c.req_id).filter(Boolean))];
 
     for(const req of reqIDs){
-        // تجميع التكاليف الإجمالية للطلبية المستهدفة
         const totalCost = coasts
             .filter(c => c.req_id === req)
             .reduce((sum, c) => sum + Number(c.coast_value || 0), 0);
 
-        // حساب عدد أصناف المنتجات المرتبطة بتلك الطلبية
         const { count } = await supabaseClient
             .from("products")
             .select("*", { count: "exact", head: true })
@@ -274,10 +295,8 @@ async function distributeCosts(){
         const productCount = count || 0;
         if(productCount === 0) continue;
 
-        // نصيب الصنف الواحد بالتساوي داخل الشحنة
         const costPerProduct = totalCost / productCount;
 
-        // تحديث الحقل المخصص للتكاليف بجدول المنتجات
         await supabaseClient
             .from("products")
             .update({ coasts_value: costPerProduct })
