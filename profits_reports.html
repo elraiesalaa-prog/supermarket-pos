@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تقرير الأرباح الدوري الحقيقي</title>
+    <title>تقرير الأرباح الدوري الصافي</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -16,7 +16,7 @@
         
         <div class="flex flex-col md:flex-row justify-between items-center border-b pb-4 mb-6 gap-3">
             <h1 class="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                📈 تقرير الأرباح الصافية (بعد خصم كافة التكاليف المنصرفة)
+                📈 تقرير الأرباح الصافية (حساب نصيب القطعة من التكاليف)
             </h1>
             <button onclick="window.location.href='products.html'" 
                     class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow">
@@ -45,27 +45,27 @@
         </div>
 
         <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-1 text-base">
-            📋 سجل المبيعات التفصيلي شامل تجميع التكاليف والمنصرفات:
+            📋 سجل تحليل مبيعات المنتجات وصافي الأرباح:
         </h3>
         
         <div class="overflow-x-auto border rounded-xl shadow-sm bg-white">
-            <table class="w-full text-center border-collapse text-sm min-w-[950px]">
+            <table class="w-full text-center border-collapse text-sm min-w-[1000px]">
                 <thead class="bg-slate-800 text-white sticky top-0">
                     <tr>
                         <th class="p-3">رقم الفاتورة</th>
                         <th class="p-3 text-right">اسم المنتج</th>
                         <th class="p-3">التاريخ</th>
-                        <th class="p-3">الكمية</th>
-                        <th class="p-3">سعر البيع للقطعة</th>
-                        <th class="p-3 bg-slate-700">شراء القطعة أساسي</th>
-                        <th class="p-3 bg-purple-900 text-purple-200">المنصرفات الموزعة</th>
-                        <th class="p-3 bg-slate-900 font-bold">إجمالي التكلفة الحقيقية</th>
-                        <th class="p-3 bg-emerald-900 text-emerald-300 font-bold">صافي الربح الفعلي</th>
+                        <th class="p-3">الكمية المباعة</th>
+                        <th class="p-3">سعر البيع/القطعة</th>
+                        <th class="p-3 bg-slate-700">شراء القطعة (أساسي)</th>
+                        <th class="p-3 bg-purple-900 text-purple-200">نصيب القطعة من المنصرفات</th>
+                        <th class="p-3 bg-slate-900 font-bold">إجمالي تكلفة القطعة</th>
+                        <th class="p-3 bg-emerald-900 text-emerald-300 font-bold">صافي الربح المحقق</th>
                     </tr>
                 </thead>
                 <tbody id="profitsTableBody" class="divide-y divide-slate-100 text-slate-700">
                     <tr>
-                        <td colspan="9" class="p-8 text-slate-400">جاري تجميع التكاليف وتحليل صافي الأرباح المحدثة...</td>
+                        <td colspan="9" class="p-8 text-slate-400">جاري احتساب وتحليل نصيب القطع من التكاليف الموزعة...</td>
                     </tr>
                 </tbody>
             </table>
@@ -83,30 +83,33 @@
         const formatMoney = (v) => Number(v || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
         async function loadProfitsReport() {
-            // 1. جلب المنتجات لبناء خارطة التكاليف (سعر الشراء الأساسي + التكاليف الموزعة الكلية)
+            // 1. جلب المنتجات لبناء الخارطة وتفتيت التكاليف الكلية على مستوى القطعة الفردية
             const { data: productsData } = await supabaseClient.from("products").select("id_product, product_name, pay_price, pice_qte, coasts_value");
             let productCostMap = new Map();
             
             if (productsData) {
                 productsData.forEach(p => {
                     let payPrice = Number(p.pay_price) || 0;
-                    let pieceQte = Number(p.pice_qte) || 1;
-                    let baseUnitCost = payPrice / pieceQte; // تكلفة الشراء الأساسية للقطعة
-                    let distributedCost = Number(p.coasts_value) || 0; // التكاليف المنصرفة الموزعة من الصفحة السابقة
+                    let pieceQte = Number(p.pice_qte) || 1; // تفادي القسمة على صفر
+                    let totalCostsValue = Number(p.coasts_value) || 0; // تكلفة المنتج بالكامل التي تم توزيعها حسب الطلبية
+
+                    // 💡 العمليات الحسابية على مستوى القطعة الواحدة:
+                    let unitBaseCost = payPrice / pieceQte; // نصيب القطعة الواحدة من سعر الشراء الأساسي
+                    let unitDistributedCost = totalCostsValue / pieceQte; // نصيب القطعة الحقيقي والجديد من التكاليف الموزعة
                     
-                    // 💡 التكلفة الإجمالية الحقيقية للقطعة
-                    let totalRealCost = baseUnitCost + distributedCost;
+                    // إجمالي التكلفة الفردية للقطعة
+                    let finalUnitRealCost = unitBaseCost + unitDistributedCost;
 
                     productCostMap.set(p.id_product, {
                         name: p.product_name,
-                        baseCost: baseUnitCost,
-                        distCost: distributedCost,
-                        realCost: totalRealCost
+                        baseCost: unitBaseCost,
+                        distCost: unitDistributedCost, // تم تقسيمها بنجاح هنا
+                        realCost: finalUnitRealCost
                     });
                 });
             }
 
-            // 2. جلب جميع تفاصيل المبيعات مرتبة حديثاً
+            // 2. جلب مبيعات الفواتير التفصيلية
             const { data: salesData, error: salesError } = await supabaseClient
                 .from("orders_details")
                 .select("*")
@@ -137,21 +140,19 @@
                 let qte = Number(item.qte) || 0;
                 let sellPrice = Number(item.price) || 0;
                 
-                // جلب التكاليف التفصيلية لهذا المنتج من الخارطة الحسابية
                 let prodInfo = productCostMap.get(pId);
                 let pName = prodInfo ? prodInfo.name : "منتج غير معروف";
                 let baseCost = prodInfo ? prodInfo.baseCost : 0;
-                let distCost = prodInfo ? prodInfo.distCost : 0;
-                let realCost = prodInfo ? prodInfo.realCost : 0; // التكلفة الكاملة (شراء + منصرفات)
+                let distCost = prodInfo ? prodInfo.distCost : 0; // نصيب القطعة الواحدة من المنصرفات
+                let realCost = prodInfo ? prodInfo.realCost : 0; // إجمالي التكلفة الحقيقية للقطعة
 
-                // 💡 حساب صافي الربح الحقيقي الفعلي بعد خصم كافة التكاليف
+                // حساب صافي الربح الفعلي للحركة بناءً على التكلفة المفككة للقطعة
                 let singleProfit = sellPrice - realCost;
                 let totalLineProfit = singleProfit * qte;
 
-                // تحليل وتصنيف التواريخ
+                // تصفية التاريخ
                 let orderDate = new Date(item.date_order);
 
-                // فحص الأرباح حسب الفترة الزمنية
                 if (orderDate >= startOfToday) {
                     todaySum += totalLineProfit;
                     todayCount++;
@@ -165,7 +166,7 @@
                     monthlyCount++;
                 }
 
-                // بناء أسطر الجدول لتوضيح طريقة الخصم
+                // عرض الحسبة بالتفصيل الممل في الجدول للشفافية والمراجعة
                 html += `
                 <tr class="hover:bg-slate-50/80 transition">
                     <td class="p-3 font-mono text-xs text-slate-400">#${item.id_order}</td>
@@ -174,13 +175,13 @@
                     <td class="p-3 font-bold text-slate-800">${qte}</td>
                     <td class="p-3 font-semibold text-blue-600">${formatMoney(sellPrice)}</td>
                     <td class="p-3 bg-slate-50 text-slate-600">${formatMoney(baseCost)}</td>
-                    <td class="p-3 bg-purple-50 text-purple-800 font-medium">${formatMoney(distCost)}</td>
+                    <td class="p-3 bg-purple-50 text-purple-800 font-bold">${formatMoney(distCost)}</td>
                     <td class="p-3 bg-slate-100 text-slate-900 font-bold">${formatMoney(realCost)}</td>
                     <td class="p-3 bg-emerald-50 text-emerald-800 font-bold">${formatMoney(totalLineProfit)}</td>
                 </tr>`;
             });
 
-            // طباعة النتائج في كروت الواجهة العلوية
+            // طباعة الإحصائيات
             document.getElementById("todayProfits").innerText = formatMoney(todaySum);
             document.getElementById("todaySalesCount").innerText = `${todayCount} حركة صنف مباع`;
 
@@ -190,11 +191,10 @@
             document.getElementById("monthlyProfits").innerText = formatMoney(monthlySum);
             document.getElementById("monthlySalesCount").innerText = `${monthlyCount} حركة صنف مباع`;
 
-            // ضخ البيانات داخل الجدول
             document.getElementById("profitsTableBody").innerHTML = html;
         }
 
-        // تشغيل التحليل عند تحميل الصفحة
+        // استدعاء التشغيل الفوري
         loadProfitsReport();
     </script>
 </body>
