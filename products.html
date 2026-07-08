@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة المنتجات المطور</title>
+    <title>إدارة المنتجات - روابط الصور المباشرة</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
@@ -33,7 +33,6 @@
             gap: 10px;
         }
 
-        /* للشاشات الكبيرة */
         @media(min-width:768px) {
             .grid {
                 grid-template-columns: repeat(3, 1fr);
@@ -59,7 +58,6 @@
             margin-top: 5px;
         }
 
-        /* للشاشات الكبيرة */
         @media(min-width:768px) {
             button {
                 width: auto;
@@ -71,7 +69,6 @@
         .delete { background: #dc3545; color: white }
         .logout { background: #333; color: white; float: none; margin-bottom: 10px }
 
-        /* للشاشات الكبيرة */
         @media(min-width:768px) {
             .logout { float: left }
         }
@@ -115,7 +112,7 @@
 
     <button class="logout" onclick="logout()">خروج</button>
 
-    <h2>إدارة المنتجات</h2>
+    <h2>إدارة المنتجات (روابط الصور)</h2>
 
     <input type="text" id="searchBox" placeholder="بحث عن منتج..." onkeyup="searchProduct()">
 
@@ -135,10 +132,7 @@
         <select id="id_cat"></select>
         <input id="p_weight" placeholder="الوزن">
         
-        <div style="display: flex; flex-direction: column; gap: 2px;">
-            <label style="font-size: 11px; font-weight: bold; color: #555;">صورة المنتج الحقيقي:</label>
-            <input id="product_image_file" type="file" accept="image/*">
-        </div>
+        <input id="image_product" type="text" placeholder="رابط صورة المنتج الحقيقي (URL)">
     </div>
 
     <br>
@@ -173,7 +167,6 @@ const supabaseClient = window.supabase.createClient(
 
 let edit_id = null
 let products = []
-let current_image_url = null 
 
 // تحميل الأصناف
 async function loadCategories(){
@@ -206,7 +199,8 @@ function renderTable(list){
     let fallbackImg = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=150";
     
     list.forEach(p => {
-        let img = p.image_url || fallbackImg;
+        // قراءة المسمى الجديد للحقل image_product
+        let img = p.image_product || fallbackImg;
         html += `
         <tr>
             <td>${p.id_product}</td>
@@ -222,51 +216,15 @@ function renderTable(list){
     document.getElementById("tableBody").innerHTML = html
 }
 
-// دالة الرفع الآمنة: لا تعطل الحفظ إذا لم يتم اختيار صورة أو إذا فشل الـ Storage
-async function uploadImageFileSafely() {
-    const fileInput = document.getElementById("product_image_file");
-    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-        return current_image_url; 
-    }
-
-    try {
-        const file = fileInput.files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { data, error } = await supabaseClient.storage
-            .from('product-images')
-            .upload(filePath, file);
-
-        if (error) {
-            console.warn("فشل رفع الصورة لـ Storage (تأكد من تفعيل صلاحيات الـ Bucket):", error.message);
-            return current_image_url; // العودة للرابط الحالي دون إيقاف الحفظ
-        }
-
-        const { data: publicUrlData } = supabaseClient.storage
-            .from('product-images')
-            .getPublicUrl(filePath);
-
-        return publicUrlData.publicUrl;
-    } catch (e) {
-        console.warn("خطأ غير متوقع في معالجة الصور:", e);
-        return current_image_url;
-    }
-}
-
-// حفظ المنتج المحسن والمضمون بنسبة 100%
+// حفظ المنتج
 async function saveProduct(){
     const btnSave = document.getElementById("btnSave");
     btnSave.disabled = true;
-    btnSave.innerText = "جاري المعالجة...";
+    btnSave.innerText = "جاري الحفظ...";
 
     let payQte = Number(pay_qte.value) || 0
     let piceQte = Number(pice_qte.value) || 0
     let stockCalculated = payQte * piceQte
-
-    // محاولة الرفع الآمن أولاً
-    let finalImageUrl = await uploadImageFileSafely();
 
     let data = {
         product_name: product_name.value || null,
@@ -281,7 +239,7 @@ async function saveProduct(){
         coasts_value: Number(coasts_value.value) || 0,
         id_cat: Number(id_cat.value) || 1,
         p_weight: p_weight.value || null,
-        image_url: finalImageUrl 
+        image_product: image_product.value || null // ربط الحقل النصي الجديد بجدول سوبابيز
     }
 
     try {
@@ -319,9 +277,7 @@ function editProduct(id){
     coasts_value.value = p.coasts_value || ''
     id_cat.value = p.id_cat || ''
     p_weight.value = p.p_weight || ''
-    
-    current_image_url = p.image_url || null 
-    document.getElementById("product_image_file").value = ""; 
+    image_product.value = p.image_product || '' // تعبئة الحقل بالرابط الحالي عند التعديل
     
     edit_id = id
 }
@@ -341,9 +297,7 @@ function searchProduct(){
 }
 
 function clearForm(){
-    document.querySelectorAll("input").forEach(i => i.value = "")
-    document.getElementById("product_image_file").value = "";
-    current_image_url = null;
+    document.querySelectorAll(".grid input").forEach(i => i.value = "")
     edit_id = null;
 }
 
