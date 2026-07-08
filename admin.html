@@ -1,1547 +1,760 @@
 <!DOCTYPE html>
-
 <html lang="ar" dir="rtl">
-
-
 
 <head>
 
-
-
 <meta charset="UTF-8"> 
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
 
 <title>لوحة المدير</title> 
 
-
-
 <script src="https://cdn.tailwindcss.com"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script src="https://unpkg.com/feather-icons"></script>
 
-
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
-
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-
-
 
 <style>
 
-
-
 *{
-
 margin:0;
-
 padding:0;
-
 box-sizing:border-box;
-
 }
-
-
 
 body{
-
 font-family:'Cairo',Tahoma,sans-serif;
-
 background:
-
 linear-gradient(rgba(15,23,42,0.92),rgba(15,23,42,0.95)),
-
-url("https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1600&auto=format&fit=crop") center/cover fixed;
-
+url("https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1600&auto=format&fit=crop") center/cover fixed; /* 👕 تم تحديث صورة الخلفية لمتجر ملابس راقٍ */
 min-height:100vh;
-
 color:white;
-
 overflow-x:hidden;
-
 }
-
-
 
 /* ===== شريط علوي ===== */
 
-
-
 .header{
-
 background:rgba(15,23,42,0.8);
-
 backdrop-filter:blur(12px);
-
 border-bottom:1px solid rgba(255,255,255,0.08);
-
 padding:15px 20px;
-
 position:sticky;
-
 top:0;
-
 z-index:999;
-
 }
-
-
 
 .header-flex{
-
 display:flex;
-
 justify-content:space-between;
-
 align-items:center;
-
 gap:15px;
-
 flex-wrap:wrap;
-
 }
-
-
 
 .brand-box{
-
 display:flex;
-
 align-items:center;
-
 gap:15px;
-
 }
-
-
 
 .logo{
-
 width:60px;
-
 height:60px;
-
 border-radius:18px;
-
 background:linear-gradient(135deg,#2563eb,#7c3aed);
-
 display:flex;
-
 align-items:center;
-
 justify-content:center;
-
 font-size:26px;
-
 font-weight:bold;
-
 box-shadow:0 10px 25px rgba(37,99,235,0.35);
-
 }
-
-
 
 .brand-text h1{
-
 font-size:24px;
-
 font-weight:800;
-
 margin-bottom:3px;
-
 }
-
-
 
 .brand-text p{
-
 font-size:14px;
-
 color:#cbd5e1;
-
 }
-
-
 
 .top-info{
-
 display:flex;
-
 align-items:center;
-
 gap:12px;
-
 flex-wrap:wrap;
-
 }
-
-
 
 .info-card{
-
 background:rgba(255,255,255,0.08);
-
 padding:10px 16px;
-
 border-radius:14px;
-
 font-size:14px;
-
 backdrop-filter:blur(10px);
-
 border:1px solid rgba(255,255,255,0.05);
-
 }
-
-
 
 /* ===== أزرار علوية ===== */
 
-
-
 .quick-actions{
-
 padding:15px 20px;
-
 display:flex;
-
 gap:12px;
-
 overflow-x:auto;
-
 scrollbar-width:none;
-
 }
-
-
 
 .quick-actions::-webkit-scrollbar{
-
 display:none;
-
 }
-
-
 
 .action-btn{
-
 min-width:max-content;
-
 padding:12px 18px;
-
 border:none;
-
 border-radius:14px;
-
 background:rgba(255,255,255,0.08);
-
 color:white;
-
 cursor:pointer;
-
 font-weight:700;
-
 transition:0.3s;
-
 border:1px solid rgba(255,255,255,0.06);
-
 backdrop-filter:blur(10px);
-
 }
-
-
 
 .action-btn:hover{
-
 transform:translateY(-3px);
-
 background:linear-gradient(135deg,#2563eb,#7c3aed);
-
 }
-
-
 
 /* ===== التخطيط ===== */
 
-
-
 .main-layout{
-
 display:grid;
-
 grid-template-columns:260px 1fr 260px;
-
 gap:20px;
-
 padding:20px;
-
 min-height:calc(100vh - 150px);
-
 }
-
-
 
 /* ===== القوائم ===== */
 
-
-
 .sidebar{
-
 background:rgba(255,255,255,0.08);
-
 border-radius:24px;
-
 padding:20px;
-
 backdrop-filter:blur(14px);
-
 border:1px solid rgba(255,255,255,0.06);
-
 height:fit-content;
-
 }
-
-
 
 .sidebar-title{
-
 font-size:22px;
-
 font-weight:800;
-
 margin-bottom:22px;
-
 text-align:center;
-
 background:linear-gradient(90deg,#60a5fa,#c084fc);
-
 -webkit-background-clip:text;
-
 -webkit-text-fill-color:transparent;
-
 }
-
-
 
 .menu{
-
 padding:15px;
-
 margin-bottom:12px;
-
 border-radius:16px;
-
 cursor:pointer;
-
 transition:0.3s;
-
 background:rgba(255,255,255,0.07);
-
 border:1px solid rgba(255,255,255,0.05);
-
 font-weight:700;
-
 display:flex;
-
 align-items:center;
-
 gap:10px;
-
 }
-
-
 
 .menu:hover{
-
 transform:translateX(-5px);
-
 background:linear-gradient(135deg,#2563eb,#7c3aed);
-
 }
-
-
 
 hr{
-
 border:none;
-
 height:1px;
-
 background:rgba(255,255,255,0.08);
-
 margin:18px 0;
-
 }
-
-
 
 /* ===== الوسط ===== */
 
-
-
 .center-area{
-
 display:flex;
-
 flex-direction:column;
-
 gap:20px;
-
 }
-
-
 
 .stats{
-
 display:grid;
-
 grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-
 gap:18px;
-
 }
-
-
 
 .stat-card{
-
 background:rgba(255,255,255,0.08);
-
 padding:22px;
-
 border-radius:24px;
-
 backdrop-filter:blur(14px);
-
 border:1px solid rgba(255,255,255,0.05);
-
 transition:0.3s;
-
 }
-
-
 
 .stat-card:hover{
-
 transform:translateY(-5px);
-
 }
-
-
 
 .stat-top{
-
 display:flex;
-
 justify-content:space-between;
-
 align-items:center;
-
 margin-bottom:15px;
-
 }
-
-
 
 .stat-icon{
-
 width:52px;
-
 height:52px;
-
 border-radius:16px;
-
 display:flex;
-
 align-items:center;
-
 justify-content:center;
-
 font-size:24px;
-
 background:linear-gradient(135deg,#2563eb,#7c3aed);
-
 }
-
-
 
 .stat-title{
-
 font-size:14px;
-
 color:#cbd5e1;
-
 }
-
-
 
 .stat-number{
-
 font-size:28px;
-
 font-weight:800;
-
 }
-
-
 
 /* ===== الصورة ===== */
 
-
-
 .hero-box{
-
 background:rgba(255,255,255,0.08);
-
 border-radius:28px;
-
 padding:20px;
-
 backdrop-filter:blur(14px);
-
 border:1px solid rgba(255,255,255,0.05);
-
 display:flex;
-
 align-items:center;
-
 justify-content:center;
-
 min-height:420px;
-
 overflow:hidden;
-
 }
-
-
 
 .hero-box img{
-
 width:100%;
-
 max-height:500px;
-
-object-fit:contain;
-
+object-fit:cover;
 border-radius:20px;
-
 }
-
-
 
 /* ===== النافذة ===== */
 
-
-
 .modal{
-
 display:none;
-
 position:fixed;
-
 top:0;
-
 left:0;
-
 width:100%;
-
 height:100%;
-
 background:rgba(0,0,0,0.55);
-
 z-index:9999;
-
 align-items:center;
-
 justify-content:center;
-
 padding:20px;
-
 }
-
-
 
 .modal-content{
-
 background:white;
-
 width:100%;
-
 max-width:400px;
-
 border-radius:24px;
-
 padding:25px;
-
 color:#111827;
-
 box-shadow:0 20px 40px rgba(0,0,0,0.4);
-
 }
-
-
 
 .modal-content h3{
-
 margin-bottom:20px;
-
 font-size:24px;
-
 font-weight:800;
-
 text-align:center;
-
 }
-
-
 
 .modal-content input{
-
 width:100%;
-
 padding:14px;
-
 border-radius:14px;
-
 border:1px solid #d1d5db;
-
 margin-bottom:15px;
-
 font-family:'Cairo',Tahoma,sans-serif;
-
 }
-
-
 
 .modal-content input:focus{
-
 outline:none;
-
 border-color:#2563eb;
-
 box-shadow:0 0 0 4px rgba(37,99,235,0.12);
-
 }
-
-
 
 .modal-buttons{
-
 display:flex;
-
 gap:10px;
-
 }
-
-
 
 .modal-buttons button{
-
 flex:1;
-
 padding:12px;
-
 border:none;
-
 border-radius:14px;
-
 cursor:pointer;
-
 font-weight:700;
-
 font-family:'Cairo',Tahoma,sans-serif;
-
 }
-
-
 
 .save-btn{
-
 background:linear-gradient(135deg,#2563eb,#7c3aed);
-
 color:white;
-
 }
-
-
 
 .cancel-btn{
-
 background:#e5e7eb;
-
 }
-
-
 
 /* ===== موبايل ===== */
 
-
-
 @media(max-width:1100px){
 
-
-
 .main-layout{
-
 grid-template-columns:1fr;
-
 }
-
-
 
 .sidebar{
-
 width:100%;
-
 }
 
-
-
 }
-
-
 
 @media(max-width:768px){
 
-
-
 .header{
-
 padding:15px;
-
 }
-
-
 
 .brand-text h1{
-
 font-size:20px;
-
 }
-
-
 
 .logo{
-
 width:52px;
-
 height:52px;
-
 font-size:22px;
-
 }
-
-
 
 .quick-actions{
-
 padding:12px;
-
 }
-
-
 
 .action-btn{
-
 padding:10px 14px;
-
 font-size:14px;
-
 }
-
-
 
 .stats{
-
 grid-template-columns:1fr;
-
 }
-
-
 
 .hero-box{
-
 min-height:250px;
-
 padding:12px;
-
 }
-
-
 
 .menu{
-
 padding:13px;
-
 font-size:15px;
-
 }
 
-
-
 }
-
-
 
 ::-webkit-scrollbar{
-
 width:8px;
-
 height:8px;
-
 }
-
-
 
 ::-webkit-scrollbar-thumb{
-
 background:#7c3aed;
-
 border-radius:20px;
-
 }
-
-
 
 </style>
 
-
-
 </head>
-
-
 
 <body>
 
-
-
-<!-- ===== الهيدر ===== -->
-
-
-
 <div class="header">
-
-
 
 <div class="header-flex">
 
-
-
 <div class="brand-box">
 
-
-
 <div class="logo">
-
 💼
-
 </div>
-
-
 
 <div class="brand-text">
-
 <h1 id="storeHeader">نظام إدارة المبيعات</h1>
-
 <p>
-
 🏪 <span id="storeName">ABM للتجارة والاستثمار</span>
-
 </p>
-
 </div>
 
-
-
 </div>
-
-
 
 <div class="top-info">
 
-
-
 <div class="info-card">
-
 👤 <span id="usernameDisplay"></span>
-
 </div>
-
-
 
 <div class="info-card" id="clock"></div>
 
-
-
 <div class="info-card cursor-pointer" onclick="editPassword()">
-
 🔒 كلمة المرور
+</div>
 
 </div>
 
-
-
 </div>
 
-
-
 </div>
-
-
-
-</div>
-
-
-
-<!-- ===== الأزرار السريعة ===== -->
-
-
 
 <div class="quick-actions">
-
  
-
 <button onclick="go('products_report.html')" class="action-btn">
-
 📦 تفاصيل المنتجات
-
 </button>
-
 <button onclick="go('sales_reports.html')" class="action-btn">
-
 📦 تقييم ارباح المنتجات
-
 </button>
-
-
 
 <button onclick="go('sales_return.html')" class="action-btn">
-
  🔄  المرتجعات
-
 </button>
-
-
 
 <button onclick="go('invoice.html')" class="action-btn">
-
 ✅ ادارة الفواتير  
-
 </button>
-
-
 
 <button onclick="go('backup.html')" class="action-btn">
-
 💾 نسخة احتياطية
-
 </button>
-
-
 
 <button onclick="go('restore.html')" class="action-btn">
-
 ♻️ استعادة
-
 </button>
-
-
 
 <button onclick="go('dashboard.html')" class="action-btn">
-
 📊 لوحة التحكم
-
 </button>
-
-
 
 <button onclick="go('settings.html')" class="action-btn">
-
 ⚙ إعدادات
-
 </button>
 
-
-
 </div>
-
-
-
-<!-- ===== المحتوى ===== -->
-
-
 
 <div class="main-layout">
 
-
-
-<!-- القائمة اليمنى -->
-
-
-
 <div class="sidebar">
 
-
-
 <div class="sidebar-title">
-
 القائمة الرئيسية
-
 </div>
-
-
 
 <div class="menu" onclick="go('categories.html')">
-
 📂 الأصناف
-
 </div>
-
-
 
 <div class="menu" onclick="go('products.html')">
-
 📦 المنتجات
-
 </div>
-
-
 
 <div class="menu" onclick="go('customers.html')">
-
 👥 العملاء
-
 </div>
-
-
 
 <div class="menu" onclick="go('importer.html')">
-
 🚚 الموردين
-
 </div>
 
-
-
 <hr>
-
-
 
 <div class="menu" onclick="go('tb_users.html')">
-
 👥 إدارة المستخدمين
-
 </div>
-
 <div class="menu" onclick="go('loans.html')">
-
 💰 القروض
-
 </div>
-
 <div class="menu" onclick="go('loan_statement.html')">
-
 📄 سداد القروض
-
 </div>
-
-
 
 <hr>
 
-
-
 <div class="menu" onclick="go('coast_value.html')">
-
 💸 المصروفات
-
 </div>
 
-
-
 </div>
-
-
-
-<!-- الوسط -->
-
-
 
 <div class="center-area">
 
-
-
 <div class="stats">
 
-
-
 <div class="stat-card">
-
 <div class="stat-top">
-
 <div>
-
 <div class="stat-title">*</div>
-
 <div class="stat-number">24/7</div>
-
 </div>
-
-
 
 <div class="stat-icon">📦</div>
-
 </div>
-
 </div>
-
-
 
 <div class="stat-card">
-
 <div class="stat-top">
-
 <div>
-
 <div class="capital_report.html">*</div>
-
 <div class="stat-number">100%</div>
-
 </div>
-
-
 
 <div class="stat-icon">⚡</div>
-
 </div>
-
 </div>
-
-
 
 <div class="stat-card">
-
 <div class="stat-top">
-
 <div>
-
 <div class="stat-title">إد*</div>
-
 <div class="stat-number">CRM</div>
-
 </div>
-
-
 
 <div class="stat-icon">👥</div>
-
+</div>
 </div>
 
 </div>
-
-
-
-</div>
-
-
 
 <div class="hero-box">
 
-
-
-<img src="pic14.webp"
-
+<img src="https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=1000&auto=format&fit=crop"
 loading="lazy"
-
-alt="sales dashboard">
-
-
+alt="clothing store dashboard">
 
 </div>
 
-
-
 </div>
-
-<!-- القائمة اليسرى -->
-
-
-
 <div class="sidebar">
 
-
-
 <div class="sidebar-title">
-
 العمليات
-
 </div>
-
-
 
 <div class="menu" onclick="go('sales_pos.html')">
-
 🛒 المبيعات
-
 </div>
-
-
 
 <div class="menu" onclick="go('products_report_simple.html')">
-
 📈 تحليل المنتجات
-
 </div>
-
 <div class="menu" onclick="go('capital_report.html')">
-
 📈 تحليل رأس المال
-
 </div>
-
  <div class="menu" onclick="go('profits_reports.html')">
-
 💵 الأرباح  بالمدة
-
 </div>
-
 <div class="menu" onclick="go('profits_report.html')">
-
 💵 الأرباح
-
 </div>
-
-
 
 <hr>
 
-
-
 <div class="menu" onclick="go('products_weight_report.html')">
-
 ⚖ الأوزان
-
 </div>
-
-
 
 <div class="menu"
-
 style="background:linear-gradient(135deg,#ef4444,#dc2626);"
-
 onclick="logout()">
-
 🚪 خروج
+</div>
 
 </div>
 
-
-
 </div>
-
-
-
-</div>
-
-
-
-<!-- ===== نافذة كلمة المرور ===== -->
-
-
 
 <div id="passwordBox" class="modal">
 
-
-
 <div class="modal-content">
-
-
 
 <h3>تغيير كلمة المرور</h3>
 
-
-
 <input type="password" id="oldPass" placeholder="كلمة المرور القديمة">
-
-
 
 <input type="password" id="newPass" placeholder="كلمة المرور الجديدة">
 
-
-
 <div class="modal-buttons">
 
-
-
 <button onclick="savePassword()" class="save-btn">
-
 حفظ
-
 </button>
-
-
 
 <button onclick="closePassword()" class="cancel-btn">
-
 إلغاء
-
 </button>
 
-
+</div>
 
 </div>
 
-
-
 </div>
-
-
-
-</div>
-
-
 
 <script>
 
-
-
 function go(page){
-
 window.location.href = page;
-
 }
 
-
-
 const supabaseClient = supabase.createClient(
-
 "https://vmxbedovoahuggfpcmyk.supabase.co",
-
 "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-
 )
-
-
 
 function loadStore(){
 
-
-
 let name = localStorage.getItem("storeName") || "ABM للتجارة والاستثمار"
-
 let header = localStorage.getItem("storeHeader") || "نظام إدارة المبيعات"
 
-
-
 document.getElementById("storeName").innerText = name
-
 document.getElementById("storeHeader").innerText = header
 
-
-
 }
-
-
 
 loadStore()
 
-
-
 function updateClock(){
-
-
 
 let now = new Date()
 
-
-
 document.getElementById("clock").innerHTML =
-
 "🕒 " + now.toLocaleTimeString() + " | " + now.toLocaleDateString()
-
-
 
 }
 
-
-
 updateClock()
-
 setInterval(updateClock,1000)
-
-
 
 document.addEventListener("DOMContentLoaded", function(){
 
-
-
 let user = localStorage.getItem("user")
-
-
 
 if(!user){
 
-
-
 window.location = "index.html"
-
 return
 
-
-
 }
-
-
 
 document.getElementById("usernameDisplay").textContent = user
 
-
-
 })
-
-
 
 function logout(){
 
-
-
 localStorage.clear()
-
 window.location = "index.html"
 
-
-
 }
-
-
 
 function editPassword(){
 
-
-
 document.getElementById("passwordBox").style.display = "flex"
 
-
-
 }
-
-
 
 function closePassword(){
 
-
-
 document.getElementById("passwordBox").style.display = "none"
 
-
-
 }
-
-
 
 async function savePassword(){
 
-
-
 let username = localStorage.getItem("user")
-
 let oldPass = document.getElementById("oldPass").value
-
 let newPass = document.getElementById("newPass").value
-
-
 
 if(!oldPass || !newPass){
 
-
-
 alert("أدخل جميع البيانات")
-
 return
-
-
 
 }
 
-
-
 const {data,error} = await supabaseClient
-
 .from("tb_users")
-
 .select("*")
-
 .eq("fullname",username)
-
 .eq("pwd",oldPass)
-
 .single()
-
-
 
 if(error || !data){
 
-
-
 alert("كلمة المرور غير صحيحة")
-
 return
-
-
 
 }
 
-
-
 const {error:updateError} = await supabaseClient
-
 .from("tb_users")
-
 .update({pwd:newPass})
-
 .eq("fullname",username)
-
-
 
 if(updateError){
 
-
-
 alert("خطأ في التحديث")
-
 return
 
-
-
 }
-
-
 
 alert("تم التغيير بنجاح")
 
-
-
 closePassword()
-
-
 
 }
 
-
-
 feather.replace()
-
-
 
 </script>
 
-
-
 </body>
-
 </html>
