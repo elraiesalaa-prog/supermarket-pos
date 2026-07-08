@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر الأزياء الإلكتروني</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- شريط علوي -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🛍️</span>
+                <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">ABM للملبوسات</span>
+            </div>
+            
+            <a href="cart.html" class="relative bg-slate-100 hover:bg-slate-200 p-2.5 rounded-xl transition flex items-center gap-2 font-bold text-sm">
+                <span>🛒 سلة المشتريات</span>
+                <span id="cartCount" class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- الواجهة الترحيبية -->
+    <header class="relative bg-slate-900 text-white overflow-hidden py-16 px-4 text-center">
+        <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000&auto=format&fit=crop');"></div>
+        <div class="relative max-w-2xl mx-auto z-10">
+            <h1 class="text-3xl md:text-5xl font-extrabold mb-4">أحدث صيحات الموضة والأزياء</h1>
+            <p class="text-sm md:text-base text-slate-300">اكتشف تشكيلتنا الجديدة المتميزة المتزامنة مباشرة مع مخازننا.</p>
+        </div>
+    </header>
+
+    <!-- عرض الملبوسات -->
+    <main class="max-w-7xl mx-auto px-4 py-10">
+        <h2 class="text-xl md:text-2xl font-bold mb-6 flex items-center gap-2">✨ أحدث معروضاتنا</h2>
+        
+        <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="col-span-full text-center py-12 text-slate-400 text-sm">جاري تحديث الملبوسات من سوبابيز...</div>
+        </div>
+    </main>
+
+    <script>
+        // إعداد العميل لـ سوبابيز بنفس بيانات لوحة المدير الخاصة بك
+        const supabaseClient = supabase.createClient(
+            "https://vmxbedovoahuggfpcmyk.supabase.co",
+            "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+        );
+
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
+
+        // جلب المنتجات الحية من جدول المنتجات التابع لك
+        async function fetchProducts() {
+            try {
+                // جلب اسم المنتج، سعر البيع (يفترض وجود حقل للبيع أو نستخدم coasts_value كمثال)، والمعرف
+                const { data, error } = await supabaseClient
+                    .from("products")
+                    .select("*");
+
+                if (error) throw error;
+                products = data;
+                renderProducts();
+            } catch (error) {
+                console.error("خطأ أثناء جلب البيانات:", error);
+                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-red-500">عذراً، فشل الاتصال بقاعدة البيانات الحية.</div>`;
+            }
+            updateCartCount();
+        }
+
+        function renderProducts() {
+            let html = "";
+            if(products.length === 0) {
+                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">لا توجد منتجات معروضة حالياً.</div>`;
+                return;
+            }
+
+            products.forEach(p => {
+                // نعتمد على حقل السعر المتوفر لديك، وإذا لم يتوفر رابط صورة نضع صورة ملابس افتراضية أنيقة
+                let price = p.sell_price || p.coasts_value || 0;
+                let imgUrl = p.image_url || "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500";
+                
+                html += `
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-slate-100 transition flex flex-col justify-between">
+                    <img src="${imgUrl}" alt="${p.product_name}" class="w-full h-56 object-cover bg-slate-100">
+                    <div class="p-4 flex-1 flex flex-col justify-between gap-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base line-clamp-2">${p.product_name}</h3>
+                            <div class="text-blue-600 font-extrabold text-lg mt-1">${Number(price).toFixed(2)} ج.م</div>
+                        </div>
+                        <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition text-sm">
+                            ➕ إضافة للسلة
+                        </button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById("productsGrid").innerHTML = html;
+        }
+
+        function addToCart(id) {
+            const product = products.find(p => p.id_product === id);
+            if (!product) return;
+
+            const existingItem = cart.find(item => item.id_product === id);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+
+            localStorage.setItem('customerCart', JSON.stringify(cart));
+            updateCartCount();
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById("cartCount").innerText = count;
+        }
+
+        fetchProducts();
+    </script>
+</body>
+</html>
