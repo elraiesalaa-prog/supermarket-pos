@@ -52,7 +52,6 @@
         let products = [];
         let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
 
-        // جلب المنتجات الحية من جدول المنتجات التابع لك
         async function fetchProducts() {
             try {
                 const { data, error } = await supabaseClient
@@ -69,6 +68,31 @@
             updateCartCount();
         }
 
+        // دالة ديناميكية متطورة لاستخراج السعر مهما كان اسم الحقل في جدولك
+        function extractProductPrice(product) {
+            // 1. الفحص المبدئي بناءً على المسميات الأكثر شيوعاً في الأنظمة المحاسبية
+            const commonKeys = ['sell_price', 'price_sell', 'product_price', 'coasts_value', 'price', 'unit_price'];
+            for (let key of commonKeys) {
+                if (product[key] !== undefined && product[key] !== null && Number(product[key]) > 0) {
+                    return Number(product[key]);
+                }
+            }
+
+            // 2. فحص تلقائي شامل لجميع حقول الكائن في حال كان الحقل يمتلك اسماً مخصصاً تماماً
+            for (let key in product) {
+                // تجنب قراءة المعرفات والكميات كأنها أسعار
+                if (key.toLowerCase().includes('id') || key.toLowerCase().includes('qte') || key.toLowerCase().includes('quantity') || key.toLowerCase().includes('count')) {
+                    continue;
+                }
+                const value = Number(product[key]);
+                // إذا وجدنا أي حقل عددي قيمته أكبر من 0 نعتبره السعر الافتراضي المتوفر
+                if (!isNaN(value) && value > 0) {
+                    return value;
+                }
+            }
+            return 0; // القيمة الافتراضية إذا كان المنتج مجانياً أو فارغ السعر
+        }
+
         function renderProducts() {
             let html = "";
             if(products.length === 0) {
@@ -77,20 +101,23 @@
             }
 
             products.forEach(p => {
-                // دالة ذكية للبحث عن السعر الصحيح بناءً على المسميات الشائعة في نظامك (سعر بيع، قيمة، أو تكلفة)
-                let price = p.sell_price || p.price_sell || p.product_price || p.coasts_value || p.price || 0;
-                
+                // استخراج السعر والاسم ديناميكياً
+                let price = extractProductPrice(p);
+                let productName = p.product_name || p.name || Object.values(p).find(val => typeof val === 'string') || "منتج غير مسمى";
                 let imgUrl = p.image_url || "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500";
                 
+                // البحث عن حقل المعرّف الفريد ديناميكياً لحساب إضافة السلة
+                let idProduct = p.id_product || p.id || Object.values(p).find(val => typeof val === 'number');
+
                 html += `
                 <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-slate-100 transition flex flex-col justify-between">
-                    <img src="${imgUrl}" alt="${p.product_name}" class="w-full h-56 object-cover bg-slate-100">
+                    <img src="${imgUrl}" alt="${productName}" class="w-full h-56 object-cover bg-slate-100">
                     <div class="p-4 flex-1 flex flex-col justify-between gap-3">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-base line-clamp-2">${p.product_name || p.name}</h3>
+                            <h3 class="font-bold text-slate-800 text-base line-clamp-2">${productName}</h3>
                             <div class="text-blue-600 font-extrabold text-lg mt-1">${Number(price).toFixed(2)} ج.م</div>
                         </div>
-                        <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition text-sm">
+                        <button onclick="handleAddToCartClick(${idProduct}, ${price})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition text-sm">
                             ➕ إضافة للسلة
                         </button>
                     </div>
@@ -99,17 +126,24 @@
             document.getElementById("productsGrid").innerHTML = html;
         }
 
-        function addToCart(id) {
-            const product = products.find(p => p.id_product === id);
+        function handleAddToCartClick(id, activePrice) {
+            // البحث عن المنتج بالمعرف الديناميكي
+            const product = products.find(p => (p.id_product || p.id) === id);
             if (!product) return;
 
-            const existingItem = cart.find(item => item.id_product === id);
+            const targetId = product.id_product || product.id;
+            const existingItem = cart.find(item => (item.id_product || item.id) === targetId);
+
             if (existingItem) {
                 existingItem.quantity += 1;
             } else {
-                // التأكد من حفظ السعر الصحيح داخل السلة أيضاً
-                let finalPrice = product.sell_price || product.price_sell || product.product_price || product.coasts_value || product.price || 0;
-                cart.push({ ...product, quantity: 1, sell_price: finalPrice });
+                cart.push({ 
+                    ...product, 
+                    id_product: targetId,
+                    product_name: product.product_name || product.name,
+                    quantity: 1, 
+                    sell_price: activePrice 
+                });
             }
 
             localStorage.setItem('customerCart', JSON.stringify(cart));
