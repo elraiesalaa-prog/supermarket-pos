@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سلة المشتريات - إتمام الطلب</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-xl md:text-3xl font-extrabold text-slate-800 flex items-center gap-2">🛒 سلة المشتريات</h1>
+            <a href="store.html" class="text-blue-600 hover:underline font-bold text-sm">⬅️ العودة للمتجر</a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- قائمة المشتريات -->
+            <div class="lg:col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                <h2 class="font-bold text-slate-700 mb-4 border-b pb-2">القطع المختارة</h2>
+                <div id="cartItems" class="divide-y divide-slate-100"></div>
+            </div>
+
+            <!-- بيانات التوصيل وحفظ الطلب -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 h-fit space-y-4">
+                <h2 class="font-bold text-slate-700 border-b pb-2">بيانات مستلم الشحنة</h2>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">الاسم الكامل</label>
+                    <input type="text" id="clientName" placeholder="محمد الشريف..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">رقم الهاتف للاتصال</label>
+                    <input type="tel" id="clientPhone" placeholder="01xxxxxxxxx" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 text-left" dir="ltr">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">عنوان الشحن بالتفصيل</label>
+                    <input type="text" id="clientAddress" placeholder="المنطقة، الشارع، رقم الشقة..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+
+                <div class="border-t pt-3 flex justify-between items-center font-bold text-lg">
+                    <span class="text-slate-600">إجمالي الحساب:</span>
+                    <span id="cartTotal" class="text-emerald-600">0.00 ج.م</span>
+                </div>
+
+                <button onclick="submitOrder()" id="btnSubmit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition">
+                    🛍️ إرسال الطلب للنظام سوبابيز
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const supabaseClient = supabase.createClient(
+            "https://vmxbedovoahuggfpcmyk.supabase.co",
+            "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+        );
+
+        let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
+
+        function renderCart() {
+            let html = "";
+            let total = 0;
+
+            if(cart.length === 0) {
+                document.getElementById("cartItems").innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">سلتك فارغة تماماً.</div>`;
+                document.getElementById("cartTotal").innerText = "0.00 ج.م";
+                return;
+            }
+
+            cart.forEach((item, index) => {
+                let price = item.sell_price || item.coasts_value || 0;
+                let subtotal = price * item.quantity;
+                total += subtotal;
+
+                html += `
+                <div class="flex items-center gap-3 py-3">
+                    <div class="flex-1">
+                        <h4 class="font-bold text-slate-800 text-sm">${item.product_name}</h4>
+                        <p class="text-xs text-slate-400">${Number(price).toFixed(2)} ج.م × ${item.quantity}</p>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="changeQty(${index}, -1)" class="w-7 h-7 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200">-</button>
+                        <span class="font-bold text-sm w-5 text-center">${item.quantity}</span>
+                        <button onclick="changeQty(${index}, 1)" class="w-7 h-7 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200">+</button>
+                    </div>
+                    <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-600 font-bold text-xs p-1">❌</button>
+                </div>`;
+            });
+
+            document.getElementById("cartItems").innerHTML = html;
+            document.getElementById("cartTotal").innerText = total.toFixed(2) + " ج.م";
+        }
+
+        function changeQty(index, change) {
+            cart[index].quantity += change;
+            if (cart[index].quantity <= 0) cart.splice(index, 1);
+            localStorage.setItem('customerCart', JSON.stringify(cart));
+            renderCart();
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('customerCart', JSON.stringify(cart));
+            renderCart();
+        }
+
+        // إدراج الفاتورة والعمليات في سوبابيز مباشرة لتظهر بلوحة تحكم المدير التابعة لك
+        async function submitOrder() {
+            const name = document.getElementById("clientName").value.trim();
+            const phone = document.getElementById("clientPhone").value.trim();
+            const address = document.getElementById("clientAddress").value.trim();
+
+            if(!name || !phone || !address) return alert("الرجاء تعبئة بيانات الشحن كاملة!");
+            if(cart.length === 0) return alert("السلة فارغة!");
+
+            const btn = document.getElementById("btnSubmit");
+            btn.disabled = true;
+            btn.innerText = "جاري ترحيل الطلب...";
+
+            try {
+                // تحضير مصفوفة الحركات لإدخالها دفعة واحدة في جدول تفاصيل العمليات/المبيعات الخاص بك
+                const ordersToInsert = cart.map(item => ({
+                    product_name: `[طلب متجر من: ${name} - هاتف: ${phone}] ` + item.product_name,
+                    quantity: item.quantity,
+                    sell_price: item.sell_price || item.coasts_value || 0
+                }));
+
+                // ترحيل البيانات إلى سوبابيز مباشرة في جدول المبيعات
+                const { error } = await supabaseClient
+                    .from("orders_details")
+                    .insert(ordersToInsert);
+
+                if (error) throw error;
+
+                alert("🎉 ممتاز! تم استلام طلبك بنجاح، وظهر الآن مباشرة في لوحة إدارة المدير التابعة للمتجر.");
+                localStorage.removeItem('customerCart');
+                window.location.href = "store.html";
+
+            } catch (error) {
+                console.error(error);
+                alert("حدث خطأ أثناء إرسال الطلب، تأكد من مطابقة أسماء جداولك وحقولك المحاسبية.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
+            }
+        }
+
+        renderCart();
+    </script>
+</body>
+</html>
