@@ -238,6 +238,7 @@ document.getElementById("product_image_file").addEventListener("change", functio
 });
 
 // حفظ المنتج
+// حفظ المنتج المطور (يمنع مسح الصورة القديمة عند التعديل)
 async function saveProduct(){
     const btnSave = document.getElementById("btnSave");
     btnSave.disabled = true;
@@ -247,6 +248,8 @@ async function saveProduct(){
     let piceQte = Number(pice_qte.value) || 0
     let stockCalculated = payQte * piceQte
 
+    // إذا كنا في وضع التعديل (edit_id ليس فارغاً) ولم يقم المستخدم باختيار صورة جديدة، 
+    // نقوم بجلب الصورة القديمة المحفوظة في متغير base64_image_string
     let data = {
         product_name: product_name.value || null,
         pay_qte: payQte,
@@ -260,7 +263,7 @@ async function saveProduct(){
         coasts_value: Number(coasts_value.value) || 0,
         id_cat: Number(id_cat.value) || 1,
         p_weight: p_weight.value || null,
-        image_product: base64_image_string // حفظ الصورة الحقيقية كنص في حقل image_product
+        image_product: base64_image_string // سيحتفظ بالصورة القديمة أو يضع الجديدة إذا رُفعت
     }
 
     try {
