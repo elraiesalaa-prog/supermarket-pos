@@ -38,7 +38,7 @@
     <main class="max-w-7xl mx-auto px-4 py-10">
         <h2 class="text-xl md:text-2xl font-bold mb-6">✨ أحدث معروضاتنا المتاحة</h2>
         <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            </div>
+        </div>
     </main>
 
     <script>
@@ -54,12 +54,10 @@
             try {
                 const { data, error } = await supabaseClient.from("products").select("*");
                 
-                // إذا كانت البيانات قادمة بنجاح وليست فارغة
                 if (!error && data && data.length > 0) {
                     products = data;
                     console.log("تم جلب البيانات الحية من سوبابيز:", products);
                 } else {
-                    // إذا عادت فارغة بسبب حماية RLS نقوم بتشغيل البيانات الاحتياطية فوراً لتأمين المتجر
                     throw new Error("قاعدة البيانات فارغة أو محمية");
                 }
             } catch (error) {
@@ -68,7 +66,8 @@
                     { id_product: 101, product_name: "عباءة شرقية فاخرة", seal_price: 650, qte_in_stock: 12 },
                     { id_product: 102, product_name: "قميص قطن تركي كاجوال", seal_price: 380, qte_in_stock: 25 },
                     { id_product: 103, product_name: "فستان سهرة أنيق زفاف", seal_price: 1200, qte_in_stock: 5 },
-                    { id_product: 104, product_name: "بنطال جينز أزرق عصري", seal_price: 420, qte_in_stock: 18 }
+                    { id_product: 104, product_name: "بنطال جينز أزرق عصري", seal_price: 420, qte_in_stock: 18 },
+                    { id_product: 105, product_name: "تيشيرت صيفي (مثال لمنتهي المخزون)", seal_price: 250, qte_in_stock: 0 } // لن يظهر
                 ];
             }
             renderProducts();
@@ -77,19 +76,31 @@
 
         function renderProducts() {
             let html = "";
-            products.forEach(p => {
+            let fallbackImg = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500"; 
+            
+            // تصفية وعرض المنتجات التي تمتلك مخزون أكبر من صفر فقط
+            const availableProducts = products.filter(p => (Number(p.qte_in_stock) || 0) > 0);
+
+            if (availableProducts.length === 0) {
+                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">لا توجد منتجات متاحة في المخزون حالياً.</div>`;
+                return;
+            }
+
+            availableProducts.forEach(p => {
                 let price = Number(p.seal_price) || 0;
                 let productName = p.product_name || "منتج غير مسمى";
-                let imgUrl = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500"; 
+                
+                // قراءة رابط الصورة الحقيقي المرفوع من جدول السلع، وإلا العودة للصورة الافتراضية
+                let imgUrl = p.image_url || fallbackImg;
                 
                 html += `
                 <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between p-4">
-                    <img src="${imgUrl}" alt="${productName}" class="w-full h-48 object-cover rounded-xl bg-gray-100 mb-3">
+                    <img src="${imgUrl}" alt="${productName}" class="w-full h-48 object-cover rounded-xl bg-gray-100 mb-3" onerror="this.src='${fallbackImg}'">
                     <div class="flex-1 flex flex-col justify-between gap-2">
                         <div>
                             <h3 class="font-bold text-gray-800 text-sm line-clamp-2">${productName}</h3>
                             <div class="text-blue-600 font-extrabold text-base mt-1">${price.toFixed(2)} ج.م</div>
-                            <span class="text-xs text-gray-400 mt-1 block">المخزون: ${p.qte_in_stock || 0} قطع</span>
+                            <span class="text-xs text-gray-400 mt-1 block">المخزون: ${p.qte_in_stock} قطع</span>
                         </div>
                         <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition text-xs mt-2">
                             ➕ إضافة للسلة
