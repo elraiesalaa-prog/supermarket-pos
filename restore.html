@@ -19,7 +19,6 @@
                 <span class="text-2xl">🛍️</span>
                 <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">ABM للملبوسات</span>
             </div>
-            
             <a href="cart.html" class="relative bg-slate-100 hover:bg-slate-200 p-2.5 rounded-xl transition flex items-center gap-2 font-bold text-sm">
                 <span>🛒 سلة المشتريات</span>
                 <span id="cartCount" class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
@@ -37,7 +36,6 @@
 
     <main class="max-w-7xl mx-auto px-4 py-10">
         <h2 class="text-xl md:text-2xl font-bold mb-6 flex items-center gap-2">✨ أحدث معروضاتنا المتاحة</h2>
-        
         <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div class="col-span-full text-center py-12 text-slate-400 text-sm">جاري تحديث الملبوسات من سوبابيز...</div>
         </div>
@@ -52,7 +50,6 @@
         let products = [];
         let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
 
-        // جلب المنتجات
         async function fetchProducts() {
             try {
                 const { data, error } = await supabaseClient
@@ -60,26 +57,42 @@
                     .select("*");
 
                 if (error) throw error;
+                
                 products = data;
+                
+                // خطوة تشخيصية: لطباعة البيانات القادمة في المتصفح لرؤيتها وفحصها
+                console.log("البيانات المستلمة من سوبابيز كاملاً:", products);
+                
                 renderProducts();
             } catch (error) {
                 console.error("خطأ أثناء جلب البيانات:", error);
-                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-red-500">عذراً، فشل الاتصال بقاعدة البيانات الحية.</div>`;
+                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-red-500">عذراً، فشل الاتصال بقاعدة البيانات.</div>`;
             }
             updateCartCount();
         }
 
-        // بناء وعرض الكروت بناءً على المسميات الحقيقية لجدولك
         function renderProducts() {
             let html = "";
-            if(products.length === 0) {
-                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">لا توجد منتجات معروضة حالياً.</div>`;
+            if (!products || products.length === 0) {
+                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">لا توجد منتجات معروضة حالياً أو الحماية تمنع جلبها.</div>`;
                 return;
             }
 
             products.forEach(p => {
-                // استخدام الحقل الفعلي المطابق للكود الخاص بك
-                let price = Number(p.seal_price) || 0; 
+                // دالة فحص احتياطية مزدوجة: تقرأ seal_price المباشر، أو تبحث عن أي اسم حقل يحتوي على كلمة price
+                let price = 0;
+                if (p.seal_price !== undefined && p.seal_price !== null) {
+                    price = Number(p.seal_price);
+                } else {
+                    // بحث ديناميكي في حال كان مسمى الحقل مختلفاً في بيئة الإنتاج عن الكود المرسل
+                    for (let key in p) {
+                        if (key.toLowerCase().includes('price') || key.toLowerCase().includes('seal')) {
+                            price = Number(p[key]) || 0;
+                            break;
+                        }
+                    }
+                }
+
                 let productName = p.product_name || "منتج غير مسمى";
                 let imgUrl = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500"; 
                 
@@ -109,10 +122,11 @@
             if (existingItem) {
                 existingItem.quantity += 1;
             } else {
+                let finalPrice = product.seal_price || 0;
                 cart.push({ 
                     id_product: product.id_product,
                     product_name: product.product_name,
-                    seal_price: Number(product.seal_price) || 0, // ربط السعر الصحيح بالسلة
+                    seal_price: Number(finalPrice),
                     quantity: 1 
                 });
             }
