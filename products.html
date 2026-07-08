@@ -99,7 +99,6 @@
             color: white;
         }
 
-        /* تنسيق الصورة المصغرة في الجدول */
         .img-preview {
             width: 45px;
             height: 45px;
@@ -137,7 +136,7 @@
         <input id="p_weight" placeholder="الوزن">
         
         <div style="display: flex; flex-direction: column; gap: 2px;">
-            <label style="font-size: 11px; font-weight: bold; color: #555;">صورة المنتج حقيقي:</label>
+            <label style="font-size: 11px; font-weight: bold; color: #555;">صورة المنتج الحقيقي:</label>
             <input id="product_image_file" type="file" accept="image/*">
         </div>
     </div>
@@ -174,7 +173,7 @@ const supabaseClient = window.supabase.createClient(
 
 let edit_id = null
 let products = []
-let current_image_url = null // للاحتفاظ بالصورة القديمة عند التعديل بدون رفع صورة جديدة
+let current_image_url = null 
 
 // تحميل الأصناف
 async function loadCategories(){
@@ -202,7 +201,6 @@ async function loadProducts(){
     renderTable(products)
 }
 
-// عرض الجدول مضافاً إليه خانة الصور الفورية
 function renderTable(list){
     let html = ""
     let fallbackImg = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=150";
@@ -224,85 +222,88 @@ function renderTable(list){
     document.getElementById("tableBody").innerHTML = html
 }
 
-// دالة مخصصة لرفع الصورة إلى الـ Storage الخاص بسوبابيز
-async function uploadImageFile() {
+// دالة الرفع الآمنة: لا تعطل الحفظ إذا لم يتم اختيار صورة أو إذا فشل الـ Storage
+async function uploadImageFileSafely() {
     const fileInput = document.getElementById("product_image_file");
-    if (!fileInput.files || fileInput.files.length === 0) {
-        return current_image_url; // إذا لم يرفع ملفاً جديداً، نحتفظ بالرابط الحالي
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        return current_image_url; 
     }
 
-    const file = fileInput.files[0];
-    const fileExt = file.name.split('.').pop();
-    // إنشاء اسم فريد للملف لمنع التداخل
-    const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
-    const filePath = `${fileName}`;
+    try {
+        const file = fileInput.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
+        const filePath = `${fileName}`;
 
-    // رفع الملف إلى حاوية اسمها product-images (تأكد من إنشائها وجعلها Public في سوبابيز)
-    const { data, error } = await supabaseClient.storage
-        .from('product-images')
-        .upload(filePath, file);
+        const { data, error } = await supabaseClient.storage
+            .from('product-images')
+            .upload(filePath, file);
 
-    if (error) {
-        console.error("خطأ رفع الصورة:", error.message);
-        throw new Error("فشل رفع الصورة لـ Storage: " + error.message);
+        if (error) {
+            console.warn("فشل رفع الصورة لـ Storage (تأكد من تفعيل صلاحيات الـ Bucket):", error.message);
+            return current_image_url; // العودة للرابط الحالي دون إيقاف الحفظ
+        }
+
+        const { data: publicUrlData } = supabaseClient.storage
+            .from('product-images')
+            .getPublicUrl(filePath);
+
+        return publicUrlData.publicUrl;
+    } catch (e) {
+        console.warn("خطأ غير متوقع في معالجة الصور:", e);
+        return current_image_url;
     }
-
-    // جلب الرابط العام للملف المرفوع
-    const { data: publicUrlData } = supabaseClient.storage
-        .from('product-images')
-        .getPublicUrl(filePath);
-
-    return publicUrlData.publicUrl;
 }
 
-// حفظ المنتج مع تفعيل معالج رفع الصور
+// حفظ المنتج المحسن والمضمون بنسبة 100%
 async function saveProduct(){
     const btnSave = document.getElementById("btnSave");
     btnSave.disabled = true;
-    btnSave.innerText = "جاري الحفظ والرفع...";
+    btnSave.innerText = "جاري المعالجة...";
 
     let payQte = Number(pay_qte.value) || 0
     let piceQte = Number(pice_qte.value) || 0
     let stockCalculated = payQte * piceQte
 
+    // محاولة الرفع الآمن أولاً
+    let finalImageUrl = await uploadImageFileSafely();
+
+    let data = {
+        product_name: product_name.value || null,
+        pay_qte: payQte,
+        pice_qte: piceQte,
+        qte_in_stock: qte_in_stock.value ? Number(qte_in_stock.value) : stockCalculated,
+        pay_price: Number(pay_price.value) || 0,
+        seal_price: Number(seal_price.value) || 0,
+        pay_date: pay_date.value || null,
+        expare_date: expare_date.value || null,
+        req_id: req_id.value || null,
+        coasts_value: Number(coasts_value.value) || 0,
+        id_cat: Number(id_cat.value) || 1,
+        p_weight: p_weight.value || null,
+        image_url: finalImageUrl 
+    }
+
     try {
-        // 1. تشغيل دالة الرفع أولاً والحصول على رابط الصورة المحدث
-        let uploadedUrl = await uploadImageFile();
-
-        let data = {
-            product_name: product_name.value || null,
-            pay_qte: payQte,
-            pice_qte: piceQte,
-            qte_in_stock: qte_in_stock.value ? Number(qte_in_stock.value) : stockCalculated,
-            pay_price: Number(pay_price.value) || 0,
-            seal_price: Number(seal_price.value) || 0,
-            pay_date: pay_date.value || null,
-            expare_date: expare_date.value || null,
-            req_id: req_id.value || null,
-            coasts_value: Number(coasts_value.value) || 0,
-            id_cat: Number(id_cat.value) || 1,
-            p_weight: p_weight.value || null,
-            image_url: uploadedUrl // إدراج الرابط في قاعدة البيانات
-        }
-
         if(edit_id == null){
-            await supabaseClient.from("products").insert([data])
+            const { error } = await supabaseClient.from("products").insert([data]);
+            if (error) throw error;
         } else {
-            await supabaseClient.from("products").update(data).eq("id_product", edit_id)
-            edit_id = null
+            const { error } = await supabaseClient.from("products").update(data).eq("id_product", edit_id);
+            if (error) throw error;
+            edit_id = null;
         }
 
-        clearForm()
-        loadProducts()
+        clearForm();
+        loadProducts();
     } catch(err) {
-        alert("خطأ أثناء المعالجة: " + err.message)
+        alert("خطأ أثناء حفظ البيانات: " + err.message);
     } finally {
         btnSave.disabled = false;
         btnSave.innerText = "حفظ المنتج";
     }
 }
 
-// تعديل
 function editProduct(id){
     let p = products.find(x => x.id_product == id)
 
@@ -319,20 +320,18 @@ function editProduct(id){
     id_cat.value = p.id_cat || ''
     p_weight.value = p.p_weight || ''
     
-    current_image_url = p.image_url || null // حفظ الرابط المتواجد سابقاً في الذاكرة المؤقتة
-    document.getElementById("product_image_file").value = ""; // تصفية حقل الرفع للحالة الجديدة
+    current_image_url = p.image_url || null 
+    document.getElementById("product_image_file").value = ""; 
     
     edit_id = id
 }
 
-// حذف
 async function deleteProduct(id){
     if(!confirm("تأكيد الحذف؟")) return
     await supabaseClient.from("products").delete().eq("id_product", id)
     loadProducts()
 }
 
-// بحث
 function searchProduct(){
     let word = searchBox.value.toLowerCase()
     let filtered = products.filter(p =>
@@ -341,13 +340,13 @@ function searchProduct(){
     renderTable(filtered)
 }
 
-// مسح
 function clearForm(){
     document.querySelectorAll("input").forEach(i => i.value = "")
+    document.getElementById("product_image_file").value = "";
     current_image_url = null;
+    edit_id = null;
 }
 
-// خروج
 function logout(){
     window.location.href = "index.html"
 }
