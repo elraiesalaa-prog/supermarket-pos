@@ -3,149 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استرجاع البيانات النظام</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>متجر الأزياء الإلكتروني</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+    </style>
 </head>
-<body class="bg-gradient-to-r from-slate-50 to-slate-100 min-h-screen p-4 md:p-8 flex items-center justify-center">
+<body class="bg-slate-50 text-slate-800">
 
-<div class="max-w-md w-full bg-white shadow-2xl rounded-2xl p-6 border border-slate-100">
-    
-    <div class="text-center mb-6">
-        <div class="inline-flex p-3 bg-amber-50 text-amber-600 rounded-full mb-3 shadow-inner">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
+    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-slate-100">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🛍️</span>
+                <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">ABM للملبوسات</span>
+            </div>
+            
+            <a href="cart.html" class="relative bg-slate-100 hover:bg-slate-200 p-2.5 rounded-xl transition flex items-center gap-2 font-bold text-sm">
+                <span>🛒 سلة المشتريات</span>
+                <span id="cartCount" class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
+            </a>
         </div>
-        <h1 class="text-xl font-bold text-slate-800">مركز استرجاع البيانات</h1>
-        <p class="text-xs text-slate-400 mt-1">رفع ملف Excel الاحتياطي لإعادة النظام إلى حالة سابقة</p>
-    </div>
+    </nav>
 
-    <div class="mb-5">
-        <label class="block text-sm font-medium text-slate-700 mb-2">اختر ملف النسخة الاحتياطية (.xlsx):</label>
-        <input type="file" id="fileInput" accept=".xlsx" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 border border-dashed border-slate-300 p-3 rounded-xl cursor-pointer bg-slate-50" />
-    </div>
+    <header class="relative bg-slate-900 text-white overflow-hidden py-16 px-4 text-center">
+        <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000&auto=format&fit=crop');"></div>
+        <div class="relative max-w-2xl mx-auto z-10">
+            <h1 class="text-3xl md:text-5xl font-extrabold mb-4">أحدث صيحات الموضة والأزياء</h1>
+            <p class="text-sm md:text-base text-slate-300">اكتشف تشكيلتنا الجديدة المتميزة المتزامنة مباشرة مع مخازننا.</p>
+        </div>
+    </header>
 
-    <div class="space-y-3">
-        <button id="restoreBtn" onclick="runComprehensiveRestore()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-amber-600/20 transition flex items-center justify-center gap-2 outline-none">
-            🔄 بدء عملية الاسترجاع وتحديث القاعدة
-        </button>
-
-        <button onclick="history.back()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-2.5 px-4 rounded-xl transition text-sm">
-            رجوع للخلف
-        </button>
-    </div>
-
-    <div class="mt-6 border-t pt-4">
-        <div id="status" class="text-sm font-medium text-center text-slate-500 mb-2">قم باختيار ملف ثم اضغط استرجاع</div>
+    <main class="max-w-7xl mx-auto px-4 py-10">
+        <h2 class="text-xl md:text-2xl font-bold mb-6 flex items-center gap-2">✨ أحدث معروضاتنا</h2>
         
-        <div id="progressContainer" class="w-full bg-slate-100 rounded-full h-3 overflow-hidden hidden">
-            <div id="progressBar" class="bg-amber-500 h-full w-0 transition-all duration-300 rounded-full"></div>
+        <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="col-span-full text-center py-12 text-slate-400 text-sm">جاري تحديث الملبوسات من سوبابيز...</div>
         </div>
-    </div>
+    </main>
 
-    <div class="mt-4 bg-red-50 border border-red-100 p-3 rounded-xl text-xs text-red-800 leading-relaxed">
-        <strong>⚠️ تحذير محاسبي هام جداً:</strong> عملية الاسترجاع ستقوم بمسح البيانات الحالية المتواجدة في الجداول واستبدالها بالبيانات الموجودة داخل الملف المرفوع تماماً. يرجى التأكد من صحة الملف قبل البدء.
-    </div>
+    <script>
+        const supabaseClient = supabase.createClient(
+            "https://vmxbedovoahuggfpcmyk.supabase.co",
+            "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+        );
 
-</div>
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
 
-<script>
-// ================== Supabase Client ==================
-const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
-const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        // جلب المنتجات الحية من جدول المنتجات التابع لك
+        async function fetchProducts() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from("products")
+                    .select("*");
 
-async function runComprehensiveRestore() {
-    const fileInput = document.getElementById('fileInput');
-    const statusText = document.getElementById('status');
-    const progressContainer = document.getElementById('progressContainer');
-    const progressBar = document.getElementById('progressBar');
-    const restoreBtn = document.getElementById('restoreBtn');
-
-    if (!fileInput.files || fileInput.files.length === 0) {
-        return alert("الرجاء تحديد ملف Excel أولاً المُراد استرجاعه!");
-    }
-
-    if (!confirm("🚨 هل أنت متأكد تماماً من رغبتك في مسح البيانات الحالية واستبدالها بالملف المرفوع؟ لا يمكن التراجع عن هذا الإجراء.")) {
-        return;
-    }
-
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-
-    // تجهيز الواجهة للبدء
-    restoreBtn.disabled = true;
-    restoreBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    progressContainer.classList.remove('hidden');
-    progressBar.style.width = '10%';
-    statusText.textContent = "⏳ جاري قراءة وتحليل ملف الـ Excel...";
-
-    reader.onload = async function(e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-
-            // 1. استخراج الجداول من صفحات الإكسل بناءً على الأسماء المعطاة بالنسخ الاحتياطي
-            const productsSheet = workbook.Sheets["مخزون المنتجات"];
-            const coastsSheet = workbook.Sheets["المنصرفات والتكاليف"];
-            const salesSheet = workbook.Sheets["حركات المبيعات"];
-
-            if (!productsSheet || !coastsSheet || !salesSheet) {
-                throw new Error("بنية ملف الـ Excel غير متوافقة مع هذا النظام، تأكد من رفع ملف مأخوذ من صفحة النسخ الاحتياطي.");
+                if (error) throw error;
+                products = data;
+                renderProducts();
+            } catch (error) {
+                console.error("خطأ أثناء جلب البيانات:", error);
+                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-red-500">عذراً، فشل الاتصال بقاعدة البيانات الحية.</div>`;
             }
-
-            const productsData = XLSX.utils.sheet_to_json(productsSheet);
-            const coastsData = XLSX.utils.sheet_to_json(coastsSheet);
-            const salesData = XLSX.utils.sheet_to_json(salesSheet);
-
-            progressBar.style.width = '30%';
-
-            // 2. تنظيف وإعادة تعبئة جدول المنتجات (products)
-            statusText.textContent = "🗑️ جاري تنظيف جدول المنتجات القديم وضخ البيانات الجديدة...";
-            await supabaseClient.from("products").delete().neq("id_product", 0); // حذف كل السجلات
-            if (productsData.length > 0) {
-                const { error: err1 } = await supabaseClient.from("products").insert(productsData);
-                if (err1) throw err1;
-            }
-            progressBar.style.width = '55%';
-
-            // 3. تنظيف وإعادة تعبئة جدول المنصرفات (coasts)
-            statusText.textContent = "🗑️ جاري تحديث بيانات جدول التكاليف والمنصرفات الشاملة...";
-            await supabaseClient.from("coasts").delete().neq("coast_id", 0);
-            if (coastsData.length > 0) {
-                const { error: err2 } = await supabaseClient.from("coasts").insert(coastsData);
-                if (err2) throw err2;
-            }
-            progressBar.style.width = '80%';
-
-            // 4. تنظيف وإعادة تعبئة جدول تفاصيل المبيعات (orders_details)
-            statusText.textContent = "🗑️ جاري استرجاع سجل حركات وفواتير المبيعات الحية...";
-            await supabaseClient.from("orders_details").delete().neq("id_order", 0);
-            if (salesData.length > 0) {
-                const { error: err3 } = await supabaseClient.from("orders_details").insert(salesData);
-                if (err3) throw err3;
-            }
-
-            // إنهاء العملية بنجاح كامل
-            progressBar.style.width = '100%';
-            statusText.innerHTML = "🎉 <span class='text-green-600 font-bold'>تم استرجاع قاعدة البيانات كاملة ومطابقتها بنجاح!</span>";
-            alert("✅ تم استرجاع جميع البيانات بنجاح، يمكنك الذهاب لصفحات النظام الآن لمراجعة العمل.");
-
-        } catch (error) {
-            console.error(error);
-            statusText.innerHTML = "❌ <span class='text-red-600'>فشل الاسترجاع: " + error.message + "</span>";
-            progressBar.style.width = '0%';
-        } finally {
-            restoreBtn.disabled = false;
-            restoreBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            updateCartCount();
         }
-    };
 
-    reader.readAsArrayBuffer(file);
-}
-</script>
+        function renderProducts() {
+            let html = "";
+            if(products.length === 0) {
+                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">لا توجد منتجات معروضة حالياً.</div>`;
+                return;
+            }
 
+            products.forEach(p => {
+                // دالة ذكية للبحث عن السعر الصحيح بناءً على المسميات الشائعة في نظامك (سعر بيع، قيمة، أو تكلفة)
+                let price = p.sell_price || p.price_sell || p.product_price || p.coasts_value || p.price || 0;
+                
+                let imgUrl = p.image_url || "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500";
+                
+                html += `
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-slate-100 transition flex flex-col justify-between">
+                    <img src="${imgUrl}" alt="${p.product_name}" class="w-full h-56 object-cover bg-slate-100">
+                    <div class="p-4 flex-1 flex flex-col justify-between gap-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base line-clamp-2">${p.product_name || p.name}</h3>
+                            <div class="text-blue-600 font-extrabold text-lg mt-1">${Number(price).toFixed(2)} ج.م</div>
+                        </div>
+                        <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition text-sm">
+                            ➕ إضافة للسلة
+                        </button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById("productsGrid").innerHTML = html;
+        }
+
+        function addToCart(id) {
+            const product = products.find(p => p.id_product === id);
+            if (!product) return;
+
+            const existingItem = cart.find(item => item.id_product === id);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                // التأكد من حفظ السعر الصحيح داخل السلة أيضاً
+                let finalPrice = product.sell_price || product.price_sell || product.product_price || product.coasts_value || product.price || 0;
+                cart.push({ ...product, quantity: 1, sell_price: finalPrice });
+            }
+
+            localStorage.setItem('customerCart', JSON.stringify(cart));
+            updateCartCount();
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById("cartCount").innerText = count;
+        }
+
+        fetchProducts();
+    </script>
 </body>
 </html>
