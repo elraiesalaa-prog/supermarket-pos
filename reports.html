@@ -1,45 +1,151 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>التقارير</title>
-<link rel="stylesheet" href="css/style.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استرجاع البيانات النظام</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="bg-gradient-to-r from-slate-50 to-slate-100 min-h-screen p-4 md:p-8 flex items-center justify-center">
 
-<body>
+<div class="max-w-md w-full bg-white shadow-2xl rounded-2xl p-6 border border-slate-100">
+    
+    <div class="text-center mb-6">
+        <div class="inline-flex p-3 bg-amber-50 text-amber-600 rounded-full mb-3 shadow-inner">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+        </div>
+        <h1 class="text-xl font-bold text-slate-800">مركز استرجاع البيانات</h1>
+        <p class="text-xs text-slate-400 mt-1">رفع ملف Excel الاحتياطي لإعادة النظام إلى حالة سابقة</p>
+    </div>
 
-<header>
-<h2>📊 التقارير المالية</h2>
-<button onclick="logout()">خروج</button>
-</header>
+    <div class="mb-5">
+        <label class="block text-sm font-medium text-slate-700 mb-2">اختر ملف النسخة الاحتياطية (.xlsx):</label>
+        <input type="file" id="fileInput" accept=".xlsx" class="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 border border-dashed border-slate-300 p-3 rounded-xl cursor-pointer bg-slate-50" />
+    </div>
 
-<div class="pos-container">
+    <div class="space-y-3">
+        <button id="restoreBtn" onclick="runComprehensiveRestore()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-amber-600/20 transition flex items-center justify-center gap-2 outline-none">
+            🔄 بدء عملية الاسترجاع وتحديث القاعدة
+        </button>
 
-<h3>📅 تقرير اليوم</h3>
-<p>إجمالي المبيعات: <span id="dailySales">0</span></p>
-<p>إجمالي الأرباح: <span id="dailyProfit">0</span></p>
-<p>عدد الفواتير: <span id="invoiceCount">0</span></p>
+        <button onclick="history.back()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-2.5 px-4 rounded-xl transition text-sm">
+            رجوع للخلف
+        </button>
+    </div>
 
-<hr>
+    <div class="mt-6 border-t pt-4">
+        <div id="status" class="text-sm font-medium text-center text-slate-500 mb-2">قم باختيار ملف ثم اضغط استرجاع</div>
+        
+        <div id="progressContainer" class="w-full bg-slate-100 rounded-full h-3 overflow-hidden hidden">
+            <div id="progressBar" class="bg-amber-500 h-full w-0 transition-all duration-300 rounded-full"></div>
+        </div>
+    </div>
 
-<h3>📈 الرسم البياني</h3>
-<canvas id="salesChart"></canvas>
-
-<hr>
-
-<h3>🏆 أفضل المنتجات</h3>
-<div id="topProducts"></div>
+    <div class="mt-4 bg-red-50 border border-red-100 p-3 rounded-xl text-xs text-red-800 leading-relaxed">
+        <strong>⚠️ تحذير محاسبي هام جداً:</strong> عملية الاسترجاع ستقوم بمسح البيانات الحالية المتواجدة في الجداول واستبدالها بالبيانات الموجودة داخل الملف المرفوع تماماً. يرجى التأكد من صحة الملف قبل البدء.
+    </div>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/reports.js"></script>
 <script>
-protectPage(["manager","admin"]);
+// ================== Supabase Client ==================
+const supabaseUrl = "https://vmxbedovoahuggfpcmyk.supabase.co";
+const supabaseKey = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+async function runComprehensiveRestore() {
+    const fileInput = document.getElementById('fileInput');
+    const statusText = document.getElementById('status');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const restoreBtn = document.getElementById('restoreBtn');
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+        return alert("الرجاء تحديد ملف Excel أولاً المُراد استرجاعه!");
+    }
+
+    if (!confirm("🚨 هل أنت متأكد تماماً من رغبتك في مسح البيانات الحالية واستبدالها بالملف المرفوع؟ لا يمكن التراجع عن هذا الإجراء.")) {
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    // تجهيز الواجهة للبدء
+    restoreBtn.disabled = true;
+    restoreBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    progressContainer.classList.remove('hidden');
+    progressBar.style.width = '10%';
+    statusText.textContent = "⏳ جاري قراءة وتحليل ملف الـ Excel...";
+
+    reader.onload = async function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+
+            // 1. استخراج الجداول من صفحات الإكسل بناءً على الأسماء المعطاة بالنسخ الاحتياطي
+            const productsSheet = workbook.Sheets["مخزون المنتجات"];
+            const coastsSheet = workbook.Sheets["المنصرفات والتكاليف"];
+            const salesSheet = workbook.Sheets["حركات المبيعات"];
+
+            if (!productsSheet || !coastsSheet || !salesSheet) {
+                throw new Error("بنية ملف الـ Excel غير متوافقة مع هذا النظام، تأكد من رفع ملف مأخوذ من صفحة النسخ الاحتياطي.");
+            }
+
+            const productsData = XLSX.utils.sheet_to_json(productsSheet);
+            const coastsData = XLSX.utils.sheet_to_json(coastsSheet);
+            const salesData = XLSX.utils.sheet_to_json(salesSheet);
+
+            progressBar.style.width = '30%';
+
+            // 2. تنظيف وإعادة تعبئة جدول المنتجات (products)
+            statusText.textContent = "🗑️ جاري تنظيف جدول المنتجات القديم وضخ البيانات الجديدة...";
+            await supabaseClient.from("products").delete().neq("id_product", 0); // حذف كل السجلات
+            if (productsData.length > 0) {
+                const { error: err1 } = await supabaseClient.from("products").insert(productsData);
+                if (err1) throw err1;
+            }
+            progressBar.style.width = '55%';
+
+            // 3. تنظيف وإعادة تعبئة جدول المنصرفات (coasts)
+            statusText.textContent = "🗑️ جاري تحديث بيانات جدول التكاليف والمنصرفات الشاملة...";
+            await supabaseClient.from("coasts").delete().neq("coast_id", 0);
+            if (coastsData.length > 0) {
+                const { error: err2 } = await supabaseClient.from("coasts").insert(coastsData);
+                if (err2) throw err2;
+            }
+            progressBar.style.width = '80%';
+
+            // 4. تنظيف وإعادة تعبئة جدول تفاصيل المبيعات (orders_details)
+            statusText.textContent = "🗑️ جاري استرجاع سجل حركات وفواتير المبيعات الحية...";
+            await supabaseClient.from("orders_details").delete().neq("id_order", 0);
+            if (salesData.length > 0) {
+                const { error: err3 } = await supabaseClient.from("orders_details").insert(salesData);
+                if (err3) throw err3;
+            }
+
+            // إنهاء العملية بنجاح كامل
+            progressBar.style.width = '100%';
+            statusText.innerHTML = "🎉 <span class='text-green-600 font-bold'>تم استرجاع قاعدة البيانات كاملة ومطابقتها بنجاح!</span>";
+            alert("✅ تم استرجاع جميع البيانات بنجاح، يمكنك الذهاب لصفحات النظام الآن لمراجعة العمل.");
+
+        } catch (error) {
+            console.error(error);
+            statusText.innerHTML = "❌ <span class='text-red-600'>فشل الاسترجاع: " + error.message + "</span>";
+            progressBar.style.width = '0%';
+        } finally {
+            restoreBtn.disabled = false;
+            restoreBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    };
+
+    reader.readAsArrayBuffer(file);
+}
 </script>
+
 </body>
 </html>
