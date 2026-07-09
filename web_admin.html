@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>لوحة تحكم طلبات المتجر الإلكتروني</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Cairo', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow">
+        <h1 class="text-2xl font-bold text-slate-800 border-b pb-4 mb-6 flex justify-between items-center">
+            <span>📦 إدارة طلبات المتجر أونلاين</span>
+            <button onclick="loadWebOrders()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-xl">🔄 تحديث الطلبات</button>
+        </h1>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-center border-collapse">
+                <thead>
+                    <tr class="bg-slate-800 text-white text-sm">
+                        <th class="p-3 rounded-r-lg">رقم الطلب</th>
+                        <th class="p-3">العميل</th>
+                        <th class="p-3">الهاتف</th>
+                        <th class="p-3">العنوان</th>
+                        <th class="p-3">الإجمالي</th>
+                        <th class="p-3">الحالة</th>
+                        <th class="p-3 rounded-l-lg">إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody" class="text-sm divide-y divide-gray-100">
+                    <tr><td colspan="7" class="p-8 text-gray-400">جاري تحميل الطلبات...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const supabaseClient = supabase.createClient(
+            "https://vmxbedovoahuggfpcmyk.supabase.co",
+            "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
+        );
+
+        async function loadWebOrders() {
+            const { data, error } = await supabaseClient
+                .from("web_orders")
+                .select("*")
+                .order("id_web_order", { ascending: false });
+
+            if (error) return alert("خطأ أثناء جلب الطلبات: " + error.message);
+
+            let html = "";
+            if(data.length === 0) {
+                html = `<tr><td colspan="7" class="p-8 text-gray-400">لا توجد طلبات جديدة حالياً.</td></tr>`;
+            } else {
+                data.forEach(o => {
+                    html += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-bold text-blue-600">#${o.id_web_order}</td>
+                        <td class="p-3 font-semibold">${o.client_name}</td>
+                        <td class="p-3">${o.client_phone}</td>
+                        <td class="p-3 text-right max-w-xs truncate">${o.client_address}</td>
+                        <td class="p-3 font-bold text-emerald-600">${Number(o.total_amount).toFixed(2)} ج.م</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">${o.order_status}</span></td>
+                        <td class="p-3 flex justify-center gap-2">
+                            <button onclick="viewDetails(${o.id_web_order}, '${o.client_name}')" class="bg-slate-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-slate-700">🔍 عرض وتدقيق</button>
+                            <button onclick="deleteOrder(${o.id_web_order})" class="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-600">❌ حذف</button>
+                        </td>
+                    </tr>`;
+                });
+            }
+            document.getElementById("ordersTableBody").innerHTML = html;
+        }
+
+        async function viewDetails(orderId, clientName) {
+            const { data, error } = await supabaseClient
+                .from("web_order_details")
+                .select("*")
+                .eq("id_web_order", orderId);
+
+            if (error) return alert(error.message);
+
+            let detailsText = `تفاصيل طلب العميل: ${clientName}\n------------------------\n`;
+            data.forEach(i => {
+                detailsText += `- ${i.product_name} | الكمية: ${i.qte} | السعر: ${i.price} ج.م\n`;
+            });
+            
+            alert(detailsText);
+        }
+
+        async function deleteOrder(id) {
+            if(!confirm("هل أنت متأكد من حذف هذا الطلب نهائياً من المتجر؟")) return;
+            await supabaseClient.from("web_orders").delete().eq("id_web_order", id);
+            loadWebOrders();
+        }
+
+        loadWebOrders();
+    </script>
+</body>
+</html>
