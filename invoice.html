@@ -38,7 +38,7 @@
         }
 
         @media print {
-            button, .no-print { display: none !important; }
+            button { display: none !important; }
             body { background: white; }
         }
 
@@ -63,6 +63,7 @@
     </header>
 
     <div class="max-w-7xl mx-auto p-5">
+        <!-- الإحصائيات -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow p-5 text-center">
                 <div class="text-gray-500 mb-2">إجمالي المبيعات</div>
@@ -83,6 +84,7 @@
         </div>
 
         <div class="grid lg:grid-cols-2 gap-5">
+            <!-- قائمة الفواتير -->
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <div class="bg-blue-700 text-white p-4 font-bold">📋 قائمة الفواتير</div>
                 <div class="overflow-auto">
@@ -103,6 +105,7 @@
                 </div>
             </div>
 
+            <!-- تفاصيل الفاتورة السريعة -->
             <div class="bg-white rounded-xl shadow">
                 <div class="bg-green-700 text-white p-4 font-bold">🧾 تفاصيل الفاتورة</div>
                 <div id="details" class="p-6 text-gray-500">اختر فاتورة لعرض تفاصيلها</div>
@@ -110,32 +113,32 @@
         </div>
     </div>
 
-    <div id="invoiceModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-            
-            <div class="bg-gradient-to-l from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center shrink-0">
-                <h2 class="font-bold text-lg">📄 معاينة وخيارات المشاركة</h2>
+    <!-- نافذة الفاتورة المنبثقة المحسنة -->
+    <div id="invoiceModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-[96%] max-w-lg overflow-hidden">
+            <div class="bg-gradient-to-l from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center">
+                <h2 class="font-bold text-xl">معاينة الفاتورة والمشاركة</h2>
                 <button onclick="closeInvoice()" class="bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-1 font-bold">✕</button>
             </div>
             
-            <div id="invoiceContent" class="bg-gray-100 p-4 overflow-y-auto flex justify-center grow">
-                </div>
+            <div id="invoiceContent" class="bg-white max-h-[65vh] overflow-auto p-4 flex justify-center">
+                <!-- يتم حقن الفاتورة هنا -->
+            </div>
 
-            <div class="bg-white p-3 shrink-0 border-t flex flex-wrap gap-2 justify-center no-print">
-                <button onclick="shareInvoiceWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl font-bold text-xs transition">
+            <div class="bg-slate-100 p-4 flex flex-wrap justify-center gap-2 border-t">
+                <button onclick="shareInvoiceWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition">
                     📱 واتساب
                 </button>
-                <button onclick="copyInvoiceText()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-xl font-bold text-xs transition">
+                <button onclick="copyInvoiceText()" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition">
                     📋 نسخ النص
                 </button>
-                <button onclick="printInvoice()" class="bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-xl font-bold text-xs transition">
+                <button onclick="printInvoice()" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl font-bold text-sm transition">
                     🖨 طباعة
                 </button>
-                <button onclick="closeInvoice()" class="bg-gray-200 hover:bg-gray-300 text-slate-800 px-3 py-2 rounded-xl font-bold text-xs transition">
+                <button onclick="closeInvoice()" class="bg-gray-400 hover:bg-gray-500 text-slate-800 px-4 py-2 rounded-xl font-bold text-sm transition">
                     إغلاق
                 </button>
             </div>
-
         </div>
     </div>
 
@@ -157,7 +160,7 @@
         let productMap = new Map();
         let detailsMap = new Map();
 
-        // كائن عالمي لحفظ بيانات الفاتورة المفتوحة حالياً لتمريرها للأزرار
+        // متغير عالمي لحفظ بيانات الفاتورة المعروضة حالياً لإتاحة مشاركتها
         let currentOpenInvoiceData = null;
 
         const money = v => Number(v || 0).toLocaleString();
@@ -189,7 +192,7 @@
                 <meta charset="UTF-8">
                 <title>فاتورة</title>
                 <style>
-                    body{ font-family:Cairo,Arial; padding:10px; direction:rtl; display:flex; justify-content:center; }
+                    body{ font-family:Cairo,Arial; padding:25px; direction:rtl; display:flex; justify-content:center; }
                     @media print{ body{ margin:0; } }
                 </style>
             </head>
@@ -312,7 +315,7 @@
 
                 rows += `
                 <tr>
-                    <td style="padding:6px; border-bottom:1px solid #eee; text-align:right;">${prodName}</td>
+                    <td style="padding:7px; border-bottom:1px solid #eee; text-align:right;">${prodName}</td>
                     <td style="text-align:center; border-bottom:1px solid #eee;">${qty}</td>
                     <td style="text-align:center; border-bottom:1px solid #eee;">${money(price)}</td>
                     <td style="text-align:center; font-weight:bold; color:#2563eb; border-bottom:1px solid #eee;">${money(lineTotal)}</td>
@@ -327,7 +330,7 @@
             const time = invoiceObj.toLocaleTimeString("ar-EG");
             const currentInvoiceSeller = order.seal_man || sellerName || "غير معروف";
 
-            // تخزين البيانات في الكائن لضمان عمل دالة المشاركة والنسخ
+            // حفظ البيانات الحالية في كائن للمشاركة لاحقاً عبر الأزرار
             currentOpenInvoiceData = {
                 id: id,
                 customerName: cust?.first_name || "بدون اسم",
@@ -338,24 +341,136 @@
                 total: money(total)
             };
 
-            // بناء هيكل الفاتورة الحرارية المعروضة
+            // بناء هيكل الفاتورة الحرارية المعروضة داخل المودال
             document.getElementById("invoiceContent").innerHTML = `
-            <div style="width:80mm; background:#fff; border:1px solid #2563eb; border-radius:8px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#222; padding:2px;">
-                <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:10px; text-align:center;">
-                    <div style="font-size:18px; font-weight:bold;">مؤسسة علاء الدين</div>
-                    <div style="font-size:12px; margin-top:2px;">فاتورة مبيعات</div>
+            <div style="width:80mm; background:#fff; border:2px solid #2563eb; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,.08); font-family:Cairo,Arial,sans-serif; font-size:11px; color:#222;">
+                <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:12px; text-align:center;">
+                    <div style="font-size:20px; font-weight:bold;">مؤسسة علاء الدين</div>
+                    <div style="font-size:13px; margin-top:2px;">فاتورة مبيعات</div>
+                    <div style="font-size:10px; opacity:.9;">POS SYSTEM</div>
                 </div>
 
-                <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #ddd; line-height:1.7;">
+                <div style="padding:10px; background:#f8fafc; border-bottom:1px solid #ddd; line-height:1.9;">
                     <div style="display:flex; justify-content:space-between;">
                         <span><b>رقم الفاتورة:</b> #${id}</span>
                         <span>${date}</span>
                     </div>
-                    <div style="margin-top:2px;">👤 <b>العميل :</b> ${currentOpenInvoiceData.customerName}</div>
+                    <div style="margin-top:4px;">👤 <b>العميل :</b> ${currentOpenInvoiceData.customerName}</div>
                     <div>🛒 <b>البائع :</b> ${currentOpenInvoiceData.seller}</div>
                     <div>🕒 ${time}</div>
                 </div>
 
                 <table style="width:100%; border-collapse:collapse; font-size:10px;">
                     <thead>
-                        <tr style="background:#2563eb
+                        <tr style="background:#2563eb; color:#fff;">
+                            <th style="padding:6px; text-align:right;">الصنف</th>
+                            <th style="padding:6px;">الكمية</th>
+                            <th style="padding:6px;">السعر</th>
+                            <th style="padding:6px;">الجملة</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+
+                <div style="padding:10px; background:#f8fafc; border-top:1px solid #ddd;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:8px; border-radius:6px; font-size:14px; font-weight:bold;">
+                        <span>الإجمالي الكلي</span>
+                        <span>${money(total)} ج.م</span>
+                    </div>
+                </div>
+
+                <div style="padding:12px; text-align:center; font-size:10px; color:#666; border-top:1px dashed #ccc;">
+                    شكراً لتعاملكم معنا 🌹<br>نتمنى لكم يوماً سعيداً
+                </div>
+            </div>`;
+
+            // تحديث قسم التفاصيل السريعة على جانب الصفحة أيضاً
+            document.getElementById("details").innerHTML = `
+                <div class="space-y-2">
+                    <p class="font-bold text-lg text-slate-800">فاتورة رقم: #${id}</p>
+                    <p><b>العميل:</b> ${currentOpenInvoiceData.customerName}</p>
+                    <p><b>التاريخ:</b> ${date}</p>
+                    <p class="text-xl font-bold text-blue-700">الإجمالي: ${money(total)} ج.م</p>
+                </div>`;
+
+            const modal = document.getElementById("invoiceModal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        // ================= MEDIA SHARE LOGIC =================
+        function generateShareText() {
+            if (!currentOpenInvoiceData) return "";
+            let text = `🧾 *فاتورة مبيعات - مؤسسة علاء الدين* 🧾\n`;
+            text += `------------------------------------\n`;
+            text += `🔢 *رقم الفاتورة:* #${currentOpenInvoiceData.id}\n`;
+            text += `👤 *العميل:* ${currentOpenInvoiceData.customerName}\n`;
+            text += `🛒 *البائع:* ${currentOpenInvoiceData.seller}\n`;
+            text += `📅 *التاريخ:* ${currentOpenInvoiceData.date}\n`;
+            text += `------------------------------------\n`;
+            text += `📦 *الأصناف والقطع:*\n`;
+            text += currentOpenInvoiceData.itemsText;
+            text += `------------------------------------\n`;
+            text += `💰 *الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.م\n\n`;
+            text += `🌹 شكراً لتعاملكم معنا ونتمنى لكم يوماً سعيداً 🌹`;
+            return text;
+        }
+
+        function shareInvoiceWhatsApp() {
+            if (!currentOpenInvoiceData) return alert("الرجاء اختيار فاتورة أولاً!");
+            const shareText = generateShareText();
+            let phone = currentOpenInvoiceData.customerPhone.replace(/\D/g, '');
+            if (phone.startsWith('01')) { phone = '20' + phone.substring(1); } // كود مصر كمثال افتراضي للتحويل
+            
+            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(shareText)}`;
+            window.open(url, '_blank');
+        }
+
+        function copyInvoiceText() {
+            if (!currentOpenInvoiceData) return alert("الرجاء اختيار فاتورة أولاً!");
+            const shareText = generateShareText();
+            navigator.clipboard.writeText(shareText).then(() => {
+                alert("📋 تم نسخ نص الفاتورة المنظم بنجاح! يمكنك الآن لصقها في أي ميديا (تليجرام، ماسنجر، إيميل...).");
+            }).catch(() => {
+                alert("فشل نسخ النص، يرجى المحاولة يدوياً.");
+            });
+        }
+
+        // ================= STATS =================
+        async function loadStats() {
+            try {
+                const [{ data: ordersData, error: e1 }, { data: detailsData, error: e2 }] = await Promise.all([
+                    supabaseClient.from("orders_o").select("*"),
+                    supabaseClient.from("orders_details").select("total_amount")
+                ]);
+
+                if (e1) throw e1;
+                if (e2) throw e2;
+
+                const total = (detailsData || []).reduce((s, x) => s + Number(x.total_amount || 0), 0);
+
+                document.getElementById("sales").innerText = money(total) + " ج.م";
+                document.getElementById("invCount").innerText = ordersData.length;
+                document.getElementById("cusCount").innerText = customers.length;
+                document.getElementById("proCount").innerText = products.length;
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // ================= INITIALIZATION =================
+        async function init() {
+            console.log("loading...");
+            await loadCurrentUser();
+            await loadMaster();
+            await loadDetails();
+            await loadOrders();
+            await loadStats();
+            console.log("done");
+        }
+
+        init();
+    </script>
+</body>
+</html>
