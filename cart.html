@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سلة المشتريات - إتمام الطلب</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -60,7 +60,7 @@
         );
 
         let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
-        let globalTotal = 0; // متغير عالمي للاحتفاظ بقيمة الإجمالي عند الترحيل
+        let globalTotal = 0;
 
         function renderCart() {
             let html = "";
@@ -73,8 +73,8 @@
             }
 
             cart.forEach((item, index) => {
-                // تصحيح قراءة حقل السعر إلى seal_price ليتطابق مع قاعدة البيانات
-                let price = Number(item.seal_price) || Number(item.coasts_value) || 0;
+                // قراءة السعر بأمان سواء تم تخزينه باسم seal_price أو الاسم القديم
+                let price = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
                 let quantity = Number(item.quantity) || 1;
                 let subtotal = price * quantity;
                 globalTotal += subtotal;
@@ -111,7 +111,6 @@
             renderCart();
         }
 
-        // إدراج الفاتورة والعمليات في سوبابيز مباشرة لتظهر بلوحة تحكم المدير
         async function submitOrder() {
             const name = document.getElementById("clientName").value.trim();
             const phone = document.getElementById("clientPhone").value.trim();
@@ -125,15 +124,14 @@
             btn.innerText = "جاري ترحيل الطلب...";
 
             try {
-                // تحضير البيانات بما يتوافق مع مسميات الحقول الرقمية والنصية في جدولك
+                // تعديل المسمى الذكي هنا: تم تغيير "sell_price" إلى "seal_price" 
+                // ليطابق تماماً مسمى حقول جداولك الرياضية والمحاسبية ويمنع خطأ 400
                 const ordersToInsert = cart.map(item => ({
                     product_name: `[طلب متجر من: ${name} - هاتف: ${phone} - العنوان: ${address}] ` + (item.product_name || ''),
                     quantity: Number(item.quantity) || 1,
-                    // ترحيل السعر للحقل المحاسبي الفعلي لديك لتجنب أخطاء حظر قواعد البيانات
-                    sell_price: Number(item.seal_price) || Number(item.coasts_value) || 0
+                    seal_price: Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0
                 }));
 
-                // ترحيل البيانات إلى سوبابيز مباشرة في جدول المبيعات الخاص بك
                 const { error } = await supabaseClient
                     .from("orders_details")
                     .insert(ordersToInsert);
@@ -145,15 +143,14 @@
                 window.location.href = "store.html";
 
             } catch (error) {
-                console.error("تفاصيل خطأ سوبابيز الكاملة:", error);
-                alert("حدث خطأ أثناء إرسال الطلب: " + error.message + "\nتأكد من إلغاء قفل الحماية RLS لجدول orders_details إذا استمرت المشكلة.");
+                console.error("تفاصيل الخطأ الكاملة:", error);
+                alert("حدث خطأ أثناء إرسال الطلب: " + error.message + "\n\n💡 نصيحة: تأكد من أن اسم العمود في جدول orders_details هو seal_price وليس sell_price.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
             }
         }
 
-        // تشغيل البناء الأولي عند فتح الصفحة مباشرة
         renderCart();
     </script>
 </body>
