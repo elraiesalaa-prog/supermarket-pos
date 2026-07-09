@@ -43,43 +43,44 @@
         );
 
         async function loadWebOrders() {
-            const { data, error } = await supabaseClient
-                .from("web_orders")
-                .select("*")
-                .order("id_web_order", { ascending: false });
+    const { data, error } = await supabaseClient
+        .from("web_orders")
+        .select("*")
+        .order("id_web_order", { ascending: false });
 
-            if (error) return alert("خطأ أثناء جلب الطلبات: " + error.message);
+    if (error) return alert("خطأ أثناء جلب الطلبات: " + error.message);
 
-            let html = "";
-            if(data.length === 0) {
-                html = `<tr><td colspan="7" class="p-8 text-gray-400">لا توجد طلبات جديدة حالياً.</td></tr>`;
-            } else {
-                data.forEach(o => {
-                    let isApproved = o.order_status === "تم الاعتماد والتوصيل";
-                    let badgeClass = isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
+    let html = "";
+    if(data.length === 0) {
+        html = `<tr><td colspan="7" class="p-8 text-gray-400">لا توجد طلبات جديدة حالياً.</td></tr>`;
+    } else {
+        data.forEach(o => {
+            let isApproved = o.order_status === "تم الاعتماد والتوصيل";
+            let badgeClass = isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
+            
+            html += `
+            <tr class="hover:bg-slate-50">
+                <td class="p-3 font-bold text-blue-600">#${o.id_web_order}</td>
+                <td class="p-3 font-semibold">${o.client_name}</td>
+                <td class="p-3">${o.client_phone}</td>
+                <td class="p-3 text-right max-w-xs truncate">${o.client_address}</td>
+                <td class="p-3 font-bold text-emerald-600">${Number(o.total_amount).toFixed(2)} ج.م</td>
+                <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${badgeClass}">${o.order_status}</span></td>
+                <td class="p-3 flex justify-center gap-2 items-center">
                     
-                    html += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-bold text-blue-600">#${o.id_web_order}</td>
-                        <td class="p-3 font-semibold">${o.client_name}</td>
-                        <td class="p-3">${o.client_phone}</td>
-                        <td class="p-3 text-right max-w-xs truncate">${o.client_address}</td>
-                        <td class="p-3 font-bold text-emerald-600">${Number(o.total_amount).toFixed(2)} ج.م</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${badgeClass}">${o.order_status}</span></td>
-                        <td class="p-3 flex justify-center gap-2 items-center">
-                            <button onclick="printWebInvoice(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount}, '${o.date_created}')" class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-amber-600 font-bold flex items-center gap-1">🖨️ طباعة الفاتورة</button>
-                            
-                            ${!isApproved ? `
-                                <button id="btn-approve-${o.id_web_order}" onclick="approveAndDeductStock(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount})" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-emerald-700 font-bold">✔️ اعتماد وخصم</button>
-                            ` : `<span class="text-xs text-gray-400 font-bold px-2 py-1 bg-gray-100 rounded-lg">🔒 معتمد</span>`}
-                            
-                            <button onclick="deleteOrder(${o.id_web_order})" class="bg-red-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-red-600">❌</button>
-                        </td>
-                    </tr>`;
-                });
-            }
-            document.getElementById("ordersTableBody").innerHTML = html;
-        }
+                    <button onclick="printWebInvoice(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount}, '${o.date_created}')" class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-amber-600 font-bold">🖨️ طباعة</button>
+                    
+                    ${!isApproved ? `
+                        <button id="btn-approve-${o.id_web_order}" onclick="approveAndDeductStock(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount})" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-emerald-700 font-bold">✔️ اعتماد</button>
+                    ` : `<span class="text-xs text-gray-400 font-bold px-2 py-1 bg-gray-100 rounded-lg">🔒 معتمد</span>`}
+                    
+                    <button onclick="deleteOrder(${o.id_web_order})" class="bg-red-500 text-white text-xs px-2 py-1.5 rounded-lg hover:bg-red-600">❌</button>
+                </td>
+            </tr>`;
+        });
+    }
+    document.getElementById("ordersTableBody").innerHTML = html;
+}
 
         // --- دالة الطباعة الاحترافية بنفس قالب الـ POS الأصلي ---
         async function printWebInvoice(orderId, name, phone, address, totalAmount, dateStr) {
