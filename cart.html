@@ -112,79 +112,64 @@
 
         // دالة إرسال الفاتورة المتوافقة تماماً والمترابطة مع الـ POS لعدم تدمير الفواتير القديمة
         async function submitOrder() {
-            const name = document.getElementById("clientName").value.trim();
-            const phone = document.getElementById("clientPhone").value.trim();
-            const address = document.getElementById("clientAddress").value.trim();
+    const name = document.getElementById("clientName").value.trim();
+    const phone = document.getElementById("clientPhone").value.trim();
+    const address = document.getElementById("clientAddress").value.trim();
 
-            if(!name || !phone || !address) return alert("الرجاء تعبئة بيانات الشحن كاملة!");
-            if(cart.length === 0) return alert("السلة فارغة!");
+    if(!name || !phone || !address) return alert("الرجاء تعبئة بيانات الشحن كاملة!");
+    if(cart.length === 0) return alert("السلة فارغة!");
 
-            const btn = document.getElementById("btnSubmit");
-            btn.disabled = true;
-            btn.innerText = "جاري حجز الفاتورة وتأمين الطلب...";
+    const btn = document.getElementById("btnSubmit");
+    btn.disabled = true;
+    btn.innerText = "جاري إرسال طلبك...";
 
-            try {
-                const currentDateTime = new Date().toISOString();
-                
-                // --- الخطوة الأولى: إنشاء رأس الفاتورة في orders_o لاستخراج رقم الفاتورة ---
-                // نمرر حقل customer_id كقيمة فارغة (null) لأن الزبون من المتجر الخارجي، أو يمكنك ربطه بعميل افتراضي
-                const { data: orderData, error: orderError } = await supabaseClient
-                    .from("orders_o")
-                    .insert([{
-                        customer_id: null, 
-                        date_order: currentDateTime,
-                        pay_method: "عند الاستلام",
-                        seal_man: "المتجر الإلكتروني"
-                    }]).select();
+    try {
+        // 1. حفظ الطلب في جدول المتجر الجديد الآمن
+        const { data: webOrder, error: orderError } = await supabaseClient
+            .from("web_orders")
+            .insert([{
+                client_name: name,
+                client_phone: phone,
+                client_address: address,
+                total_amount: globalTotal
+            }]).select();
 
-                if (orderError) throw orderError;
-                if (!orderData || orderData.length === 0) throw new Error("لم يتم إرجاع معرف الفاتورة بنجاح.");
+        if (orderError) throw orderError;
+        const newWebOrderId = webOrder[0].id_web_order;
 
-                const generatedOrderId = orderData[0].id_order; // رقم الفاتورة الحقيقي المولد من سوبابيز
+        // 2. تجهيز التفاصيل للجدول الجديد
+        const detailsToInsert = cart.map(item => {
+            let itemPrice = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
+            let itemQte = Number(item.quantity) || 1;
+            return {
+                id_web_order: newWebOrderId,
+                id_product: Number(item.id_product),
+                product_name: item.product_name,
+                qte: itemQte,
+                price: itemPrice,
+                amount: itemPrice * itemQte
+            };
+        });
 
-                // --- الخطوة الثانية: تجهيز تفاصيل الفاتورة وإدراجها مع رقم الفاتورة الصحيح ---
-                const detailsToInsert = cart.map(item => {
-                    let itemPrice = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
-                    let itemQte = Number(item.quantity) || 1;
-                    
-                    return {
-                        id_product: Number(item.id_product),   // كود ربط حقيقي بجدول المنتجات
-                        id_order: generatedOrderId,            // ربط حقيقي برأس الفاتورة المستخرج لمنع أخطاء الـ POS
-                        qte: itemQte,
-                        price: itemPrice,
-                        descount: 0,
-                        amount: itemPrice * itemQte,
-                        total_amount: itemPrice * itemQte,
-                        id_customer: null,                     // زبون أونلاين خارجي
-                        date_order: currentDateTime,
-                        pay_method: "عند الاستلام",
-                        description_order: `العنوان: ${address} | الهاتف: ${phone}`,
-                        seal_man: "المتجر الإلكتروني",
-                        first_name: name                       // اسم صاحب الطلب الخارجي
-                    };
-                });
+        // 3. إدخال التفاصيل
+        const { error: detailsError } = await supabaseClient
+            .from("web_order_details")
+            .insert(detailsToInsert);
 
-                // ترحيل تفاصيل العمليات بالكامل دفعة واحدة لجدول الأسطر
-                const { error: detailsError } = await supabaseClient
-                    .from("orders_details")
-                    .insert(detailsToInsert);
+        if (detailsError) throw detailsError;
 
-                if (detailsError) throw detailsError;
+        alert(`🎉 تم استلام طلبك بنجاح وجاري مراجعته من الإدارة.\nرقم الطلب: ${newWebOrderId}`);
+        localStorage.removeItem('customerCart');
+        window.location.href = "store.html";
 
-                alert(`🎉 ممتاز! تم استلام طلبك بنجاح.\nرقم الفاتورة الموحد في نظامك هو: ${generatedOrderId}`);
-                
-                localStorage.removeItem('customerCart');
-                window.location.href = "store.html";
-
-            } catch (error) {
-                console.error("تفاصيل الخطأ المحاسبي:", error);
-                alert("حدث خطأ أثناء معالجة وحفظ الفاتورة:\n" + error.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
-            }
-        }
-
+    } catch (error) {
+        console.error(error);
+        alert("خطأ أثناء إرسال الطلب: " + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
+    }
+}
         renderCart();
     </script>
 </body>
