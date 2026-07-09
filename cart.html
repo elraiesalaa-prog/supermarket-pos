@@ -73,7 +73,6 @@
             }
 
             cart.forEach((item, index) => {
-                // قراءة السعر بأمان سواء تم تخزينه باسم seal_price أو الاسم القديم
                 let price = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
                 let quantity = Number(item.quantity) || 1;
                 let subtotal = price * quantity;
@@ -124,14 +123,26 @@
             btn.innerText = "جاري ترحيل الطلب...";
 
             try {
-                // تعديل المسمى الذكي هنا: تم تغيير "sell_price" إلى "seal_price" 
-                // ليطابق تماماً مسمى حقول جداولك الرياضية والمحاسبية ويمنع خطأ 400
-                const ordersToInsert = cart.map(item => ({
-                    product_name: `[طلب متجر من: ${name} - هاتف: ${phone} - العنوان: ${address}] ` + (item.product_name || ''),
-                    quantity: Number(item.quantity) || 1,
-                    seal_price: Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0
-                }));
+                // تجميع وهيكلة البيانات لتطابق هيكل جدول orders_details بدقة شديدة
+                const ordersToInsert = cart.map(item => {
+                    let itemPrice = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
+                    let itemQte = Number(item.quantity) || 1;
+                    
+                    return {
+                        id_product: Number(item.id_product), // تمرير الـ ID الفعلي للمنتج لفك الـ Constraint
+                        qte: itemQte,                       // حقل الكمية في جدولك (REAL)
+                        price: itemPrice,                   // حقل السعر في جدولك (REAL)
+                        amount: itemPrice * itemQte,        // السعر الإجمالي لهذا السطر
+                        total_amount: globalTotal,          // إجمالي الفاتورة الكلي
+                        date_order: new Date().toISOString(),
+                        pay_method: "عند الاستلام",
+                        first_name: name,                   // اسم العميل في حقل first_name
+                        description_order: `اسم المنتج: ${item.product_name} | هاتف العميل: ${phone} | عنوان الشحن: ${address}`, // تفاصيل إضافية آمنة للطلب
+                        seal_man: "المتجر الإلكتروني"
+                    };
+                });
 
+                // ترحيل المصفوفة المطابقة للجدول
                 const { error } = await supabaseClient
                     .from("orders_details")
                     .insert(ordersToInsert);
@@ -143,8 +154,8 @@
                 window.location.href = "store.html";
 
             } catch (error) {
-                console.error("تفاصيل الخطأ الكاملة:", error);
-                alert("حدث خطأ أثناء إرسال الطلب: " + error.message + "\n\n💡 نصيحة: تأكد من أن اسم العمود في جدول orders_details هو seal_price وليس sell_price.");
+                console.error("تفاصيل الخطأ المحاسبي:", error);
+                alert("حدث خطأ أثناء إرسال الطلب:\n" + error.message);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
