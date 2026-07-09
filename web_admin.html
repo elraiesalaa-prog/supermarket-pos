@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة تحكم طلبات المتجر الإلكتروني - مع الطباعة والاعتماد</title>
+    <title>لوحة تحكم طلبات المتجر الإلكتروني - العرض والمشاركة</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
@@ -36,6 +36,33 @@
         </div>
     </div>
 
+    <div id="invoiceModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl w-[96%] max-w-lg overflow-hidden">
+            <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                <h2 class="font-bold text-lg">📄 معاينة الفاتورة وخيارات المشاركة</h2>
+                <button onclick="closeInvoiceModal()" class="text-white hover:text-red-400 text-xl font-bold">✕</button>
+            </div>
+            
+            <div id="invoicePreviewContent" class="p-6 bg-gray-50 max-h-[60vh] overflow-y-auto flex justify-center">
+                </div>
+
+            <div class="p-4 bg-white border-t flex flex-wrap gap-2 justify-center">
+                <button id="btnPrintAction" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
+                    🖨️ طباعة الفاتورة
+                </button>
+                <button id="btnWhatsappAction" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
+                    📱 واتساب العميل
+                </button>
+                <button id="btnCopyAction" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
+                    📋 نسخ النص
+                </button>
+                <button onclick="closeInvoiceModal()" class="bg-gray-200 hover:bg-gray-300 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const supabaseClient = supabase.createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
@@ -43,144 +70,152 @@
         );
 
         async function loadWebOrders() {
-    const { data, error } = await supabaseClient
-        .from("web_orders")
-        .select("*")
-        .order("id_web_order", { ascending: false });
+            const { data, error } = await supabaseClient
+                .from("web_orders")
+                .select("*")
+                .order("id_web_order", { ascending: false });
 
-    if (error) return alert("خطأ أثناء جلب الطلبات: " + error.message);
+            if (error) return alert("خطأ أثناء جلب الطلبات: " + error.message);
 
-    let html = "";
-    if(data.length === 0) {
-        html = `<tr><td colspan="7" class="p-8 text-gray-400">لا توجد طلبات جديدة حالياً.</td></tr>`;
-    } else {
-        data.forEach(o => {
-            let isApproved = o.order_status === "تم الاعتماد والتوصيل";
-            let badgeClass = isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
-            
-            html += `
-            <tr class="hover:bg-slate-50">
-                <td class="p-3 font-bold text-blue-600">#${o.id_web_order}</td>
-                <td class="p-3 font-semibold">${o.client_name}</td>
-                <td class="p-3">${o.client_phone}</td>
-                <td class="p-3 text-right max-w-xs truncate">${o.client_address}</td>
-                <td class="p-3 font-bold text-emerald-600">${Number(o.total_amount).toFixed(2)} ج.م</td>
-                <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${badgeClass}">${o.order_status}</span></td>
-                <td class="p-3 flex justify-center gap-2 items-center">
+            let html = "";
+            if(data.length === 0) {
+                html = `<tr><td colspan="7" class="p-8 text-gray-400">لا توجد طلبات جديدة حالياً.</td></tr>`;
+            } else {
+                data.forEach(o => {
+                    let isApproved = o.order_status === "تم الاعتماد والتوصيل";
+                    let badgeClass = isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
                     
-                    <button onclick="printWebInvoice(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount}, '${o.date_created}')" class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-amber-600 font-bold">🖨️ طباعة</button>
-                    
-                    ${!isApproved ? `
-                        <button id="btn-approve-${o.id_web_order}" onclick="approveAndDeductStock(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount})" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-emerald-700 font-bold">✔️ اعتماد</button>
-                    ` : `<span class="text-xs text-gray-400 font-bold px-2 py-1 bg-gray-100 rounded-lg">🔒 معتمد</span>`}
-                    
-                    <button onclick="deleteOrder(${o.id_web_order})" class="bg-red-500 text-white text-xs px-2 py-1.5 rounded-lg hover:bg-red-600">❌</button>
-                </td>
+                    html += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-bold text-blue-600">#${o.id_web_order}</td>
+                        <td class="p-3 font-semibold">${o.client_name}</td>
+                        <td class="p-3">${o.client_phone}</td>
+                        <td class="p-3 text-right max-w-xs truncate">${o.client_address}</td>
+                        <td class="p-3 font-bold text-emerald-600">${Number(o.total_amount).toFixed(2)} ج.م</td>
+                        <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${badgeClass}">${o.order_status}</span></td>
+                        <td class="p-3 flex justify-center gap-2 items-center">
+                            
+                            <button onclick="previewAndPrepareInvoice(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount}, '${o.date_created}')" class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-amber-600 font-bold">🔍 عرض ومشاركة</button>
+                            
+                            ${!isApproved ? `
+                                <button id="btn-approve-${o.id_web_order}" onclick="approveAndDeductStock(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount})" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-emerald-700 font-bold">✔️ اعتماد</button>
+                            ` : `<span class="text-xs text-gray-400 font-bold px-2 py-1 bg-gray-100 rounded-lg">🔒 معتمد</span>`}
+                            
+                            <button onclick="deleteOrder(${o.id_web_order})" class="bg-red-500 text-white text-xs px-2 py-1.5 rounded-lg hover:bg-red-600">❌</button>
+                        </td>
             </tr>`;
-        });
-    }
-    document.getElementById("ordersTableBody").innerHTML = html;
-}
+                });
+            }
+            document.getElementById("ordersTableBody").innerHTML = html;
+        }
 
-        // --- دالة الطباعة الاحترافية بنفس قالب الـ POS الأصلي ---
-        async function printWebInvoice(orderId, name, phone, address, totalAmount, dateStr) {
-            // جلب تفاصيل المنتجات الخاصة بالطلب من قاعدة البيانات أولاً
+        // --- دالة عرض الفاتورة وتجهيز أزرار الميديا والطباعة ---
+        async function previewAndPrepareInvoice(orderId, name, phone, address, totalAmount, dateStr) {
             const { data: items, error } = await supabaseClient
                 .from("web_order_details")
                 .select("*")
                 .eq("id_web_order", orderId);
 
-            if (error || !items) return alert("فشل جلب تفاصيل المنتجات للطباعة: " + error.message);
+            if (error || !items) return alert("فشل جلب تفاصيل المنتجات: " + error.message);
 
             const money = v => Number(v || 0).toLocaleString();
             let rows = "";
+            let shareText = `🧾 فاتورة طلب أونلاين رقم: #${orderId}\n👤 العميل: ${name}\n📞 الهاتف: ${phone}\n📍 العنوان: ${address}\n\n📦 المنتجات المطلوبة:\n`;
 
             items.forEach(i => {
                 rows += `
                 <tr>
-                    <td style="padding:7px; border-bottom:1px solid #eee; text-align:right;">${i.product_name}</td>
+                    <td style="padding:6px; border-bottom:1px solid #eee; text-align:right;">${i.product_name}</td>
                     <td style="text-align:center; border-bottom:1px solid #eee;">${i.qte}</td>
                     <td style="text-align:center; border-bottom:1px solid #eee;">${money(i.price)}</td>
                     <td style="text-align:center; font-weight:bold; color:#2563eb; border-bottom:1px solid #eee;">${money(i.amount)}</td>
                 </tr>`;
+                shareText += `- ${i.product_name} (الكمية: ${i.qte} | السعر: ${money(i.price)} ج.م)\n`;
             });
+
+            shareText += `\n💵 الإجمالي الكلي: ${money(totalAmount)} ج.م\n🌹 شكراً لتعاملك مع مؤسسة علاء الدين!`;
 
             const dateObj = new Date(dateStr);
             const formattedDate = dateObj.toLocaleDateString("ar-EG");
             const formattedTime = dateObj.toLocaleTimeString("ar-EG");
 
-            // فتح نافذة طباعة جديدة منبثقة تحمل التصميم المطابق
-            const w = window.open("", "_blank");
-            w.document.write(`
-            <!DOCTYPE html>
-            <html lang="ar" dir="rtl">
-            <head>
-                <meta charset="UTF-8">
-                <title>فاتورة طلب رقم #${orderId}</title>
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-                    body { font-family: 'Cairo', Arial, sans-serif; direction: rtl; background: #fff; padding: 10px; display: flex; justify-content: center; }
-                    table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; }
-                    th { background: #2563eb; color: #fff; padding: 6px; text-align: center; }
-                    @media print { body { padding: 0; } }
-                </style>
-            </head>
-            <body>
-                <div style="width:80mm; background:#fff; border:2px solid #2563eb; border-radius:12px; overflow:hidden; box-shadow:0 8px 20px rgba(0,0,0,.1); font-size:12px; color:#222;">
-                    
-                    <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:12px; text-align:center;">
-                        <div style="font-size:22px; font-weight:bold;">مؤسسة علاء الدين</div>
-                        <div style="font-size:14px; margin-top:3px;">فاتورة المتجر الإلكتروني</div>
-                        <div style="font-size:11px; opacity:.9;">ONLINE ORDER</div>
+            // بناء الفاتورة وعرضها داخل الـ Modal
+            const invoiceHTML = `
+            <div id="printableArea" style="width:80mm; background:#fff; border:1px solid #2563eb; border-radius:8px; overflow:hidden; font-size:11px; color:#222; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:10px; text-align:center;">
+                    <div style="font-size:18px; font-weight:bold;">مؤسسة علاء الدين</div>
+                    <div style="font-size:12px; margin-top:2px;">فاتورة المتجر الإلكتروني</div>
+                </div>
+                <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #ddd; line-height:1.7;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span><b>رقم الطلب:</b> #${orderId}</span>
+                        <span>${formattedDate}</span>
                     </div>
-
-                    <div style="padding:10px; background:#f8fafc; border-bottom:1px solid #ddd; line-height:1.9;">
-                        <div style="display:flex; justify-content:space-between;">
-                            <span><b>رقم الطلب:</b> #${orderId}</span>
-                            <span>${formattedDate}</span>
-                        </div>
-                        <div style="margin-top:4px;">👤 <b>العميل :</b> ${name}</div>
-                        <div>📞 <b>الهاتف :</b> ${phone}</div>
-                        <div style="font-size:11px; color:#555;">📍 <b>العنوان :</b> ${address}</div>
-                        <div>🕒 ${formattedTime}</div>
-                    </div>
-
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="padding:6px; text-align:right;">الصنف</th>
-                                <th style="padding:6px;">الكمية</th>
-                                <th style="padding:6px;">السعر</th>
-                                <th style="padding:6px;">الجملة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rows}
-                        </tbody>
-                    </table>
-
-                    <div style="padding:10px; background:#f8fafc; border-top:1px solid #ddd;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:10px; border-radius:8px; font-size:16px; font-weight:bold;">
-                            <span>الإجمالي</span>
-                            <span>${money(totalAmount)} ج.م</span>
-                        </div>
-                    </div>
-
-                    <div style="padding:12px; text-align:center; font-size:11px; color:#666; border-top:1px dashed #ccc;">
-                        شكراً لتسوقكم من متجرنا أونلاين 🌹<br>مؤسسة علاء الدين لخدمتكم دائماً
+                    <div>👤 <b>العميل :</b> ${name}</div>
+                    <div>📞 <b>الهاتف :</b> ${phone}</div>
+                    <div style="font-size:10px; color:#555;">📍 <b>العنوان :</b> ${address}</div>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                    <thead>
+                        <tr style="background:#2563eb; color:#fff;">
+                            <th style="padding:4px; text-align:right;">الصنف</th>
+                            <th style="padding:4px;">الكمية</th>
+                            <th style="padding:4px;">السعر</th>
+                            <th style="padding:4px;">الجملة</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div style="padding:8px; background:#f8fafc; border-top:1px solid #ddd;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:6px; border-radius:6px; font-size:13px; font-weight:bold;">
+                        <span>الإجمالي</span>
+                        <span>${money(totalAmount)} ج.م</span>
                     </div>
                 </div>
+                <div style="padding:8px; text-align:center; font-size:10px; color:#666; border-top:1px dashed #ccc;">
+                    شكراً لتسوقكم أونلاين 🌹
+                </div>
+            </div>`;
 
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        setTimeout(() => { window.close(); }, 500);
-                    }
-                <\/script>
-            </body>
-            </html>
-            `);
-            w.document.close();
+            document.getElementById("invoicePreviewContent").innerHTML = invoiceHTML;
+
+            // ربط العمليات بالأزرار الجديدة
+            document.getElementById("btnPrintAction").onclick = function() {
+                const w = window.open("", "_blank");
+                w.document.write(`
+                <html>
+                <head><title>طباعة فاتورة</title><style>body{direction:rtl; font-family:Arial; display:flex; justify-content:center; padding:20px;}</style></head>
+                <body>${document.getElementById("invoicePreviewContent").innerHTML}
+                <script>window.onload=function(){window.print(); window.close();}<\/script>
+                </body></html>`);
+                w.document.close();
+            };
+
+            // رابط إرسال واتساب مباشر لرقم العميل
+            document.getElementById("btnWhatsappAction").onclick = function() {
+                let cleanPhone = phone.replace(/\D/g, ''); // تنظيف الرقم
+                // إضافة كود الدولة الافتراضي (مثال مصر 20) إذا بدأ الرقم بـ 01
+                if(cleanPhone.startsWith('01')) { cleanPhone = '20' + cleanPhone.substring(1); }
+                const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(shareText)}`;
+                window.open(url, '_blank');
+            };
+
+            // نسخ النص للمحافظة ومشاركته بأي وسيلة (تليجرام، إيميل... إلخ)
+            document.getElementById("btnCopyAction").onclick = function() {
+                navigator.clipboard.writeText(shareText);
+                alert("📋 تم نسخ نص تفاصيل الفاتورة بنجاح! يمكنك الآن لصقها ومشاركتها في أي ميديا.");
+            };
+
+            // فتح النافذة
+            const modal = document.getElementById("invoiceModal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closeInvoiceModal() {
+            const modal = document.getElementById("invoiceModal");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
         }
 
         // --- دالة الاعتماد والترحيل المحاسبي وتحديث المخزون ---
@@ -189,89 +224,50 @@
 
             const btn = document.getElementById(`btn-approve-${webOrderId}`);
             btn.disabled = true;
-            btn.innerText = "جاري الاعتماد والخصم...";
+            btn.innerText = "جاري الاعتماد...";
 
             try {
                 const currentDateTime = new Date().toISOString();
-
-                const { data: items, error: itemsError } = await supabaseClient
-                    .from("web_order_details")
-                    .select("*")
-                    .eq("id_web_order", webOrderId);
-
+                const { data: items, error: itemsError } = await supabaseClient.from("web_order_details").select("*").eq("id_web_order", webOrderId);
                 if (itemsError) throw itemsError;
 
                 const { data: customerData } = await supabaseClient.from("customers").select("id_customer").limit(1);
                 let fallbackCustomerId = (customerData && customerData.length > 0) ? customerData[0].id_customer : 1;
 
-                const { data: orderData, error: orderError } = await supabaseClient
-                    .from("orders_o")
-                    .insert([{
-                        customer_id: fallbackCustomerId,
-                        date_order: currentDateTime,
-                        pay_method: "cash",
-                        seal_man: "اعتماد المتجر الإلكتروني"
-                    }]).select();
+                const { data: orderData, error: orderError } = await supabaseClient.from("orders_o").insert([{
+                    customer_id: fallbackCustomerId, date_order: currentDateTime, pay_method: "cash", seal_man: "اعتماد المتجر الإلكتروني"
+                }]).select();
 
                 if (orderError) throw orderError;
                 const mainOrderId = orderData[0].id_order;
 
                 for (let item of items) {
-                    const { error: insertDetError } = await supabaseClient
-                        .from("orders_details")
-                        .insert([{
-                            id_product: Number(item.id_product),
-                            id_order: Number(mainOrderId),
-                            qte: Number(item.qte),
-                            price: Number(item.price),
-                            descount: 0,
-                            amount: Number(item.amount),
-                            total_amount: Number(totalAmount),
-                            id_customer: fallbackCustomerId,
-                            date_order: currentDateTime,
-                            pay_method: "cash",
-                            description_order: `فاتورة متجر معتمدة - هاتف: ${phone}`,
-                            seal_man: "المتجر الإلكتروني",
-                            first_name: name
-                        }]);
+                    await supabaseClient.from("orders_details").insert([{
+                        id_product: Number(item.id_product), id_order: Number(mainOrderId), qte: Number(item.qte),
+                        price: Number(item.price), descount: 0, amount: Number(item.amount), total_amount: Number(totalAmount),
+                        id_customer: fallbackCustomerId, date_order: currentDateTime, pay_method: "cash",
+                        description_order: `فاتورة متجر معتمدة - هاتف: ${phone}`, seal_man: "المتجر الإلكتروني", first_name: name
+                    }]);
 
-                    if (insertDetError) throw insertDetError;
-
-                    const { data: prodData } = await supabaseClient
-                        .from("products")
-                        .select("qte_in_stock")
-                        .eq("id_product", item.id_product)
-                        .single();
-
+                    const { data: prodData } = await supabaseClient.from("products").select("qte_in_stock").eq("id_product", item.id_product).single();
                     if(prodData) {
-                        let currentStock = Number(prodData.qte_in_stock) || 0;
-                        let newStock = currentStock - Number(item.qte);
-
-                        await supabaseClient
-                            .from("products")
-                            .update({ qte_in_stock: newStock })
-                            .eq("id_product", item.id_product);
+                        let newStock = (Number(prodData.qte_in_stock) || 0) - Number(item.qte);
+                        await supabaseClient.from("products").update({ qte_in_stock: newStock }).eq("id_product", item.id_product);
                     }
                 }
 
-                await supabaseClient
-                    .from("web_orders")
-                    .update({ order_status: "تم الاعتماد والتوصيل" })
-                    .eq("id_web_order", webOrderId);
-
-                alert(`🎉 تم الاعتماد بنجاح!\n- تم توليد فاتورة POS برقم: ${mainOrderId}\n- تم تحديث وخصم المخزون الفعلي لجميع القطع.`);
+                await supabaseClient.from("web_orders").update({ order_status: "تم الاعتماد والتوصيل" }).eq("id_web_order", webOrderId);
+                alert(`🎉 تم الاعتماد وتحديث المخزون وفاتورة الـ POS رقم: ${mainOrderId}`);
                 loadWebOrders();
-
             } catch (error) {
-                console.error(error);
                 alert("حدث خطأ أثناء عملية الاعتماد: " + error.message);
                 btn.disabled = false;
-                btn.innerText = "✔️ اعتماد وخصم";
+                btn.innerText = "✔️ اعتماد";
             }
         }
 
         async function deleteOrder(id) {
-            if(!confirm("هل أنت متأكد من حذف هذا الطلب نهائياً من المتجر؟")) return;
+            if(!confirm("هل أنت متأكد من حذف الطلب نهائياً؟")) return;
             await supabaseClient.from("web_orders").delete().eq("id_web_order", id);
             loadWebOrders();
         }
