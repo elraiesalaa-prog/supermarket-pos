@@ -110,6 +110,7 @@
             renderCart();
         }
 
+        // دالة إرسال الفاتورة المتوافقة تماماً والمترابطة مع الـ POS لعدم تدمير الفواتير القديمة
         async function submitOrder() {
             const name = document.getElementById("clientName").value.trim();
             const phone = document.getElementById("clientPhone").value.trim();
@@ -120,42 +121,64 @@
 
             const btn = document.getElementById("btnSubmit");
             btn.disabled = true;
-            btn.innerText = "جاري ترحيل الطلب...";
+            btn.innerText = "جاري حجز الفاتورة وتأمين الطلب...";
 
             try {
-                // تجميع وهيكلة البيانات لتطابق هيكل جدول orders_details بدقة شديدة
-                const ordersToInsert = cart.map(item => {
+                const currentDateTime = new Date().toISOString();
+                
+                // --- الخطوة الأولى: إنشاء رأس الفاتورة في orders_o لاستخراج رقم الفاتورة ---
+                // نمرر حقل customer_id كقيمة فارغة (null) لأن الزبون من المتجر الخارجي، أو يمكنك ربطه بعميل افتراضي
+                const { data: orderData, error: orderError } = await supabaseClient
+                    .from("orders_o")
+                    .insert([{
+                        customer_id: null, 
+                        date_order: currentDateTime,
+                        pay_method: "عند الاستلام",
+                        seal_man: "المتجر الإلكتروني"
+                    }]).select();
+
+                if (orderError) throw orderError;
+                if (!orderData || orderData.length === 0) throw new Error("لم يتم إرجاع معرف الفاتورة بنجاح.");
+
+                const generatedOrderId = orderData[0].id_order; // رقم الفاتورة الحقيقي المولد من سوبابيز
+
+                // --- الخطوة الثانية: تجهيز تفاصيل الفاتورة وإدراجها مع رقم الفاتورة الصحيح ---
+                const detailsToInsert = cart.map(item => {
                     let itemPrice = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
                     let itemQte = Number(item.quantity) || 1;
                     
                     return {
-                        id_product: Number(item.id_product), // تمرير الـ ID الفعلي للمنتج لفك الـ Constraint
-                        qte: itemQte,                       // حقل الكمية في جدولك (REAL)
-                        price: itemPrice,                   // حقل السعر في جدولك (REAL)
-                        amount: itemPrice * itemQte,        // السعر الإجمالي لهذا السطر
-                        total_amount: globalTotal,          // إجمالي الفاتورة الكلي
-                        date_order: new Date().toISOString(),
+                        id_product: Number(item.id_product),   // كود ربط حقيقي بجدول المنتجات
+                        id_order: generatedOrderId,            // ربط حقيقي برأس الفاتورة المستخرج لمنع أخطاء الـ POS
+                        qte: itemQte,
+                        price: itemPrice,
+                        descount: 0,
+                        amount: itemPrice * itemQte,
+                        total_amount: itemPrice * itemQte,
+                        id_customer: null,                     // زبون أونلاين خارجي
+                        date_order: currentDateTime,
                         pay_method: "عند الاستلام",
-                        first_name: name,                   // اسم العميل في حقل first_name
-                        description_order: `اسم المنتج: ${item.product_name} | هاتف العميل: ${phone} | عنوان الشحن: ${address}`, // تفاصيل إضافية آمنة للطلب
-                        seal_man: "المتجر الإلكتروني"
+                        description_order: `العنوان: ${address} | الهاتف: ${phone}`,
+                        seal_man: "المتجر الإلكتروني",
+                        first_name: name                       // اسم صاحب الطلب الخارجي
                     };
                 });
 
-                // ترحيل المصفوفة المطابقة للجدول
-                const { error } = await supabaseClient
+                // ترحيل تفاصيل العمليات بالكامل دفعة واحدة لجدول الأسطر
+                const { error: detailsError } = await supabaseClient
                     .from("orders_details")
-                    .insert(ordersToInsert);
+                    .insert(detailsToInsert);
 
-                if (error) throw error;
+                if (detailsError) throw detailsError;
 
-                alert("🎉 ممتاز! تم استلام طلبك بنجاح، وظهر الآن مباشرة في لوحة إدارة المدير التابعة للمتجر.");
+                alert(`🎉 ممتاز! تم استلام طلبك بنجاح.\nرقم الفاتورة الموحد في نظامك هو: ${generatedOrderId}`);
+                
                 localStorage.removeItem('customerCart');
                 window.location.href = "store.html";
 
             } catch (error) {
                 console.error("تفاصيل الخطأ المحاسبي:", error);
-                alert("حدث خطأ أثناء إرسال الطلب:\n" + error.message);
+                alert("حدث خطأ أثناء معالجة وحفظ الفاتورة:\n" + error.message);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
