@@ -20,13 +20,11 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- قائمة المشتريات -->
             <div class="lg:col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
                 <h2 class="font-bold text-slate-700 mb-4 border-b pb-2">القطع المختارة</h2>
                 <div id="cartItems" class="divide-y divide-slate-100"></div>
             </div>
 
-            <!-- بيانات التوصيل وحفظ الطلب -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 h-fit space-y-4">
                 <h2 class="font-bold text-slate-700 border-b pb-2">بيانات مستلم الشحنة</h2>
                 
@@ -62,10 +60,11 @@
         );
 
         let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
+        let globalTotal = 0; // متغير عالمي للاحتفاظ بقيمة الإجمالي عند الترحيل
 
         function renderCart() {
             let html = "";
-            let total = 0;
+            globalTotal = 0;
 
             if(cart.length === 0) {
                 document.getElementById("cartItems").innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">سلتك فارغة تماماً.</div>`;
@@ -74,19 +73,21 @@
             }
 
             cart.forEach((item, index) => {
-                let price = item.sell_price || item.coasts_value || 0;
-                let subtotal = price * item.quantity;
-                total += subtotal;
+                // تصحيح قراءة حقل السعر إلى seal_price ليتطابق مع قاعدة البيانات
+                let price = Number(item.seal_price) || Number(item.coasts_value) || 0;
+                let quantity = Number(item.quantity) || 1;
+                let subtotal = price * quantity;
+                globalTotal += subtotal;
 
                 html += `
                 <div class="flex items-center gap-3 py-3">
                     <div class="flex-1">
-                        <h4 class="font-bold text-slate-800 text-sm">${item.product_name}</h4>
-                        <p class="text-xs text-slate-400">${Number(price).toFixed(2)} ج.م × ${item.quantity}</p>
+                        <h4 class="font-bold text-slate-800 text-sm">${item.product_name || "منتج غير مسمى"}</h4>
+                        <p class="text-xs text-slate-400">${price.toFixed(2)} ج.م × ${quantity}</p>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button onclick="changeQty(${index}, -1)" class="w-7 h-7 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200">-</button>
-                        <span class="font-bold text-sm w-5 text-center">${item.quantity}</span>
+                        <span class="font-bold text-sm w-5 text-center">${quantity}</span>
                         <button onclick="changeQty(${index}, 1)" class="w-7 h-7 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200">+</button>
                     </div>
                     <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-600 font-bold text-xs p-1">❌</button>
@@ -94,11 +95,11 @@
             });
 
             document.getElementById("cartItems").innerHTML = html;
-            document.getElementById("cartTotal").innerText = total.toFixed(2) + " ج.م";
+            document.getElementById("cartTotal").innerText = globalTotal.toFixed(2) + " ج.م";
         }
 
         function changeQty(index, change) {
-            cart[index].quantity += change;
+            cart[index].quantity = (Number(cart[index].quantity) || 1) + change;
             if (cart[index].quantity <= 0) cart.splice(index, 1);
             localStorage.setItem('customerCart', JSON.stringify(cart));
             renderCart();
@@ -110,7 +111,7 @@
             renderCart();
         }
 
-        // إدراج الفاتورة والعمليات في سوبابيز مباشرة لتظهر بلوحة تحكم المدير التابعة لك
+        // إدراج الفاتورة والعمليات في سوبابيز مباشرة لتظهر بلوحة تحكم المدير
         async function submitOrder() {
             const name = document.getElementById("clientName").value.trim();
             const phone = document.getElementById("clientPhone").value.trim();
@@ -124,14 +125,15 @@
             btn.innerText = "جاري ترحيل الطلب...";
 
             try {
-                // تحضير مصفوفة الحركات لإدخالها دفعة واحدة في جدول تفاصيل العمليات/المبيعات الخاص بك
+                // تحضير البيانات بما يتوافق مع مسميات الحقول الرقمية والنصية في جدولك
                 const ordersToInsert = cart.map(item => ({
-                    product_name: `[طلب متجر من: ${name} - هاتف: ${phone}] ` + item.product_name,
-                    quantity: item.quantity,
-                    sell_price: item.sell_price || item.coasts_value || 0
+                    product_name: `[طلب متجر من: ${name} - هاتف: ${phone} - العنوان: ${address}] ` + (item.product_name || ''),
+                    quantity: Number(item.quantity) || 1,
+                    // ترحيل السعر للحقل المحاسبي الفعلي لديك لتجنب أخطاء حظر قواعد البيانات
+                    sell_price: Number(item.seal_price) || Number(item.coasts_value) || 0
                 }));
 
-                // ترحيل البيانات إلى سوبابيز مباشرة في جدول المبيعات
+                // ترحيل البيانات إلى سوبابيز مباشرة في جدول المبيعات الخاص بك
                 const { error } = await supabaseClient
                     .from("orders_details")
                     .insert(ordersToInsert);
@@ -143,14 +145,15 @@
                 window.location.href = "store.html";
 
             } catch (error) {
-                console.error(error);
-                alert("حدث خطأ أثناء إرسال الطلب، تأكد من مطابقة أسماء جداولك وحقولك المحاسبية.");
+                console.error("تفاصيل خطأ سوبابيز الكاملة:", error);
+                alert("حدث خطأ أثناء إرسال الطلب: " + error.message + "\nتأكد من إلغاء قفل الحماية RLS لجدول orders_details إذا استمرت المشكلة.");
             } finally {
                 btn.disabled = false;
                 btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
             }
         }
 
+        // تشغيل البناء الأولي عند فتح الصفحة مباشرة
         renderCart();
     </script>
 </body>
