@@ -6,7 +6,7 @@
     <title>متجر الأزياء الإلكتروني</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -20,12 +20,24 @@
                 <span class="text-2xl">🛍️</span>
                 <span class="text-xl font-bold text-blue-600">ABM للملبوسات</span>
             </div>
-            <a href="cart.html" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-xl transition flex items-center gap-2 font-bold text-sm">
-                <span>🛒 سلة المشتريات</span>
-                <span id="cartCount" class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
-            </a>
+            <div class="flex items-center gap-4">
+                <!-- توضيح سعر الشحن في الهيدر للعميل بشكل شفاف -->
+                <div class="hidden sm:flex items-center gap-1 text-xs bg-amber-50 text-amber-800 px-3 py-1.5 rounded-lg border border-amber-200">
+                    <span>🚚 التوصيل الثابت:</span>
+                    <span id="shippingDisplay" class="font-bold">0</span>
+                </div>
+                <a href="cart.html" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-xl transition flex items-center gap-2 font-bold text-sm">
+                    <span>🛒 سلة المشتريات</span>
+                    <span id="cartCount" class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
+                </a>
+            </div>
         </div>
     </nav>
+
+    <!-- لافتة فرعية للهواتف تظهر سعر الشحن والتوصيل -->
+    <div class="sm:hidden bg-amber-50 text-amber-800 text-center py-2 text-xs border-b border-amber-100 font-semibold">
+        🚚 سعر الشحن والتوصيل الموحد: <span id="shippingDisplayMobile">0</span>
+    </div>
 
     <header class="relative bg-gray-900 text-white py-16 px-4 text-center">
         <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000&auto=format&fit=crop');"></div>
@@ -47,8 +59,19 @@
             "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
         );
 
+        // ================= تـكـلـفـة الـشـحـن والـتـوصـيـل =================
+        // يمكنك تغيير هذا الرقم (مثلاً إلى 50 أو 100) حسب سعر التوصيل الثابت لديك
+        const SHIPPING_FEES = 50; 
+
         let products = [];
         let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
+
+        // تحديث نصوص واجهة الشحن والتوصيل في الصفحة عند البدء
+        function initShippingDisplay() {
+            const text = `${SHIPPING_FEES.toFixed(2)} ج.م`;
+            if(document.getElementById("shippingDisplay")) document.getElementById("shippingDisplay").innerText = text;
+            if(document.getElementById("shippingDisplayMobile")) document.getElementById("shippingDisplayMobile").innerText = text;
+        }
 
         async function fetchProducts() {
             try {
@@ -67,7 +90,7 @@
                     { id_product: 102, product_name: "قميص قطن تركي كاجوال", seal_price: 380, qte_in_stock: 25 },
                     { id_product: 103, product_name: "فستان سهرة أنيق زفاف", seal_price: 1200, qte_in_stock: 5 },
                     { id_product: 104, product_name: "بنطال جينز أزرق عصري", seal_price: 420, qte_in_stock: 18 },
-                    { id_product: 105, product_name: "تيشيرت صيفي (مثال لمنتهي المخزون)", seal_price: 250, qte_in_stock: 0 } // لن يظهر
+                    { id_product: 105, product_name: "تيشيرت صيفي (مثال لمنتهي المخزون)", seal_price: 250, qte_in_stock: 0 }
                 ];
             }
             renderProducts();
@@ -75,42 +98,38 @@
         }
 
         function renderProducts() {
-    let html = "";
-    // صورة افتراضية أنيقة في حال لم تكن هناك صورة للمنتج
-    let fallbackImg = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500"; 
-    
-    // 1. تصفية وعرض المنتجات التي تمتلك مخزون أكبر من صفر فقط
-    const availableProducts = products.filter(p => (Number(p.qte_in_stock) || 0) > 0);
+            let html = "";
+            let fallbackImg = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500"; 
+            
+            const availableProducts = products.filter(p => (Number(p.qte_in_stock) || 0) > 0);
 
-    if (availableProducts.length === 0) {
-        document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">لا توجد منتجات متاحة في المخزون حالياً.</div>`;
-        return;
-    }
+            if (availableProducts.length === 0) {
+                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">لا توجد منتجات متاحة في المخزون حالياً.</div>`;
+                return;
+            }
 
-    availableProducts.forEach(p => {
-        let price = Number(p.seal_price) || 0;
-        let productName = p.product_name || "منتج غير مسمى";
-        
-        // 2. التعديل الجوهري: قراءة الحقل الصحيح image_product بدلاً من image_url
-        let imgUrl = p.image_product || fallbackImg;
-        
-        html += `
-        <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between p-4">
-            <img src="${imgUrl}" alt="${productName}" class="w-full h-48 object-cover rounded-xl bg-gray-100 mb-3" onerror="this.src='${fallbackImg}'">
-            <div class="flex-1 flex flex-col justify-between gap-2">
-                <div>
-                    <h3 class="font-bold text-gray-800 text-sm line-clamp-2">${productName}</h3>
-                    <div class="text-blue-600 font-extrabold text-base mt-1">${price.toFixed(2)} ج.م</div>
-                    <span class="text-xs text-gray-400 mt-1 block">المخزون: ${p.qte_in_stock} قطع</span>
-                </div>
-                <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition text-xs mt-2">
-                    ➕ إضافة للسلة
-                </button>
-            </div>
-        </div>`;
-    });
-    document.getElementById("productsGrid").innerHTML = html;
-}
+            availableProducts.forEach(p => {
+                let price = Number(p.seal_price) || 0;
+                let productName = p.product_name || "منتج غير مسمى";
+                let imgUrl = p.image_product || fallbackImg;
+                
+                html += `
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between p-4">
+                    <img src="${imgUrl}" alt="${productName}" class="w-full h-48 object-cover rounded-xl bg-gray-100 mb-3" onerror="this.src='${fallbackImg}'">
+                    <div class="flex-1 flex flex-col justify-between gap-2">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm line-clamp-2">${productName}</h3>
+                            <div class="text-blue-600 font-extrabold text-base mt-1">${price.toFixed(2)} ج.م</div>
+                            <span class="text-xs text-gray-400 mt-1 block">المخزون: ${p.qte_in_stock} قطع</span>
+                        </div>
+                        <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition text-xs mt-2">
+                            ➕ إضافة للسلة
+                        </button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById("productsGrid").innerHTML = html;
+        }
 
         function addToCart(id) {
             const product = products.find(p => p.id_product === id);
@@ -127,6 +146,10 @@
                     quantity: 1 
                 });
             }
+            
+            // تعديل جوهري: تخزين رسوم الشحن الثابتة بشكل موازٍ في LocalStorage 
+            // ليتم سحبها في صفحة السلة cart.html وحساب إجمالي الفاتورة النهائي بناءً عليها.
+            localStorage.setItem('shippingFees', SHIPPING_FEES);
             localStorage.setItem('customerCart', JSON.stringify(cart));
             updateCartCount();
         }
@@ -135,6 +158,8 @@
             document.getElementById("cartCount").innerText = cart.reduce((sum, item) => sum + item.quantity, 0);
         }
 
+        // تشغيل التهيئة وجلب المنتجات
+        initShippingDisplay();
         fetchProducts();
     </script>
 </body>
