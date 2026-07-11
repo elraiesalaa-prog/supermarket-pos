@@ -67,11 +67,33 @@
         let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
 
         // تحديث نصوص واجهة الشحن والتوصيل في الصفحة عند البدء
-        function initShippingDisplay() {
-            const text = `${SHIPPING_FEES.toFixed(2)} ج.م`;
-            if(document.getElementById("shippingDisplay")) document.getElementById("shippingDisplay").innerText = text;
-            if(document.getElementById("shippingDisplayMobile")) document.getElementById("shippingDisplayMobile").innerText = text;
+       // استبدل دالة initShippingDisplay القديمة في صفحة المتجر بهذه الدالة الديناميكية:
+async function initShippingDisplay() {
+    let activeShipping = 50; // القيمة الاحتياطية الافتراضية في حال انقطاع الإنترنت
+
+    try {
+        // جلب سعر الشحن الفعلي والمباشر الحساب الإداري من سوبابيز
+        const { data, error } = await supabaseClient
+            .from("shipping_settings")
+            .select("shipping_cost")
+            .eq("id", 1)
+            .single();
+        
+        if (!error && data) {
+            activeShipping = Number(data.shipping_cost);
         }
+    } catch (err) {
+        console.warn("تعذر الاتصال المباشر بقاعدة بيانات الشحن، تم استخدام القيمة الاحتياطية:", err);
+    }
+
+    // عرض النتيجة الحية للمستخدم في واجهة المتجر
+    const text = `${activeShipping.toFixed(2)} ج.م`;
+    if(document.getElementById("shippingDisplay")) document.getElementById("shippingDisplay").innerText = text;
+    if(document.getElementById("shippingDisplayMobile")) document.getElementById("shippingDisplayMobile").innerText = text;
+    
+    // حفظ القيمة الحالية القادمة من السيرفر في ذاكرة المتصفح لتستلمها صفحة السلة فوراً
+    localStorage.setItem('shippingFees', activeShipping);
+}
 
         async function fetchProducts() {
             try {
