@@ -26,7 +26,7 @@
                 <div id="cartItems" class="divide-y divide-slate-100"></div>
             </div>
 
-            <!-- قسم الفاتورة وبيانات الشحن -->
+            <!-- قسم الفاتورة وبيانات الشحن المدخلة من المسؤول -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 h-fit space-y-4">
                 <h2 class="font-bold text-slate-700 border-b pb-2">بيانات مستلم الشحنة</h2>
                 
@@ -43,18 +43,18 @@
                     <input type="text" id="clientAddress" placeholder="المنطقة، الشارع، رقم الشقة..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
                 </div>
 
-                <!-- تفاصيل الحساب والشحن -->
+                <!-- تفاصيل الحساب الديناميكية التي تتغير بناء على لوحة التحكم -->
                 <div class="border-t pt-3 space-y-2 text-sm font-semibold text-slate-600">
                     <div class="flex justify-between items-center">
                         <span>إجمالي المنتجات:</span>
                         <span id="productsTotal">0.00 ج.م</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span>تكلفة التوصيل:</span>
-                        <span id="shippingTotal">0.00 ج.م</span>
+                        <span>تكلفة التوصيل المتغيرة:</span>
+                        <span id="shippingTotal" class="text-amber-600 font-bold">0.00 ج.م</span>
                     </div>
                     <div class="flex justify-between items-center font-bold text-lg border-t pt-2 mt-1">
-                        <span class="text-slate-800">إجمالي الحساب الكلي:</span>
+                        <span class="text-slate-800">إجمالي الحساب النهائي:</span>
                         <span id="cartTotal" class="text-emerald-600">0.00 ج.م</span>
                     </div>
                 </div>
@@ -73,9 +73,10 @@
         );
 
         let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
-        // جلب رسوم الشحن المخزنة في المتجر (الافتراضي 0 إذا لم توجد)
-        const shippingCost = Number(localStorage.getItem('shippingFees')) || 0; 
-        let globalTotal = 0; // سيمثل الحساب النهائي متضمناً الشحن
+        
+        // التقاط التكلفة الديناميكية التي حددها المسؤول وتم حفظها اثناء زيارة العميل للمتجر
+        const shippingCost = Number(localStorage.getItem('shippingFees')) || 50; 
+        let globalTotal = 0; 
 
         function renderCart() {
             let html = "";
@@ -111,7 +112,7 @@
                 </div>`;
             });
 
-            // حساب المجموع النهائي بإضافة الشحن
+            // حساب المجموع الكلي متضمناً السعر القادم من جدول الإدارة
             globalTotal = productsSubtotal + shippingCost;
 
             document.getElementById("cartItems").innerHTML = html;
@@ -146,7 +147,7 @@
             btn.innerText = "جاري إرسال طلبك...";
 
             try {
-                // 1. حفظ الطلب في جدول المتجر الرئيسي (القيمة الإجمالية تشمل الشحن الآن)
+                // 1. رفع الطلب شاملاً السعر المحدث
                 const { data: webOrder, error: orderError } = await supabaseClient
                     .from("web_orders")
                     .insert([{
@@ -159,7 +160,7 @@
                 if (orderError) throw orderError;
                 const newWebOrderId = webOrder[0].id_web_order;
 
-                // 2. تجهيز تفاصيل المنتجات للجدول الفرعي
+                // 2. تجهيز مصفوفة تفاصيل الفاتورة
                 const detailsToInsert = cart.map(item => {
                     let itemPrice = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
                     let itemQte = Number(item.quantity) || 1;
@@ -173,7 +174,7 @@
                     };
                 });
 
-                // 3. إدخال تفاصيل المنتجات في قاعدة البيانات
+                // 3. رفع السجلات الفرعية
                 const { error: detailsError } = await supabaseClient
                     .from("web_order_details")
                     .insert(detailsToInsert);
@@ -193,7 +194,7 @@
             }
         }
 
-        // تشغيل البناء الأولي عند فتح الصفحة
+        // تشغيل البناء البرمي
         renderCart();
     </script>
 </body>
