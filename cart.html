@@ -6,7 +6,7 @@
     <title>سلة المشتريات - إتمام الطلب</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
     </style>
@@ -20,11 +20,13 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- قسم القطع المختارة -->
             <div class="lg:col-span-2 bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
                 <h2 class="font-bold text-slate-700 mb-4 border-b pb-2">القطع المختارة</h2>
                 <div id="cartItems" class="divide-y divide-slate-100"></div>
             </div>
 
+            <!-- قسم الفاتورة وبيانات الشحن -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 h-fit space-y-4">
                 <h2 class="font-bold text-slate-700 border-b pb-2">بيانات مستلم الشحنة</h2>
                 
@@ -41,9 +43,20 @@
                     <input type="text" id="clientAddress" placeholder="المنطقة، الشارع، رقم الشقة..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
                 </div>
 
-                <div class="border-t pt-3 flex justify-between items-center font-bold text-lg">
-                    <span class="text-slate-600">إجمالي الحساب:</span>
-                    <span id="cartTotal" class="text-emerald-600">0.00 ج.م</span>
+                <!-- تفاصيل الحساب والشحن -->
+                <div class="border-t pt-3 space-y-2 text-sm font-semibold text-slate-600">
+                    <div class="flex justify-between items-center">
+                        <span>إجمالي المنتجات:</span>
+                        <span id="productsTotal">0.00 ج.م</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span>تكلفة التوصيل:</span>
+                        <span id="shippingTotal">0.00 ج.م</span>
+                    </div>
+                    <div class="flex justify-between items-center font-bold text-lg border-t pt-2 mt-1">
+                        <span class="text-slate-800">إجمالي الحساب الكلي:</span>
+                        <span id="cartTotal" class="text-emerald-600">0.00 ج.م</span>
+                    </div>
                 </div>
 
                 <button onclick="submitOrder()" id="btnSubmit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition">
@@ -60,23 +73,28 @@
         );
 
         let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
-        let globalTotal = 0;
+        // جلب رسوم الشحن المخزنة في المتجر (الافتراضي 0 إذا لم توجد)
+        const shippingCost = Number(localStorage.getItem('shippingFees')) || 0; 
+        let globalTotal = 0; // سيمثل الحساب النهائي متضمناً الشحن
 
         function renderCart() {
             let html = "";
-            globalTotal = 0;
+            let productsSubtotal = 0;
 
             if(cart.length === 0) {
                 document.getElementById("cartItems").innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">سلتك فارغة تماماً.</div>`;
+                document.getElementById("productsTotal").innerText = "0.00 ج.م";
+                document.getElementById("shippingTotal").innerText = "0.00 ج.م";
                 document.getElementById("cartTotal").innerText = "0.00 ج.م";
+                globalTotal = 0;
                 return;
             }
 
             cart.forEach((item, index) => {
                 let price = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
                 let quantity = Number(item.quantity) || 1;
-                let subtotal = price * quantity;
-                globalTotal += subtotal;
+                let itemTotal = price * quantity;
+                productsSubtotal += itemTotal;
 
                 html += `
                 <div class="flex items-center gap-3 py-3">
@@ -93,7 +111,12 @@
                 </div>`;
             });
 
+            // حساب المجموع النهائي بإضافة الشحن
+            globalTotal = productsSubtotal + shippingCost;
+
             document.getElementById("cartItems").innerHTML = html;
+            document.getElementById("productsTotal").innerText = productsSubtotal.toFixed(2) + " ج.م";
+            document.getElementById("shippingTotal").innerText = shippingCost.toFixed(2) + " ج.م";
             document.getElementById("cartTotal").innerText = globalTotal.toFixed(2) + " ج.م";
         }
 
@@ -110,66 +133,67 @@
             renderCart();
         }
 
-        // دالة إرسال الفاتورة المتوافقة تماماً والمترابطة مع الـ POS لعدم تدمير الفواتير القديمة
         async function submitOrder() {
-    const name = document.getElementById("clientName").value.trim();
-    const phone = document.getElementById("clientPhone").value.trim();
-    const address = document.getElementById("clientAddress").value.trim();
+            const name = document.getElementById("clientName").value.trim();
+            const phone = document.getElementById("clientPhone").value.trim();
+            const address = document.getElementById("clientAddress").value.trim();
 
-    if(!name || !phone || !address) return alert("الرجاء تعبئة بيانات الشحن كاملة!");
-    if(cart.length === 0) return alert("السلة فارغة!");
+            if(!name || !phone || !address) return alert("الرجاء تعبئة بيانات الشحن كاملة!");
+            if(cart.length === 0) return alert("السلة فارغة!");
 
-    const btn = document.getElementById("btnSubmit");
-    btn.disabled = true;
-    btn.innerText = "جاري إرسال طلبك...";
+            const btn = document.getElementById("btnSubmit");
+            btn.disabled = true;
+            btn.innerText = "جاري إرسال طلبك...";
 
-    try {
-        // 1. حفظ الطلب في جدول المتجر الجديد الآمن
-        const { data: webOrder, error: orderError } = await supabaseClient
-            .from("web_orders")
-            .insert([{
-                client_name: name,
-                client_phone: phone,
-                client_address: address,
-                total_amount: globalTotal
-            }]).select();
+            try {
+                // 1. حفظ الطلب في جدول المتجر الرئيسي (القيمة الإجمالية تشمل الشحن الآن)
+                const { data: webOrder, error: orderError } = await supabaseClient
+                    .from("web_orders")
+                    .insert([{
+                        client_name: name,
+                        client_phone: phone,
+                        client_address: address,
+                        total_amount: globalTotal
+                    }]).select();
 
-        if (orderError) throw orderError;
-        const newWebOrderId = webOrder[0].id_web_order;
+                if (orderError) throw orderError;
+                const newWebOrderId = webOrder[0].id_web_order;
 
-        // 2. تجهيز التفاصيل للجدول الجديد
-        const detailsToInsert = cart.map(item => {
-            let itemPrice = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
-            let itemQte = Number(item.quantity) || 1;
-            return {
-                id_web_order: newWebOrderId,
-                id_product: Number(item.id_product),
-                product_name: item.product_name,
-                qte: itemQte,
-                price: itemPrice,
-                amount: itemPrice * itemQte
-            };
-        });
+                // 2. تجهيز تفاصيل المنتجات للجدول الفرعي
+                const detailsToInsert = cart.map(item => {
+                    let itemPrice = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
+                    let itemQte = Number(item.quantity) || 1;
+                    return {
+                        id_web_order: newWebOrderId,
+                        id_product: Number(item.id_product),
+                        product_name: item.product_name,
+                        qte: itemQte,
+                        price: itemPrice,
+                        amount: itemPrice * itemQte
+                    };
+                });
 
-        // 3. إدخال التفاصيل
-        const { error: detailsError } = await supabaseClient
-            .from("web_order_details")
-            .insert(detailsToInsert);
+                // 3. إدخال تفاصيل المنتجات في قاعدة البيانات
+                const { error: detailsError } = await supabaseClient
+                    .from("web_order_details")
+                    .insert(detailsToInsert);
 
-        if (detailsError) throw detailsError;
+                if (detailsError) throw detailsError;
 
-        alert(`🎉 تم استلام طلبك بنجاح وجاري مراجعته من الإدارة.\nرقم الطلب: ${newWebOrderId}`);
-        localStorage.removeItem('customerCart');
-        window.location.href = "store.html";
+                alert(`🎉 تم استلام طلبك بنجاح وجاري مراجعته من الإدارة.\nرقم الطلب: ${newWebOrderId}`);
+                localStorage.removeItem('customerCart');
+                window.location.href = "store.html";
 
-    } catch (error) {
-        console.error(error);
-        alert("خطأ أثناء إرسال الطلب: " + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
-    }
-}
+            } catch (error) {
+                console.error(error);
+                alert("خطأ أثناء إرسال الطلب: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
+            }
+        }
+
+        // تشغيل البناء الأولي عند فتح الصفحة
         renderCart();
     </script>
 </body>
