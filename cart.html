@@ -6,7 +6,7 @@
     <title>سلة المشتريات - إتمام الطلب</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
     </style>
@@ -26,7 +26,7 @@
                 <div id="cartItems" class="divide-y divide-slate-100"></div>
             </div>
 
-            <!-- قسم الفاتورة وبيانات الشحن المدخلة من المسؤول -->
+            <!-- قسم الفاتورة وبيانات الشحن -->
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 h-fit space-y-4">
                 <h2 class="font-bold text-slate-700 border-b pb-2">بيانات مستلم الشحنة</h2>
                 
@@ -38,19 +38,28 @@
                     <label class="block text-xs font-bold text-slate-500 mb-1">رقم الهاتف للاتصال</label>
                     <input type="tel" id="clientPhone" placeholder="01xxxxxxxxx" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 text-left" dir="ltr">
                 </div>
+                
+                <!-- إضافة اختيار المنطقة ديناميكياً من قاعدة البيانات -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1">عنوان الشحن بالتفصيل</label>
-                    <input type="text" id="clientAddress" placeholder="المنطقة، الشارع، رقم الشقة..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">المحافظة / منطقة الشحن</label>
+                    <select id="clientRegion" onchange="updateShippingCost()" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 bg-white">
+                        <option value="" data-cost="0">جاري تحميل المناطق...</option>
+                    </select>
                 </div>
 
-                <!-- تفاصيل الحساب الديناميكية التي تتغير بناء على لوحة التحكم -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">العنوان بالتفصيل (الشارع / رقم المبنى)</label>
+                    <input type="text" id="clientAddress" placeholder="اسم الشارع، رقم العقار والشقة..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                </div>
+
+                <!-- تفاصيل الحساب الديناميكية المتوافقة مع السعر المختار -->
                 <div class="border-t pt-3 space-y-2 text-sm font-semibold text-slate-600">
                     <div class="flex justify-between items-center">
                         <span>إجمالي المنتجات:</span>
                         <span id="productsTotal">0.00 ج.م</span>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span>تكلفة التوصيل المتغيرة:</span>
+                        <span>تكلفة التوصيل للمنطقة:</span>
                         <span id="shippingTotal" class="text-amber-600 font-bold">0.00 ج.م</span>
                     </div>
                     <div class="flex justify-between items-center font-bold text-lg border-t pt-2 mt-1">
@@ -73,14 +82,54 @@
         );
 
         let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
-        
-        // التقاط التكلفة الديناميكية التي حددها المسؤول وتم حفظها اثناء زيارة العميل للمتجر
-        const shippingCost = Number(localStorage.getItem('shippingFees')) || 50; 
+        let productsSubtotal = 0;
+        let currentShippingCost = 0;
         let globalTotal = 0; 
 
+        // 1. جلب قائمة المحافظات/المناطق ديناميكياً من جدول الأسطر المنفصلة
+        async function fetchRegions() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from("shipping_settings")
+                    .select("*")
+                    .order("region_name", { ascending: true });
+
+                if (error) throw error;
+
+                const regionSelect = document.getElementById("clientRegion");
+                let optionsHTML = '<option value="" data-cost="0">-- اختر المحافظة/المنطقة --</option>';
+                
+                if (data && data.length > 0) {
+                    data.forEach(region => {
+                        optionsHTML += `<option value="${region.region_name}" data-cost="${region.shipping_cost}">${region.region_name} (${Number(region.shipping_cost).toFixed(2)} ج.م)</option>`;
+                    });
+                } else {
+                    optionsHTML = '<option value="شحن عام" data-cost="50">شحن موحد (50.00 ج.م)</option>';
+                }
+                
+                regionSelect.innerHTML = optionsHTML;
+            } catch (err) {
+                console.error("خطأ في جلب مناطق الشحن:", err);
+                document.getElementById("clientRegion").innerHTML = '<option value="شحن عام" data-cost="50">شحن موحد (50.00 ج.م)</option>';
+            }
+        }
+
+        // 2. تحديث قيمة الشحن والإجمالي الكلي فور تغير اختيار العميل للمنطقة
+        function updateShippingCost() {
+            const selectEl = document.getElementById("clientRegion");
+            const selectedOption = selectEl.options[selectEl.selectedIndex];
+            
+            // قراءة السعر من حقل الداتا المخصص بالـ Option
+            currentShippingCost = Number(selectedOption.getAttribute("data-cost")) || 0;
+            
+            // إعادة حساب المجموع النهائي وتحديث الواجهة
+            calculateFinalTotals();
+        }
+
+        // 3. دالة استعراض وحساب سلة المشتريات
         function renderCart() {
             let html = "";
-            let productsSubtotal = 0;
+            productsSubtotal = 0;
 
             if(cart.length === 0) {
                 document.getElementById("cartItems").innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">سلتك فارغة تماماً.</div>`;
@@ -112,13 +161,17 @@
                 </div>`;
             });
 
-            // حساب المجموع الكلي متضمناً السعر القادم من جدول الإدارة
-            globalTotal = productsSubtotal + shippingCost;
-
             document.getElementById("cartItems").innerHTML = html;
+            calculateFinalTotals();
+        }
+
+        // 4. تجميعة الحسابات وتحديث أرقام الفاتورة في واجهة المستخدم
+        function calculateFinalTotals() {
+            globalTotal = productsSubtotal + currentShippingCost;
+            
             document.getElementById("productsTotal").innerText = productsSubtotal.toFixed(2) + " ج.م";
-            document.getElementById("shippingTotal").innerText = shippingCost.toFixed(2) + " ج.م";
-            document.getElementById("cartTotal").innerText = globalTotal.toFixed(2) + " ج.م";
+            document.getElementById("shippingTotal").innerText = currentShippingCost.toFixed(2) + " ج.م";
+            document.getElementById("cartTotal").innerText = globalTotal.toFixed(2) + " ج.m";
         }
 
         function changeQty(index, change) {
@@ -134,33 +187,41 @@
             renderCart();
         }
 
+        // 5. رفع الطلب المعتمد متضمناً اسم المنطقة وتكلفة شحنها الصحيحة
         async function submitOrder() {
             const name = document.getElementById("clientName").value.trim();
             const phone = document.getElementById("clientPhone").value.trim();
-            const address = document.getElementById("clientAddress").value.trim();
+            const region = document.getElementById("clientRegion").value;
+            const addressDetails = document.getElementById("clientAddress").value.trim();
 
-            if(!name || !phone || !address) return alert("الرجاء تعبئة بيانات الشحن كاملة!");
+            if(!name || !phone || !region || !addressDetails) {
+                return alert("الرجاء تحديد منطقة الشحن وتعبئة كامل بيانات العميل العالقة!");
+            }
             if(cart.length === 0) return alert("السلة فارغة!");
 
             const btn = document.getElementById("btnSubmit");
             btn.disabled = true;
             btn.innerText = "جاري إرسال طلبك...";
 
+            // دمج المنطقة مع العنوان التفصيلي لتظهر واضحة ومنسقة في لوحة الإدارة
+            const fullAddress = `${region} - ${addressDetails}`;
+
             try {
-                // 1. رفع الطلب شاملاً السعر المحدث
+                // 1. رفع رأس الطلب الكلي
                 const { data: webOrder, error: orderError } = await supabaseClient
                     .from("web_orders")
                     .insert([{
                         client_name: name,
                         client_phone: phone,
-                        client_address: address,
-                        total_amount: globalTotal
+                        client_address: fullAddress,
+                        total_amount: globalTotal,
+                        order_status: "قيد المراجعة" // تعيين حالة افتراضية
                     }]).select();
 
                 if (orderError) throw orderError;
                 const newWebOrderId = webOrder[0].id_web_order;
 
-                // 2. تجهيز مصفوفة تفاصيل الفاتورة
+                // 2. تجهيز سجلات تفاصيل الأصناف المشتراة
                 const detailsToInsert = cart.map(item => {
                     let itemPrice = Number(item.seal_price) || Number(item.sell_price) || Number(item.coasts_value) || 0;
                     let itemQte = Number(item.quantity) || 1;
@@ -174,14 +235,14 @@
                     };
                 });
 
-                // 3. رفع السجلات الفرعية
+                // 3. رفع السجلات التابعة
                 const { error: detailsError } = await supabaseClient
                     .from("web_order_details")
                     .insert(detailsToInsert);
 
                 if (detailsError) throw detailsError;
 
-                alert(`🎉 تم استلام طلبك بنجاح وجاري مراجعته من الإدارة.\nرقم الطلب: ${newWebOrderId}`);
+                alert(`🎉 تم استلام طلبك بنجاح وسيتصل بك مندوبنا للتأكيد.\nرقم الطلب: #${newWebOrderId}`);
                 localStorage.removeItem('customerCart');
                 window.location.href = "store.html";
 
@@ -194,8 +255,11 @@
             }
         }
 
-        // تشغيل البناء البرمي
-        renderCart();
+        // التشغيل الأولي المزدوج عند تحميل نافذة العميل
+        window.onload = async function() {
+            await fetchRegions(); // تحميل أسعار ومحافظات الشحن الحقيقية أولاً
+            renderCart();         // بناء منتجات السلة وحساب الإجماليات
+        };
     </script>
 </body>
 </html>
