@@ -60,11 +60,11 @@
                     </div>
                     <div class="flex justify-between items-center">
                         <span>تكلفة التوصيل للمنطقة:</span>
-                        <span id="shippingTotal" class="text-amber-600 font-bold">0.00 ج.م</span>
+                        <span id="shippingTotal" class="text-amber-600 font-bold">0.00 ج.س</span>
                     </div>
                     <div class="flex justify-between items-center font-bold text-lg border-t pt-2 mt-1">
                         <span class="text-slate-800">إجمالي الحساب النهائي:</span>
-                        <span id="cartTotal" class="text-emerald-600">0.00 ج.م</span>
+                        <span id="cartTotal" class="text-emerald-600">0.00 ج.س</span>
                     </div>
                 </div>
 
@@ -135,7 +135,7 @@
                 document.getElementById("cartItems").innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">سلتك فارغة تماماً.</div>`;
                 document.getElementById("productsTotal").innerText = "0.00 ج.س";
                 document.getElementById("shippingTotal").innerText = "0.00 ج.س";
-                document.getElementById("cartTotal").innerText = "0.00 ج.م";
+                document.getElementById("cartTotal").innerText = "0.00 ج.س";
                 globalTotal = 0;
                 return;
             }
