@@ -3,96 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر   ABM </title>
-    <!-- استخدام الإصدار الرابع الأحدث من تايلوند سكور -->
+    <title>متجر مؤسسة علاء الدين</title>
+    <!-- استخدام الإصدار الرابع من تايلوند -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <!-- مكتبة Supabase الرسمية للربط -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- خط   الاحترافي من جوجل -->
+    <!-- خط القاهرة الاحترافي من جوجل -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; }
+        body { 
+            font-family: 'Cairo', sans-serif; 
+        }
+        /* الحفاظ على صور الخلفية المخصصة للمتجر وتأثيراتها الجمالية */
+        .store-bg {
+            background-image: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="store-bg text-slate-800">
 
-    <!-- 1. شريط التواصل والواتساب العلوي الثابت (Top Bar) -->
-    <div class="bg-slate-800 text-white text-xs py-2.5 px-4 sticky top-0 z-50 shadow-md">
+    <!-- 1. شريط التواصل والواتساب العلوي الثابت المطلب (Top Bar) -->
+    <div class="bg-slate-900 text-white text-xs py-2.5 px-4 sticky top-0 z-50 shadow-md">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2.5">
-            <div class="flex items-center gap-1.5 font-semibold text-center sm:text-right">
-                <span>✨ مرحباً بك في ABM لأنظمة الـ POS والحلول البرمجية</span>
+            <div class="flex items-center gap-1.5 font-semibold text-center sm:text-right text-slate-200">
+                <span>✨ أهلاً بك في مؤسسة علاء الدين للأنظمة الذكية والحلول المتكاملة</span>
             </div>
-            <!-- أزرار التواصل المباشر مع الإدارة لمناقشة التفاصيل -->
+            <!-- أزرار التواصل المباشر المفتوحة لمناقشة مواصفات وتفاصيل المنتجات -->
             <div class="flex items-center gap-4">
-                <a href="tel:+249122324890" class="hover:text-blue-400 transition flex items-center gap-1 font-bold">
-                    📞 اتصل بنا: <span dir="ltr">+249122324890</span>
+                <a href="tel:+201000000000" class="hover:text-blue-400 text-white font-bold transition flex items-center gap-1">
+                    📞 اتصال بالإدارة: <span dir="ltr">+20 100 000 0000</span>
                 </a>
-                <span class="text-slate-600 hidden sm:inline">|</span>
-                <a href="https://wa.me/+249918237606" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-xl text-[11px] font-bold transition flex items-center gap-1 shadow-sm">
-                    💬 استفسار واتساب مباشر
+                <span class="text-slate-700 hidden sm:inline">|</span>
+                <a href="https://wa.me/201000000000" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl text-[11px] font-bold transition flex items-center gap-1.5 shadow-sm">
+                    💬 استفسار واتساب وتفاصيل المنتج
                 </a>
             </div>
         </div>
     </div>
 
     <!-- 2. الهيدر الرئيسي للمتجر وشريط التنقل (Navbar) -->
-    <header class="bg-white border-b border-slate-100 shadow-xs">
+    <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/60 shadow-xs sticky top-[37px] z-40">
         <div class="max-w-7xl mx-auto p-4 flex justify-between items-center">
             <div>
-                <h1 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">🏬 متجر علاء الدين الرقمي</h1>
-                <p class="text-xs text-slate-400 mt-0.5">تصفح أقوى أنظمتنا ومنتجاتنا واطلبها مباشرة</p>
+                <h1 class="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                    🏬 متجر علاء الدين الرقمي
+                </h1>
+                <p class="text-xs text-slate-500 mt-0.5">تصفح أقوى العروض والأنظمة الرقمية المتاحة</p>
             </div>
             
             <!-- زر الانتقال لصفحة السلة مع العداد الديناميكي -->
-            <a href="cart.html" class="relative bg-blue-50 hover:bg-blue-100 text-blue-600 p-3 rounded-xl font-bold text-sm transition flex items-center gap-2 cursor-pointer">
+            <a href="cart.html" class="relative bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 shadow-sm cursor-pointer">
                 <span>🛒 سلة المشتريات</span>
-                <span id="cartCountBadge" class="bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+                <span id="cartCountBadge" class="bg-white text-blue-600 text-xs w-5 h-5 rounded-full flex items-center justify-center font-black">0</span>
             </a>
         </div>
     </header>
 
-    <!-- 3. قسم عرض المنتجات الرئيسي -->
+    <!-- 3. قسم عرض المنتجات الرئيسي المدمج بالخلفية الجمالية -->
     <main class="max-w-7xl mx-auto p-4 md:p-8">
         
-        <!-- عنوان القسم المساعد -->
+        <!-- عنوان القسم والمعداد الرقمي الذكي للقطع المتاحة -->
         <div class="mb-6 flex justify-between items-center">
-            <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
-                <span class="w-2 h-5 bg-blue-600 rounded-full block"></span>
-                المنتجات المتاحة بالنظام
+            <h2 class="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+                <span class="w-2.5 h-5 bg-blue-600 rounded-full block"></span>
+                قائمة المنتجات والأنظمة المعروضة
             </h2>
-            <span id="itemsCount" class="text-xs bg-slate-200 text-slate-600 px-2.5 py-1 rounded-lg font-bold">جاري الفحص...</span>
+            <span id="itemsCount" class="text-xs bg-white text-slate-600 px-3 py-1.5 rounded-xl font-bold shadow-xs border border-slate-200/60">جاري فحص المنتجات...</span>
         </div>
 
-        <!-- شبكة عرض بطاقات المنتجات الديناميكية -->
+        <!-- شبكة عرض بطاقات المنتجات المربوطة بالخلفية والصور المستدعاة -->
         <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <!-- الهيكل المؤقت (Shimmer/Loading) قبل جلب البيانات -->
-            <div class="bg-white rounded-2xl p-4 border border-slate-100 animate-pulse space-y-3">
-                <div class="bg-slate-200 h-40 rounded-xl w-full"></div>
+            <!-- هيكل تحميل مؤقت متناسق (Skeleton Loading) لحين جلب سوبابيز للبيانات -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/60 animate-pulse space-y-3">
+                <div class="bg-slate-200 h-44 rounded-xl w-full"></div>
                 <div class="h-4 bg-slate-200 rounded-sm w-3/4"></div>
                 <div class="h-3 bg-slate-200 rounded-sm w-1/2"></div>
-                <div class="h-8 bg-slate-200 rounded-xl w-full"></div>
+                <div class="h-9 bg-slate-200 rounded-xl w-full"></div>
             </div>
-            <div class="bg-white rounded-2xl p-4 border border-slate-100 animate-pulse space-y-3 hidden sm:block">
-                <div class="bg-slate-200 h-40 rounded-xl w-full"></div>
+            <div class="bg-white rounded-2xl p-4 border border-slate-200/60 animate-pulse space-y-3 hidden sm:block">
+                <div class="bg-slate-200 h-44 rounded-xl w-full"></div>
                 <div class="h-4 bg-slate-200 rounded-sm w-3/4"></div>
                 <div class="h-3 bg-slate-200 rounded-sm w-1/2"></div>
-                <div class="h-8 bg-slate-200 rounded-xl w-full"></div>
+                <div class="h-9 bg-slate-200 rounded-xl w-full"></div>
             </div>
         </div>
     </main>
 
-    <!-- 4. سكربت التشغيل والربط المنطقي مع Supabase سوبابيز -->
+    <!-- 4. سكربت التشغيل ومعالجة الحقول بما يتوافق مع صور قاعدة البيانات الخاصة بك -->
     <script>
-        // إعدادات اتصال سوبابيز الرسمية والمحمية الخاصة بك
+        // إعدادات اتصال سوبابيز الرسمية والمحمية الخاصة بمتجرك
         const supabaseClient = supabase.createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
             "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
         );
 
-        // مصفوفة المنتجات التي سيتم تحميلها من السيرفر
         let fetchedProducts = [];
 
-        // أداة جلب المنتجات من جدول النظام `products`
+        // أداة جلب البيانات من جدول النظام الأساسي
         async function loadStoreProducts() {
             try {
                 const { data, error } = await supabaseClient
@@ -103,27 +111,27 @@
                 if (error) throw error;
 
                 fetchedProducts = data || [];
-                document.getElementById("itemsCount").innerText = `${fetchedProducts.length} منتج`;
+                document.getElementById("itemsCount").innerText = `${fetchedProducts.length} صنف متاح`;
                 
                 renderProductsHtml();
             } catch (err) {
                 console.error("تعذر جلب المنتجات من سوبابيز:", err);
                 document.getElementById("productsGrid").innerHTML = `
-                    <div class="col-span-full text-center py-12 bg-red-50 text-red-600 rounded-2xl p-4 border border-red-100">
-                        ⚠️ فشل جلب المنتجات من قاعدة البيانات، يرجى مراجعة إعدادات الجدول أو المحاولة لاحقاً.
+                    <div class="col-span-full text-center py-12 bg-red-50 text-red-600 rounded-2xl p-6 border border-red-100 shadow-xs">
+                        ⚠️ عذراً، حدث خطأ أثناء الاتصال بقاعدة البيانات. يرجى التحديث أو مراجعة لوحة التحكم.
                     </div>
                 `;
             }
         }
 
-        // بناء وعرض المنتجات في الشبكة البرمجية للمتجر
+        // بناء وعرض المنتجات مع الحفاظ الكامل على حقول الصور المخزنة بقاعدة بياناتك
         function renderProductsHtml() {
             const grid = document.getElementById("productsGrid");
             
             if (fetchedProducts.length === 0) {
                 grid.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-slate-400 text-sm">
-                        📭 لا توجد منتجات معروضة حالياً في جدول قاعدة البيانات.
+                    <div class="col-span-full text-center py-12 bg-white text-slate-400 text-sm rounded-2xl shadow-xs border border-slate-100">
+                        📭 المتجر فارغ حالياً، لم يتم إدراج منتجات في لوحة التحكم بعد.
                     </div>
                 `;
                 return;
@@ -131,30 +139,46 @@
 
             let cardsHtml = "";
             fetchedProducts.forEach(product => {
-                // تحديد السعر الفعلي المتوفر بناء على حقول السعر التابعة لبنيتك
+                // احتساب السعر المتاح تلقائياً بناءً على هيكلة أسعارك المعتمدة
                 let finalPrice = Number(product.seal_price) || Number(product.sell_price) || Number(product.coasts_value) || 0;
                 
+                // الحفاظ على رابط الصورة الحقيقي المخزن في جدول قاعدة البيانات الخاصة بك
+                // الكود يبحث عن حقل الصورة لديك (سواء كان اسمه image_url أو product_image أو pic) وإذا لم يجد، يضع صورة افتراضية ذكية لتجنب أي كسر بالتصميم
+                let productImage = product.image_url || product.product_image || product.image || product.pic || '';
+                
+                let imageContainer = '';
+                if (productImage && productImage.trim() !== '') {
+                    // عرض الصورة الحقيقية المخزنة بقاعدة بيانات متجرك
+                    imageContainer = `<img src="${productImage}" alt="${product.product_name}" class="w-full h-44 object-cover rounded-xl mb-3 shadow-xs">`;
+                } else {
+                    // صورة بديلة أنيقة في حال كان حقل الصنف بقاعدة البيانات فارغاً
+                    imageContainer = `
+                        <div class="bg-slate-100 rounded-xl h-44 flex flex-col items-center justify-center text-slate-300 text-xs mb-3 select-none border border-slate-200/40">
+                            <span class="text-4xl mb-1">📦</span>
+                            <span>لا توجد صورة للمنتج</span>
+                        </div>`;
+                }
+                
                 cardsHtml += `
-                    <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-100 flex flex-col justify-between hover:shadow-md transition">
+                    <div class="bg-white rounded-2xl p-4 shadow-xs hover:shadow-lg transition-all duration-300 border border-slate-200/50 flex flex-col justify-between">
                         <div>
-                            <!-- صورة افتراضية للمنتج نظراً لعدم تخزين الصور بالجدول حالياً -->
-                            <div class="bg-slate-100 rounded-xl h-40 flex items-center justify-center text-slate-300 text-4xl mb-3 select-none">
-                                📦
-                            </div>
-                            <h3 class="font-bold text-slate-800 text-sm md:text-base line-clamp-2 min-h-[2.5rem] mb-1">
-                                ${product.product_name || 'منتج بدون اسم'}
+                            <!-- حاوية العرض المرئية للمنتج الصادرة من السيرفر -->
+                            ${imageContainer}
+                            
+                            <h3 class="font-bold text-slate-900 text-sm md:text-base line-clamp-2 min-h-[2.5rem] mb-1">
+                                ${product.product_name || 'صنف غير مسمى'}
                             </h3>
-                            <p class="text-xs text-slate-400 mb-2">رقم الصنف: #${product.id_product}</p>
+                            <p class="text-[11px] text-slate-400 mb-2">الرقم التعريفي للقطعة: #${product.id_product}</p>
                         </div>
                         
-                        <div class="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between gap-2">
+                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                             <div class="text-right">
-                                <span class="text-xs text-slate-400 block">السعر</span>
-                                <span class="font-extrabold text-emerald-600 text-base md:text-lg">
-                                    ${finalPrice.toFixed(2)} <span class="text-xs font-semibold">ج.م</span>
+                                <span class="text-[10px] text-slate-400 block font-semibold">السعر الحالي</span>
+                                <span class="font-extrabold text-emerald-600 text-base md:text-lg tracking-tight">
+                                    ${finalPrice.toFixed(2)} <span class="text-xs font-bold text-emerald-700">ج.م</span>
                                 </span>
                             </div>
-                            <button onclick="addProductToCart(${product.id_product})" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-3.5 rounded-xl transition shadow-xs cursor-pointer">
+                            <button onclick="addProductToCart(${product.id_product})" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition shadow-sm active:scale-95 cursor-pointer">
                                 ➕ إضافة للسلة
                             </button>
                         </div>
@@ -165,20 +189,17 @@
             grid.innerHTML = cardsHtml;
         }
 
-        // إضافة صنف إلى سلة المشتريات بالمتصفح المحلى LocalStorage
+        // إدراج المنتج المختار إلى ذاكرة الكاش الخاصة بمتصفح العميل لاستدعائه في صفحة cart.html
         function addProductToCart(productId) {
             const matchedItem = fetchedProducts.find(p => p.id_product === productId);
             if (!matchedItem) return;
 
             let customerCart = JSON.parse(localStorage.getItem("customerCart")) || [];
-            
-            // التحقق ما إذا كان الصنف مضافاً مسبقاً لزيادة الكمية فقط
             const cartIndex = customerCart.findIndex(item => item.id_product === productId);
 
             if (cartIndex > -1) {
                 customerCart[cartIndex].quantity = (customerCart[cartIndex].quantity || 1) + 1;
             } else {
-                // إدراج الصنف الجديد بقيمة كمية مبدئية تساوي 1
                 customerCart.push({
                     ...matchedItem,
                     quantity: 1
@@ -189,15 +210,14 @@
             updateCartBadgeCount();
         }
 
-        // تحديث عدد السلع الظاهرة على شارة السلة بالهيدر
+        // تحديث أرقام عداد السلة الفوري المعروض بجانب أيقونة المشتريات بالهيدر
         function updateCartBadgeCount() {
             const customerCart = JSON.parse(localStorage.getItem("customerCart")) || [];
-            // حساب إجمالي القطع بالاعتماد على الكمية المحددة لكل صنف
             const totalCount = customerCart.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
             document.getElementById("cartCountBadge").innerText = totalCount;
         }
 
-        // التشغيل التلقائي عند إقلاع الصفحة مباشرة
+        // الإقلاع التلقائي الآمن فور تحميل المتصفح بالكامل
         window.onload = function() {
             loadStoreProducts();
             updateCartBadgeCount();
