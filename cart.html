@@ -6,12 +6,12 @@
     <title>سلة المشتريات - إتمام الطلب</title>
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 p-4 md:p-8">
+<body class="bg-slate-50 text-slate-800 p-4 md:p-8 pb-24 md:pb-8"> <!-- تم إضافة padding أسفل الصفحة لمنع حجب المحتوى بالشريط العائم في الموبايل -->
 
     <div class="max-w-4xl mx-auto">
         <div class="flex justify-between items-center mb-6">
@@ -32,14 +32,14 @@
                 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">الاسم الكامل</label>
-                    <input type="text" id="clientName" placeholder="محمد صافي الدين..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                    <input type="text" id="clientName" placeholder="محمد الشريف..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">رقم الهاتف للاتصال</label>
                     <input type="tel" id="clientPhone" placeholder="01xxxxxxxxx" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 text-left" dir="ltr">
                 </div>
                 
-                <!-- إضافة اختيار المنطقة ديناميكياً من قاعدة البيانات -->
+                <!-- اختيار المنطقة ديناميكياً من قاعدة البيانات -->
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">المحافظة / منطقة الشحن</label>
                     <select id="clientRegion" onchange="updateShippingCost()" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 bg-white">
@@ -56,22 +56,51 @@
                 <div class="border-t pt-3 space-y-2 text-sm font-semibold text-slate-600">
                     <div class="flex justify-between items-center">
                         <span>إجمالي المنتجات:</span>
-                        <span id="productsTotal">0.00 ج.س</span>
+                        <span id="productsTotal">0.00 ج.م</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span>تكلفة التوصيل للمنطقة:</span>
-                        <span id="shippingTotal" class="text-amber-600 font-bold">0.00 ج.س</span>
+                        <span id="shippingTotal" class="text-amber-600 font-bold">0.00 ج.م</span>
                     </div>
                     <div class="flex justify-between items-center font-bold text-lg border-t pt-2 mt-1">
                         <span class="text-slate-800">إجمالي الحساب النهائي:</span>
-                        <span id="cartTotal" class="text-emerald-600">0.00 ج.س</span>
+                        <span id="cartTotal" class="text-emerald-600">0.00 ج.م</span>
                     </div>
                 </div>
 
-                <button onclick="submitOrder()" id="btnSubmit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition">
-                    🛍️ إرسال الطلب لادارة المتجر 
+                <button onclick="submitOrder()" id="btnSubmit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition cursor-pointer">
+                    🛍️ إرسال الطلب للنظام سوبابيز
                 </button>
+
+                <!-- قسم التواصل المباشر الجانبي (لشاشات الكمبيوتر والتابلت) -->
+                <div class="border-t pt-4 mt-2 hidden md:block">
+                    <p class="text-xs font-bold text-slate-400 mb-2 text-center">هل تحتاج للاستفسار عن منتج قبل الطلب؟</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <a href="https://wa.me/201000000000" target="_blank" class="flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition text-center">
+                            💬 واتساب الإدارة
+                        </a>
+                        <a href="tel:+201000000000" class="flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition text-center">
+                            📞 اتصال هاتي
+                        </a>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- شريط تواصل عائم وثابت أسفل الشاشة (ممتاز جداً لمستخدمي الهواتف الذكية) -->
+    <div class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 p-3 shadow-xl z-50 md:hidden flex items-center justify-between gap-3">
+        <div class="text-right">
+            <p class="text-[10px] font-bold text-slate-400">للاستفسار وتفاصيل المنتجات:</p>
+            <p class="text-xs font-extrabold text-slate-700">مؤسسة علاء الدين</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="https://wa.me/201000000000" target="_blank" class="flex items-center gap-1 bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">
+                💬 واتساب
+            </a>
+            <a href="tel:+201000000000" class="flex items-center gap-1 bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">
+                📞 إتصل بنا
+            </a>
         </div>
     </div>
 
@@ -101,16 +130,16 @@
                 
                 if (data && data.length > 0) {
                     data.forEach(region => {
-                        optionsHTML += `<option value="${region.region_name}" data-cost="${region.shipping_cost}">${region.region_name} (${Number(region.shipping_cost).toFixed(2)} ج.س)</option>`;
+                        optionsHTML += `<option value="${region.region_name}" data-cost="${region.shipping_cost}">${region.region_name} (${Number(region.shipping_cost).toFixed(2)} ج.م)</option>`;
                     });
                 } else {
-                    optionsHTML = '<option value="شحن عام" data-cost="50">شحن موحد (2000.00 ج.س)</option>';
+                    optionsHTML = '<option value="شحن عام" data-cost="50">شحن موحد (50.00 ج.م)</option>';
                 }
                 
                 regionSelect.innerHTML = optionsHTML;
             } catch (err) {
                 console.error("خطأ في جلب مناطق الشحن:", err);
-                document.getElementById("clientRegion").innerHTML = '<option value="شحن عام" data-cost="50">شحن موحد (2000.00 ج.س)</option>';
+                document.getElementById("clientRegion").innerHTML = '<option value="شحن عام" data-cost="50">شحن موحد (50.00 ج.م)</option>';
             }
         }
 
@@ -119,10 +148,7 @@
             const selectEl = document.getElementById("clientRegion");
             const selectedOption = selectEl.options[selectEl.selectedIndex];
             
-            // قراءة السعر من حقل الداتا المخصص بالـ Option
             currentShippingCost = Number(selectedOption.getAttribute("data-cost")) || 0;
-            
-            // إعادة حساب المجموع النهائي وتحديث الواجهة
             calculateFinalTotals();
         }
 
@@ -133,9 +159,9 @@
 
             if(cart.length === 0) {
                 document.getElementById("cartItems").innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">سلتك فارغة تماماً.</div>`;
-                document.getElementById("productsTotal").innerText = "0.00 ج.س";
-                document.getElementById("shippingTotal").innerText = "0.00 ج.س";
-                document.getElementById("cartTotal").innerText = "0.00 ج.س";
+                document.getElementById("productsTotal").innerText = "0.00 ج.م";
+                document.getElementById("shippingTotal").innerText = "0.00 ج.م";
+                document.getElementById("cartTotal").innerText = "0.00 ج.م";
                 globalTotal = 0;
                 return;
             }
@@ -153,11 +179,11 @@
                         <p class="text-xs text-slate-400">${price.toFixed(2)} ج.م × ${quantity}</p>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <button onclick="changeQty(${index}, -1)" class="w-7 h-7 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200">-</button>
+                        <button onclick="changeQty(${index}, -1)" class="w-7 h-7 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200 cursor-pointer">-</button>
                         <span class="font-bold text-sm w-5 text-center">${quantity}</span>
-                        <button onclick="changeQty(${index}, 1)" class="w-7 h-7 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200">+</button>
+                        <button onclick="changeQty(${index}, 1)" class="w-7 h-7 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200 cursor-pointer">+</button>
                     </div>
-                    <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-600 font-bold text-xs p-1">❌</button>
+                    <button onclick="removeItem(${index})" class="text-red-500 hover:text-red-600 font-bold text-xs p-1 cursor-pointer">❌</button>
                 </div>`;
             });
 
@@ -169,9 +195,9 @@
         function calculateFinalTotals() {
             globalTotal = productsSubtotal + currentShippingCost;
             
-            document.getElementById("productsTotal").innerText = productsSubtotal.toFixed(2) + " ج.س";
-            document.getElementById("shippingTotal").innerText = currentShippingCost.toFixed(2) + " ج.س";
-            document.getElementById("cartTotal").innerText = globalTotal.toFixed(2) + " ج.m";
+            document.getElementById("productsTotal").innerText = productsSubtotal.toFixed(2) + " ج.م";
+            document.getElementById("shippingTotal").innerText = currentShippingCost.toFixed(2) + " ج.م";
+            document.getElementById("cartTotal").innerText = globalTotal.toFixed(2) + " ج.م";
         }
 
         function changeQty(index, change) {
@@ -195,7 +221,7 @@
             const addressDetails = document.getElementById("clientAddress").value.trim();
 
             if(!name || !phone || !region || !addressDetails) {
-                return alert("الرجاء تحديد منطقة الشحن وتعبئة كامل بيانات العميل العالقة!");
+                return alert("الرجاء تحديد منطقة الشحن وتعبئة كامل بيانات العميل!");
             }
             if(cart.length === 0) return alert("السلة فارغة!");
 
@@ -203,7 +229,6 @@
             btn.disabled = true;
             btn.innerText = "جاري إرسال طلبك...";
 
-            // دمج المنطقة مع العنوان التفصيلي لتظهر واضحة ومنسقة في لوحة الإدارة
             const fullAddress = `${region} - ${addressDetails}`;
 
             try {
@@ -215,7 +240,7 @@
                         client_phone: phone,
                         client_address: fullAddress,
                         total_amount: globalTotal,
-                        order_status: "قيد المراجعة" // تعيين حالة افتراضية
+                        order_status: "قيد المراجعة"
                     }]).select();
 
                 if (orderError) throw orderError;
@@ -251,14 +276,13 @@
                 alert("خطأ أثناء إرسال الطلب: " + error.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "🛍️ إرسال الطلب لادارة المتجر";
+                btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
             }
         }
 
-        // التشغيل الأولي المزدوج عند تحميل نافذة العميل
         window.onload = async function() {
-            await fetchRegions(); // تحميل أسعار ومحافظات الشحن الحقيقية أولاً
-            renderCart();         // بناء منتجات السلة وحساب الإجماليات
+            await fetchRegions(); 
+            renderCart();         
         };
     </script>
 </body>
