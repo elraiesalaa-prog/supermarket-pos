@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -13,6 +14,25 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
+
+    <!-- شريط التواصل السريع المضاف حديثاً أعلى الشاشة -->
+    <div class="bg-gray-900 text-white text-xs py-2 px-4 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div class="font-semibold text-gray-300">
+                ✨ أهلاً بك في متجر ABM للملبوسات والأزياء
+            </div>
+            <!-- أزرار الاتصال والواتساب السريع للمبيعات والاستفسار -->
+            <div class="flex items-center gap-4 font-bold">
+                <a href="tel:+122324890" class="hover:text-blue-400 transition flex items-center gap-1">
+                    📞 اتصل بنا: <span dir="ltr">+122324890</span>
+                </a>
+                <span class="text-gray-700 hidden sm:inline">|</span>
+                <a href="https://wa.me/+249918237606" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded-lg transition flex items-center gap-1">
+                    💬 واتساب مباشر
+                </a>
+            </div>
+        </div>
+    </div>
 
     <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
@@ -75,42 +95,38 @@
         }
 
         function renderProducts() {
-    let html = "";
-    // صورة افتراضية أنيقة في حال لم تكن هناك صورة للمنتج
-    let fallbackImg = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500"; 
-    
-    // 1. تصفية وعرض المنتجات التي تمتلك مخزون أكبر من صفر فقط
-    const availableProducts = products.filter(p => (Number(p.qte_in_stock) || 0) > 0);
+            let html = "";
+            let fallbackImg = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500"; 
+            
+            const availableProducts = products.filter(p => (Number(p.qte_in_stock) || 0) > 0);
 
-    if (availableProducts.length === 0) {
-        document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">لا توجد منتجات متاحة في المخزون حالياً.</div>`;
-        return;
-    }
+            if (availableProducts.length === 0) {
+                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">لا توجد منتجات متاحة في المخزون حالياً.</div>`;
+                return;
+            }
 
-    availableProducts.forEach(p => {
-        let price = Number(p.seal_price) || 0;
-        let productName = p.product_name || "منتج غير مسمى";
-        
-        // 2. التعديل الجوهري: قراءة الحقل الصحيح image_product بدلاً من image_url
-        let imgUrl = p.image_product || fallbackImg;
-        
-        html += `
-        <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between p-4">
-            <img src="${imgUrl}" alt="${productName}" class="w-full h-48 object-cover rounded-xl bg-gray-100 mb-3" onerror="this.src='${fallbackImg}'">
-            <div class="flex-1 flex flex-col justify-between gap-2">
-                <div>
-                    <h3 class="font-bold text-gray-800 text-sm line-clamp-2">${productName}</h3>
-                    <div class="text-blue-600 font-extrabold text-base mt-1">${price.toFixed(2)} ج.م</div>
-                    <span class="text-xs text-gray-400 mt-1 block">المخزون: ${p.qte_in_stock} قطع</span>
-                </div>
-                <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition text-xs mt-2">
-                    ➕ إضافة للسلة
-                </button>
-            </div>
-        </div>`;
-    });
-    document.getElementById("productsGrid").innerHTML = html;
-}
+            availableProducts.forEach(p => {
+                let price = Number(p.seal_price) || 0;
+                let productName = p.product_name || "منتج غير مسمى";
+                let imgUrl = p.image_product || fallbackImg;
+                
+                html += `
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between p-4">
+                    <img src="${imgUrl}" alt="${productName}" class="w-full h-48 object-cover rounded-xl bg-gray-100 mb-3" onerror="this.src='${fallbackImg}'">
+                    <div class="flex-1 flex flex-col justify-between gap-2">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm line-clamp-2">${productName}</h3>
+                            <div class="text-blue-600 font-extrabold text-base mt-1">${price.toFixed(2)} ج.م</div>
+                            <span class="text-xs text-gray-400 mt-1 block">المخزون: ${p.qte_in_stock} قطع</span>
+                        </div>
+                        <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition text-xs mt-2">
+                            ➕ إضافة للسلة
+                        </button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById("productsGrid").innerHTML = html;
+        }
 
         function addToCart(id) {
             const product = products.find(p => p.id_product === id);
