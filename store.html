@@ -3,181 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر الأزياء الإلكتروني</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <title>متجر مؤسسة علاء الدين</title>
+    <!-- استخدام الإصدار الرابع الأحدث من تايلوند سكور -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <!-- مكتبة Supabase الرسمية للربط -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700;800&display=swap" rel="stylesheet">
+    <!-- خط القاهرة الاحترافي من جوجل -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-slate-50 text-slate-800">
 
-    <nav class="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">🛍️</span>
-                <span class="text-xl font-bold text-blue-600">ABM للملبوسات</span>
+    <!-- 1. شريط التواصل والواتساب العلوي الثابت (Top Bar) -->
+    <div class="bg-slate-800 text-white text-xs py-2.5 px-4 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2.5">
+            <div class="flex items-center gap-1.5 font-semibold text-center sm:text-right">
+                <span>✨ مرحباً بك في مؤسسة علاء الدين لأنظمة الـ POS والحلول البرمجية</span>
             </div>
+            <!-- أزرار التواصل المباشر مع الإدارة لمناقشة التفاصيل -->
             <div class="flex items-center gap-4">
-                <!-- توضيح سعر الشحن في الهيدر للعميل بشكل شفاف -->
-                
-                <a href="cart.html" class="bg-gray-100 hover:bg-gray-200 p-2 rounded-xl transition flex items-center gap-2 font-bold text-sm">
-                    <span>🛒 سلة المشتريات</span>
-                    <span id="cartCount" class="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
+                <a href="tel:+201000000000" class="hover:text-blue-400 transition flex items-center gap-1 font-bold">
+                    📞 اتصل بنا: <span dir="ltr">+20 100 000 0000</span>
+                </a>
+                <span class="text-slate-600 hidden sm:inline">|</span>
+                <a href="https://wa.me/201000000000" target="_blank" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-xl text-[11px] font-bold transition flex items-center gap-1 shadow-sm">
+                    💬 استفسار واتساب مباشر
                 </a>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- لافتة فرعية للهواتف تظهر سعر الشحن والتوصيل -->
-   
-
-    <header class="relative bg-gray-900 text-white py-16 px-4 text-center">
-        <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000&auto=format&fit=crop');"></div>
-        <div class="relative max-w-2xl mx-auto z-10">
-            <h1 class="text-3xl md:text-5xl font-extrabold mb-4">أحدث صيحات الموضة والأزياء</h1>
-            <p class="text-sm md:text-base text-gray-300">اكتشف تشكيلتنا الجديدة المتزامنة مباشرة مع مخازننا.</p>
+    <!-- 2. الهيدر الرئيسي للمتجر وشريط التنقل (Navbar) -->
+    <header class="bg-white border-b border-slate-100 shadow-xs">
+        <div class="max-w-7xl mx-auto p-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">🏬 متجر علاء الدين الرقمي</h1>
+                <p class="text-xs text-slate-400 mt-0.5">تصفح أقوى أنظمتنا ومنتجاتنا واطلبها مباشرة</p>
+            </div>
+            
+            <!-- زر الانتقال لصفحة السلة مع العداد الديناميكي -->
+            <a href="cart.html" class="relative bg-blue-50 hover:bg-blue-100 text-blue-600 p-3 rounded-xl font-bold text-sm transition flex items-center gap-2 cursor-pointer">
+                <span>🛒 سلة المشتريات</span>
+                <span id="cartCountBadge" class="bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+            </a>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-10">
-        <h2 class="text-xl md:text-2xl font-bold mb-6">✨ أحدث معروضاتنا المتاحة</h2>
+    <!-- 3. قسم عرض المنتجات الرئيسي -->
+    <main class="max-w-7xl mx-auto p-4 md:p-8">
+        
+        <!-- عنوان القسم المساعد -->
+        <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-slate-700 flex items-center gap-2">
+                <span class="w-2 h-5 bg-blue-600 rounded-full block"></span>
+                المنتجات المتاحة بالنظام
+            </h2>
+            <span id="itemsCount" class="text-xs bg-slate-200 text-slate-600 px-2.5 py-1 rounded-lg font-bold">جاري الفحص...</span>
+        </div>
+
+        <!-- شبكة عرض بطاقات المنتجات الديناميكية -->
         <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- الهيكل المؤقت (Shimmer/Loading) قبل جلب البيانات -->
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 animate-pulse space-y-3">
+                <div class="bg-slate-200 h-40 rounded-xl w-full"></div>
+                <div class="h-4 bg-slate-200 rounded-sm w-3/4"></div>
+                <div class="h-3 bg-slate-200 rounded-sm w-1/2"></div>
+                <div class="h-8 bg-slate-200 rounded-xl w-full"></div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-slate-100 animate-pulse space-y-3 hidden sm:block">
+                <div class="bg-slate-200 h-40 rounded-xl w-full"></div>
+                <div class="h-4 bg-slate-200 rounded-sm w-3/4"></div>
+                <div class="h-3 bg-slate-200 rounded-sm w-1/2"></div>
+                <div class="h-8 bg-slate-200 rounded-xl w-full"></div>
+            </div>
         </div>
     </main>
 
+    <!-- 4. سكربت التشغيل والربط المنطقي مع Supabase سوبابيز -->
     <script>
+        // إعدادات اتصال سوبابيز الرسمية والمحمية الخاصة بك
         const supabaseClient = supabase.createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
             "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
         );
 
-        // ================= تـكـلـفـة الـشـحـن والـتـوصـيـل =================
-        // يمكنك تغيير هذا الرقم (مثلاً إلى 50 أو 100) حسب سعر التوصيل الثابت لديك
-        const SHIPPING_FEES = 50; 
+        // مصفوفة المنتجات التي سيتم تحميلها من السيرفر
+        let fetchedProducts = [];
 
-        let products = [];
-        let cart = JSON.parse(localStorage.getItem('customerCart')) || [];
-
-        // تحديث نصوص واجهة الشحن والتوصيل في الصفحة عند البدء
-       // استبدل دالة initShippingDisplay القديمة في صفحة المتجر بهذه الدالة الديناميكية:
-async function initShippingDisplay() {
-    let activeShipping = 50; // القيمة الاحتياطية الافتراضية في حال انقطاع الإنترنت
-
-    try {
-        // جلب سعر الشحن الفعلي والمباشر الحساب الإداري من سوبابيز
-        const { data, error } = await supabaseClient
-            .from("shipping_settings")
-            .select("shipping_cost")
-            .eq("id", 1)
-            .single();
-        
-        if (!error && data) {
-            activeShipping = Number(data.shipping_cost);
-        }
-    } catch (err) {
-        console.warn("تعذر الاتصال المباشر بقاعدة بيانات الشحن، تم استخدام القيمة الاحتياطية:", err);
-    }
-
-    // عرض النتيجة الحية للمستخدم في واجهة المتجر
-    const text = `${activeShipping.toFixed(2)} ج.س`;
-    if(document.getElementById("shippingDisplay")) document.getElementById("shippingDisplay").innerText = text;
-    if(document.getElementById("shippingDisplayMobile")) document.getElementById("shippingDisplayMobile").innerText = text;
-    
-    // حفظ القيمة الحالية القادمة من السيرفر في ذاكرة المتصفح لتستلمها صفحة السلة فوراً
-    localStorage.setItem('shippingFees', activeShipping);
-}
-
-        async function fetchProducts() {
+        // أداة جلب المنتجات من جدول النظام `products`
+        async function loadStoreProducts() {
             try {
-                const { data, error } = await supabaseClient.from("products").select("*");
+                const { data, error } = await supabaseClient
+                    .from("products")
+                    .select("*")
+                    .order("product_name", { ascending: true });
+
+                if (error) throw error;
+
+                fetchedProducts = data || [];
+                document.getElementById("itemsCount").innerText = `${fetchedProducts.length} منتج`;
                 
-                if (!error && data && data.length > 0) {
-                    products = data;
-                    console.log("تم جلب البيانات الحية من سوبابيز:", products);
-                } else {
-                    throw new Error("قاعدة البيانات فارغة أو محمية");
-                }
-            } catch (error) {
-                console.warn("تم التحويل للوضع الاحتياطي الفوري لعرض الأسعار المحفوظة محلياً:", error.message);
-                products = [
-                    { id_product: 101, product_name: "عباءة شرقية فاخرة", seal_price: 650, qte_in_stock: 12 },
-                    { id_product: 102, product_name: "قميص قطن تركي كاجوال", seal_price: 380, qte_in_stock: 25 },
-                    { id_product: 103, product_name: "فستان سهرة أنيق زفاف", seal_price: 1200, qte_in_stock: 5 },
-                    { id_product: 104, product_name: "بنطال جينز أزرق عصري", seal_price: 420, qte_in_stock: 18 },
-                    { id_product: 105, product_name: "تيشيرت صيفي (مثال لمنتهي المخزون)", seal_price: 250, qte_in_stock: 0 }
-                ];
+                renderProductsHtml();
+            } catch (err) {
+                console.error("تعذر جلب المنتجات من سوبابيز:", err);
+                document.getElementById("productsGrid").innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-red-50 text-red-600 rounded-2xl p-4 border border-red-100">
+                        ⚠️ فشل جلب المنتجات من قاعدة البيانات، يرجى مراجعة إعدادات الجدول أو المحاولة لاحقاً.
+                    </div>
+                `;
             }
-            renderProducts();
-            updateCartCount();
         }
 
-        function renderProducts() {
-            let html = "";
-            let fallbackImg = "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?q=80&w=500"; 
+        // بناء وعرض المنتجات في الشبكة البرمجية للمتجر
+        function renderProductsHtml() {
+            const grid = document.getElementById("productsGrid");
             
-            const availableProducts = products.filter(p => (Number(p.qte_in_stock) || 0) > 0);
-
-            if (availableProducts.length === 0) {
-                document.getElementById("productsGrid").innerHTML = `<div class="col-span-full text-center py-12 text-gray-400">لا توجد منتجات متاحة في المخزون حالياً.</div>`;
+            if (fetchedProducts.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-slate-400 text-sm">
+                        📭 لا توجد منتجات معروضة حالياً في جدول قاعدة البيانات.
+                    </div>
+                `;
                 return;
             }
 
-            availableProducts.forEach(p => {
-                let price = Number(p.seal_price) || 0;
-                let productName = p.product_name || "منتج غير مسمى";
-                let imgUrl = p.image_product || fallbackImg;
+            let cardsHtml = "";
+            fetchedProducts.forEach(product => {
+                // تحديد السعر الفعلي المتوفر بناء على حقول السعر التابعة لبنيتك
+                let finalPrice = Number(product.seal_price) || Number(product.sell_price) || Number(product.coasts_value) || 0;
                 
-                html += `
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between p-4">
-                    <img src="${imgUrl}" alt="${productName}" class="w-full h-48 object-cover rounded-xl bg-gray-100 mb-3" onerror="this.src='${fallbackImg}'">
-                    <div class="flex-1 flex flex-col justify-between gap-2">
+                cardsHtml += `
+                    <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-100 flex flex-col justify-between hover:shadow-md transition">
                         <div>
-                            <h3 class="font-bold text-gray-800 text-sm line-clamp-2">${productName}</h3>
-                            <div class="text-blue-600 font-extrabold text-base mt-1">${price.toFixed(2)} ج.م</div>
-                            <span class="text-xs text-gray-400 mt-1 block">المخزون: ${p.qte_in_stock} قطع</span>
+                            <!-- صورة افتراضية للمنتج نظراً لعدم تخزين الصور بالجدول حالياً -->
+                            <div class="bg-slate-100 rounded-xl h-40 flex items-center justify-center text-slate-300 text-4xl mb-3 select-none">
+                                📦
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm md:text-base line-clamp-2 min-h-[2.5rem] mb-1">
+                                ${product.product_name || 'منتج بدون اسم'}
+                            </h3>
+                            <p class="text-xs text-slate-400 mb-2">رقم الصنف: #${product.id_product}</p>
                         </div>
-                        <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition text-xs mt-2">
-                            ➕ إضافة للسلة
-                        </button>
+                        
+                        <div class="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between gap-2">
+                            <div class="text-right">
+                                <span class="text-xs text-slate-400 block">السعر</span>
+                                <span class="font-extrabold text-emerald-600 text-base md:text-lg">
+                                    ${finalPrice.toFixed(2)} <span class="text-xs font-semibold">ج.م</span>
+                                </span>
+                            </div>
+                            <button onclick="addProductToCart(${product.id_product})" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-3.5 rounded-xl transition shadow-xs cursor-pointer">
+                                ➕ إضافة للسلة
+                            </button>
+                        </div>
                     </div>
-                </div>`;
+                `;
             });
-            document.getElementById("productsGrid").innerHTML = html;
+
+            grid.innerHTML = cardsHtml;
         }
 
-        function addToCart(id) {
-            const product = products.find(p => p.id_product === id);
-            if (!product) return;
+        // إضافة صنف إلى سلة المشتريات بالمتصفح المحلى LocalStorage
+        function addProductToCart(productId) {
+            const matchedItem = fetchedProducts.find(p => p.id_product === productId);
+            if (!matchedItem) return;
 
-            const existingItem = cart.find(item => item.id_product === id);
-            if (existingItem) {
-                existingItem.quantity += 1;
+            let customerCart = JSON.parse(localStorage.getItem("customerCart")) || [];
+            
+            // التحقق ما إذا كان الصنف مضافاً مسبقاً لزيادة الكمية فقط
+            const cartIndex = customerCart.findIndex(item => item.id_product === productId);
+
+            if (cartIndex > -1) {
+                customerCart[cartIndex].quantity = (customerCart[cartIndex].quantity || 1) + 1;
             } else {
-                cart.push({ 
-                    id_product: product.id_product,
-                    product_name: product.product_name,
-                    seal_price: Number(product.seal_price) || 0,
-                    quantity: 1 
+                // إدراج الصنف الجديد بقيمة كمية مبدئية تساوي 1
+                customerCart.push({
+                    ...matchedItem,
+                    quantity: 1
                 });
             }
-            
-            // تعديل جوهري: تخزين رسوم الشحن الثابتة بشكل موازٍ في LocalStorage 
-            // ليتم سحبها في صفحة السلة cart.html وحساب إجمالي الفاتورة النهائي بناءً عليها.
-            localStorage.setItem('shippingFees', SHIPPING_FEES);
-            localStorage.setItem('customerCart', JSON.stringify(cart));
-            updateCartCount();
+
+            localStorage.setItem("customerCart", JSON.stringify(customerCart));
+            updateCartBadgeCount();
         }
 
-        function updateCartCount() {
-            document.getElementById("cartCount").innerText = cart.reduce((sum, item) => sum + item.quantity, 0);
+        // تحديث عدد السلع الظاهرة على شارة السلة بالهيدر
+        function updateCartBadgeCount() {
+            const customerCart = JSON.parse(localStorage.getItem("customerCart")) || [];
+            // حساب إجمالي القطع بالاعتماد على الكمية المحددة لكل صنف
+            const totalCount = customerCart.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
+            document.getElementById("cartCountBadge").innerText = totalCount;
         }
 
-        // تشغيل التهيئة وجلب المنتجات
-        initShippingDisplay();
-        fetchProducts();
+        // التشغيل التلقائي عند إقلاع الصفحة مباشرة
+        window.onload = function() {
+            loadStoreProducts();
+            updateCartBadgeCount();
+        };
     </script>
 </body>
 </html>
