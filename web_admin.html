@@ -16,7 +16,7 @@
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <!-- أولاً: واجهة إضافة وتعديل مناطق الشحن -->
         <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 class="font-bold text-lg text-gray-800 mb-4">🌍 إضافة منطقة شحن جديدة</h3>
+            <h3 class="font-bold text-lg text-gray-800 mb-4">🌍 إضافة / تعديل منطقة شحن</h3>
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">اسم المنطقة / المحافظة</label>
@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <!-- ثانياً: جدول استعراض مناطق الشحن الحالية للمدير -->
+        <!-- ثانياً: جدول استعراض الأسطر والمناطق من قاعدة البيانات -->
         <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 class="font-bold text-lg text-gray-800 mb-4">🗺️ أسعار الشحن الحالية حسب المناطق</h3>
             <div class="overflow-y-auto max-h-[180px] border rounded-xl">
@@ -52,7 +52,7 @@
         </div>
     </div>
 
-    <!-- ثالثاً: واجهة إدارة واعتماد الطلبات القادمة من الزبائن -->
+    <!-- ثالثاً: واجهة إدارة واعتماد الطلبات -->
     <div class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow">
         <h1 class="text-2xl font-bold text-slate-800 border-b pb-4 mb-6 flex justify-between items-center">
             <span>📦 إدارة واعتماد طلبات المتجر أونلاين</span>
@@ -108,15 +108,14 @@
         </div>
     </div>
 
-    <!-- خامساً: شفرة الـ JavaScript البرمجية المنظمة -->
+    <!-- خامساً: شفرة الـ JavaScript المتوافقة مع بنية الجدول الجديد -->
     <script>
-        // تهيئة اتصال قاعدة البيانات 
         const supabaseClient = supabase.createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
             "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
         );
 
-        // 1. جلب وعرض قائمة مناطق الشحن الحالية في الجدول الصغير
+        // 1. جلب جميع المناطق المخزنة في قاعدة البيانات (كل سطر يمثل منطقة)
         async function loadShippingRegions() {
             try {
                 const { data, error } = await supabaseClient
@@ -130,24 +129,24 @@
                 if (!data || data.length === 0) {
                     html = `<tr><td colspan="3" class="p-4 text-gray-400">لم يتم إضافة مناطق شحن بعد.</td></tr>`;
                 } else {
-                    data.forEach(r => {
+                    data.forEach(row => {
                         html += `
                         <tr class="hover:bg-gray-50">
-                            <td class="p-2.5 font-semibold text-gray-700">${r.region_name}</td>
-                            <td class="p-2.5 font-bold text-blue-600">${Number(r.shipping_cost).toFixed(2)} ج.م</td>
+                            <td class="p-2.5 font-semibold text-gray-700">${row.region_name}</td>
+                            <td class="p-2.5 font-bold text-blue-600">${Number(row.shipping_cost).toFixed(2)} ج.م</td>
                             <td class="p-2.5">
-                                <button onclick="deleteRegion(${r.id})" class="text-red-500 hover:text-red-700 font-bold px-2">حذف</button>
+                                <button onclick="deleteRegion(${row.id}, '${row.region_name}')" class="text-red-500 hover:text-red-700 font-bold px-2">حذف</button>
                             </td>
                         </tr>`;
                     });
                 }
                 document.getElementById("shippingRegionsTableBody").innerHTML = html;
             } catch (err) { 
-                console.error("خطأ في جلب قيم الشحن للمناطق:", err); 
+                console.error("خطأ في قراءة إعدادات الشحن:", err); 
             }
         }
 
-        // 2. إضافة منطقة شحن جديدة أو تعديل سعرها
+        // 2. إضافة منطقة جديدة أو تحديث السعر إذا كانت موجودة مسبقاً (Upsert)
         async function addOrUpdateRegion() {
             const regionName = document.getElementById("inputRegionName").value.trim();
             const shippingCost = parseFloat(document.getElementById("inputRegionCost").value);
@@ -161,30 +160,38 @@
             btn.innerText = "جاري الحفظ...";
 
             try {
-                // إدراج السجل الجديد مباشرة في جدول المناطق
+                // استخدام upsert للبحث عن اسم المنطقة، إذا وجدت يعدلها، وإذا لم توجد ينشئها
                 const { error } = await supabaseClient
                     .from("shipping_settings")
-                    .insert([{ region_name: regionName, shipping_cost: shippingCost }]);
+                    .upsert(
+                        { region_name: regionName, shipping_cost: shippingCost, updated_at: new Date().toISOString() },
+                        { onConflict: 'region_name' }
+                    );
 
                 if (error) throw error;
 
-                alert(`🎉 تم إضافة منطقة (${regionName}) وتكلفة شحنها بنجاح!`);
+                alert(`🎉 تم حفظ تكلفة الشحن لمنطقة (${regionName}) بنجاح!`);
                 document.getElementById("inputRegionName").value = "";
                 document.getElementById("inputRegionCost").value = "";
-                loadShippingRegions(); // إعادة تحديث جدول المناطق
+                loadShippingRegions(); 
             } catch (err) {
-                alert("حدث خطأ أثناء الإضافة: " + err.message);
+                alert("حدث خطأ أثناء الحفظ: " + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerText = "➕ حفظ المنطقة";
             }
         }
 
-        // 3. حذف منطقة شحن
-        async function deleteRegion(id) {
-            if (!confirm("هل تريد حذف منطقة الشحن هذه؟")) return;
+        // 3. حذف سطر (منطقة) من الجدول نهائياً باستخدام المعرّف ID
+        async function deleteRegion(id, regionName) {
+            if (!confirm(`هل تريد إزالة منطقة (${regionName}) من قائمة أسعار الشحن؟`)) return;
+
             try {
-                const { error } = await supabaseClient.from("shipping_settings").delete().eq("id", id);
+                const { error } = await supabaseClient
+                    .from("shipping_settings")
+                    .delete()
+                    .eq("id", id);
+
                 if (error) throw error;
                 loadShippingRegions();
             } catch(err) {
@@ -298,7 +305,6 @@
 
             document.getElementById("invoicePreviewContent").innerHTML = invoiceHTML;
 
-            // ربط أزرار التفاعل والمشاركة (طباعة، واتساب، نسخ) بنفس الآلية السابقة...
             document.getElementById("btnPrintAction").onclick = function() {
                 const w = window.open("", "_blank");
                 w.document.write(`<html><head><title>طباعة فاتورة</title><style>body{direction:rtl; font-family:Arial; display:flex; justify-content:center; padding:20px;}</style></head><body>${document.getElementById("invoicePreviewContent").innerHTML}<script>window.onload=function(){window.print(); window.close();}<\/script></body></html>`);
@@ -382,7 +388,7 @@
             loadWebOrders();
         }
 
-        // 8. تشغيل الجلب التلقائي للبيانات بمجرد جاهزية الصفحة
+        // 8. تشغيل الجلب التلقائي للبيانات عند فتح الصفحة
         window.onload = function() {
             loadShippingRegions();
             loadWebOrders();
