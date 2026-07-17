@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -11,17 +10,19 @@
     <style>
         body { font-family: 'Cairo', sans-serif; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        /* أنيميشن النبض لهيكل التحميل السريع */
+        .skeleton { animation: pulse 1.5s infinite ease-in-out; }
+        @keyframes pulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-    <!-- شريط التواصل السريع المضاف حديثاً أعلى الشاشة -->
+    <!-- شريط التواصل السريع أعلى الشاشة -->
     <div class="bg-gray-900 text-white text-xs py-2 px-4 border-b border-gray-800">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
             <div class="font-semibold text-gray-300">
                 ✨ أهلاً بك في متجر ABM للملبوسات والأزياء
             </div>
-            <!-- أزرار الاتصال والواتساب السريع للمبيعات والاستفسار -->
             <div class="flex items-center gap-4 font-bold">
                 <a href="tel:+249122324890" class="hover:text-blue-400 transition flex items-center gap-1">
                     📞 اتصل بنا: <span dir="ltr">+249122324890</span>
@@ -57,7 +58,33 @@
 
     <main class="max-w-7xl mx-auto px-4 py-10">
         <h2 class="text-xl md:text-2xl font-bold mb-6">✨ أحدث معروضاتنا المتاحة</h2>
+        
+        <!-- شبكة المنتجات وتحتوي افتراضياً على هيكل تحميل مؤقت فوري لمنع شعور العميل بالبطء -->
         <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3 skeleton">
+                <div class="w-full h-48 bg-gray-200 rounded-xl"></div>
+                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div class="h-8 bg-gray-200 rounded-xl w-full mt-2"></div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3 skeleton hidden sm:block">
+                <div class="w-full h-48 bg-gray-200 rounded-xl"></div>
+                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div class="h-8 bg-gray-200 rounded-xl w-full mt-2"></div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3 skeleton hidden md:block">
+                <div class="w-full h-48 bg-gray-200 rounded-xl"></div>
+                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div class="h-8 bg-gray-200 rounded-xl w-full mt-2"></div>
+            </div>
+            <div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3 skeleton hidden lg:block">
+                <div class="w-full h-48 bg-gray-200 rounded-xl"></div>
+                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div class="h-8 bg-gray-200 rounded-xl w-full mt-2"></div>
+            </div>
         </div>
     </main>
 
@@ -72,22 +99,25 @@
 
         async function fetchProducts() {
             try {
-                const { data, error } = await supabaseClient.from("products").select("*");
+                // تسريع الجلب: طلب الأعمدة الهامة فقط بدلاً من * الشاملة والبطيئة
+                const { data, error } = await supabaseClient
+                    .from("products")
+                    .select("id_product, product_name, seal_price, qte_in_stock, image_product");
                 
                 if (!error && data && data.length > 0) {
                     products = data;
-                    console.log("تم جلب البيانات الحية من سوبابيز:", products);
+                    console.log("تم جلب البيانات الحية من سوبابيز بنجاح وسرعة.");
                 } else {
-                    throw new Error("قاعدة البيانات فارغة أو محمية");
+                    throw new Error("بيانات فارغة أو مشكلة اتصال");
                 }
             } catch (error) {
-                console.warn("تم التحويل للوضع الاحتياطي الفوري لعرض الأسعار المحفوظة محلياً:", error.message);
+                console.warn("تم التحويل للوضع الاحتياطي الفوري والسريع:", error.message);
+                // تم إصلاح الأخطاء البرمجية هنا وإضافة مخزون افتراضي لتعمل فوراً عند انقطاع الإنترنت
                 products = [
-                    { id_product: 101, product_name: "عباءة شرقية فاخرة", seal_price: 650 },
-                    { id_product: 102, product_name: "قميص قطن تركي كاجوال", seal_price },
-                    { id_product: 103, product_name: "فستان سهرة أنيق زفاف", seal_price },
-                    { id_product: 104, product_name: "بنطال جينز أزرق عصري", seal_price },
-                    { id_product: 105, product_name: "تيشيرت صيفي (مثال لمنتهي المخزون)", seal_price: 250, qte_in_stock: 0 } // لن يظهر
+                    { id_product: 101, product_name: "عباءة شرقية فاخرة", seal_price: 650, qte_in_stock: 10 },
+                    { id_product: 102, product_name: "قميص قطن تركي كاجوال", seal_price: 450, qte_in_stock: 15 },
+                    { id_product: 103, product_name: "فستان سهرة أنيق زفاف", seal_price: 1500, qte_in_stock: 5 },
+                    { id_product: 104, product_name: "بنطال جينز أزرق عصري", seal_price: 550, qte_in_stock: 20 }
                 ];
             }
             renderProducts();
@@ -111,13 +141,12 @@
                 let imgUrl = p.image_product || fallbackImg;
                 
                 html += `
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between p-4">
-                    <img src="${imgUrl}" alt="${productName}" class="w-full h-48 object-cover rounded-xl bg-gray-100 mb-3" onerror="this.src='${fallbackImg}'">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col justify-between p-4 transform transition duration-200 hover:shadow-md">
+                    <img src="${imgUrl}" alt="${productName}" class="w-full h-48 object-cover rounded-xl bg-gray-100 mb-3" loading="lazy" onerror="this.src='${fallbackImg}'">
                     <div class="flex-1 flex flex-col justify-between gap-2">
                         <div>
                             <h3 class="font-bold text-gray-800 text-sm line-clamp-2">${productName}</h3>
                             <div class="text-blue-600 font-extrabold text-base mt-1">${price.toFixed(2)} ج.س</div>
-                            
                         </div>
                         <button onclick="addToCart(${p.id_product})" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition text-xs mt-2">
                             ➕ إضافة للسلة
