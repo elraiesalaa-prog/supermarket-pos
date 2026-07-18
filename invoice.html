@@ -7,7 +7,7 @@
     <title>نظام الفواتير الاحترافي FIXED</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap" rel="stylesheet">
     
     <style>
         body { background: #eef2f7; font-family: 'Cairo', sans-serif; }
@@ -65,7 +65,7 @@
     <div class="max-w-7xl mx-auto p-5">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">إجمالي المبيعات</div>
+                <div class="text-gray-500 mb-2">إجمالي المبيعات (بالشحن)</div>
                 <div id="sales" class="text-2xl font-bold text-green-600">0</div>
             </div>
             <div class="bg-white rounded-xl shadow p-5 text-center">
@@ -91,7 +91,7 @@
                             <tr class="bg-slate-100">
                                 <th class="p-3">رقم</th>
                                 <th class="p-3">العميل</th>
-                                <th class="p-3">الإجمالي</th>
+                                <th class="p-3">الإجمالي الكلي</th>
                             </tr>
                         </thead>
                         <tbody id="invoices">
@@ -251,6 +251,7 @@
         // ================= LOAD ORDERS =================
         async function loadOrders() {
             try {
+                // ملاحظة: تأكد أن حقل shipping_cost موجود في جدول orders_o بقاعدة البيانات
                 const { data, error } = await supabaseClient.from("orders_o").select("*").order("id_order", { ascending: false });
                 if (error) throw error;
 
@@ -275,13 +276,17 @@
             orders.forEach(order => {
                 const customer = customerMap.get(order.customer_id);
                 const items = detailsMap.get(order.id_order) || [];
-                const total = items.reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+                
+                // حساب مجموع المنتجات + إضافة تكلفة الشحن المخزنة في الفاتورة الرئيسية
+                const itemsTotal = items.reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+                const shippingCost = Number(order.shipping_cost || order.delivery_fee || 0); 
+                const finalTotal = itemsTotal + shippingCost;
 
                 tbody.innerHTML += `
                 <tr class="cursor-pointer hover:bg-blue-50 transition" onclick="openOrder(${order.id_order})">
                     <td class="p-3">#${order.id_order}</td>
                     <td class="p-3">${customer?.first_name || "بدون اسم"}</td>
-                    <td class="p-3 font-bold text-green-600">${money(total)} ج.م</td>
+                    <td class="p-3 font-bold text-green-600">${money(finalTotal)} ج.م</td>
                 </tr>`;
             });
         }
@@ -297,7 +302,7 @@
             const cust = customerMap.get(order.customer_id);
             const items = detailsMap.get(id) || [];
 
-            let total = 0;
+            let itemsSubtotal = 0;
             let rows = "";
             let itemsTextForShare = "";
 
@@ -307,7 +312,7 @@
                 const price = Number(item.price || 0);
                 const lineTotal = Number(item.total_amount || item.amount || (qty * price));
 
-                total += lineTotal;
+                itemsSubtotal += lineTotal;
                 const prodName = product?.product_name || "منتج غير مدرج حالياً";
 
                 rows += `
@@ -320,6 +325,10 @@
 
                 itemsTextForShare += `- ${prodName} (الكمية: ${qty} | السعر: ${money(price)} ج.م)\n`;
             });
+
+            // جلب قيمة الشحن المضافة للفاتورة الرئيسية وحساب الإجمالي النهائي
+            const shippingCost = Number(order.shipping_cost || order.delivery_fee || 0);
+            const finalTotal = itemsSubtotal + shippingCost;
 
             const invoiceDate = order.created_at || order.date_order || order.order_date || new Date().toISOString();
             const invoiceObj = new Date(invoiceDate);
@@ -335,10 +344,12 @@
                 seller: currentInvoiceSeller,
                 date: date,
                 itemsText: itemsTextForShare,
-                total: money(total)
+                shipping: shippingCost,
+                subtotal: itemsSubtotal,
+                total: money(finalTotal)
             };
 
-            // بناء هيكل الفاتورة الحرارية المعروضة
+            // بناء هيكل الفاتورة الحرارية المعروضة متضمنة الشحن
             document.getElementById("invoiceContent").innerHTML = `
             <div style="width:80mm; background:#fff; border:1px solid #2563eb; border-radius:8px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#222; padding:2px;">
                 <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:10px; text-align:center;">
@@ -368,10 +379,18 @@
                     <tbody>${rows}</tbody>
                 </table>
 
-                <div style="padding:8px; background:#f8fafc; border-top:1px solid #ddd;">
+                <div style="padding:8px; background:#f8fafc; border-top:1px solid #ddd; font-size:10px; line-height: 1.6;">
+                    <div style="display:flex; justify-content:space-between; color:#555;">
+                        <span>إجمالي المنتجات:</span>
+                        <span>${money(itemsSubtotal)} ج.م</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; color:#555; margin-bottom:4px;">
+                        <span>تكلفة الشحن:</span>
+                        <span>+ ${money(shippingCost)} ج.م</span>
+                    </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:6px; border-radius:6px; font-size:13px; font-weight:bold;">
                         <span>الإجمالي الكلي</span>
-                        <span>${money(total)} ج.م</span>
+                        <span>${money(finalTotal)} ج.م</span>
                     </div>
                 </div>
 
@@ -386,7 +405,11 @@
                     <p class="font-bold text-lg text-slate-800">فاتورة رقم: #${id}</p>
                     <p><b>العميل:</b> ${currentOpenInvoiceData.customerName}</p>
                     <p><b>التاريخ:</b> ${date}</p>
-                    <p class="text-xl font-bold text-blue-700">الإجمالي: ${money(total)} ج.م</p>
+                    <div class="border-t pt-2 text-sm text-gray-600">
+                        <p>إجمالي الأصناف: ${money(itemsSubtotal)} ج.م</p>
+                        <p>تكلفة الشحن: ${money(shippingCost)} ج.م</p>
+                    </div>
+                    <p class="text-xl font-bold text-blue-700 pt-1">الإجمالي الكلي: ${money(finalTotal)} ج.م</p>
                 </div>`;
 
             const modal = document.getElementById("invoiceModal");
@@ -407,6 +430,8 @@
             text += `📦 *الأصناف والقطع:*\n`;
             text += currentOpenInvoiceData.itemsText;
             text += `------------------------------------\n`;
+            text += `💵 *إجمالي الأصناف:* ${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
+            text += `🛵 *تكلفة الشحن:* ${money(currentOpenInvoiceData.shipping)} ج.م\n`;
             text += `💰 *الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.م\n\n`;
             text += `🌹 شكراً لتعاملكم معنا ونتمنى لكم يوماً سعيداً 🌹`;
             return text;
@@ -443,9 +468,12 @@
                 if (e1) throw e1;
                 if (e2) throw e2;
 
-                const total = (detailsData || []).reduce((s, x) => s + Number(x.total_amount || 0), 0);
+                // احتساب المبيعات شاملة قيمة الشحن لكل الفواتير
+                const itemsSum = (detailsData || []).reduce((s, x) => s + Number(x.total_amount || 0), 0);
+                const shippingSum = (ordersData || []).reduce((s, o) => s + Number(o.shipping_cost || o.delivery_fee || 0), 0);
+                const totalSales = itemsSum + shippingSum;
 
-                document.getElementById("sales").innerText = money(total) + " ج.م";
+                document.getElementById("sales").innerText = money(totalSales) + " ج.م";
                 document.getElementById("invCount").innerText = ordersData.length;
                 document.getElementById("cusCount").innerText = customers.length;
                 document.getElementById("proCount").innerText = products.length;
