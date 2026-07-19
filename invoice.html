@@ -194,7 +194,7 @@
                 </style>
             </head>
             <body>
-                ${content}
+                \${content}
                 <script>window.onload=function(){ window.print(); window.close(); }<\/script>
             </body>
             </html>`);
@@ -251,7 +251,6 @@
         // ================= LOAD ORDERS =================
         async function loadOrders() {
             try {
-                // ملاحظة: تأكد أن حقل shipping_cost موجود في جدول orders_o بقاعدة البيانات
                 const { data, error } = await supabaseClient.from("orders_o").select("*").order("id_order", { ascending: false });
                 if (error) throw error;
 
@@ -277,16 +276,21 @@
                 const customer = customerMap.get(order.customer_id);
                 const items = detailsMap.get(order.id_order) || [];
                 
-                // حساب مجموع المنتجات + إضافة تكلفة الشحن المخزنة في الفاتورة الرئيسية
-                const itemsTotal = items.reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+                // تعديل حساب المجموع للتأكد من حساب ضرب (الكمية × السعر) بشكل صحيح ومباشر
+                const itemsTotal = items.reduce((sum, item) => {
+                    const qty = item.qte ?? item.quantity ?? item.qty ?? 0;
+                    const price = Number(item.price || 0);
+                    return sum + (qty * price);
+                }, 0);
+
                 const shippingCost = Number(order.shipping_cost || order.delivery_fee || 0); 
                 const finalTotal = itemsTotal + shippingCost;
 
                 tbody.innerHTML += `
-                <tr class="cursor-pointer hover:bg-blue-50 transition" onclick="openOrder(${order.id_order})">
-                    <td class="p-3">#${order.id_order}</td>
-                    <td class="p-3">${customer?.first_name || "بدون اسم"}</td>
-                    <td class="p-3 font-bold text-green-600">${money(finalTotal)} ج.م</td>
+                <tr class="cursor-pointer hover:bg-blue-50 transition" onclick="openOrder(\${order.id_order})">
+                    <td class="p-3">#\${order.id_order}</td>
+                    <td class="p-3">\${customer?.first_name || "بدون اسم"}</td>
+                    <td class="p-3 font-bold text-green-600">\${money(finalTotal)} ج.م</td>
                 </tr>`;
             });
         }
@@ -310,23 +314,24 @@
                 const product = productMap.get(item.id_product);
                 const qty = item.qte ?? item.quantity ?? item.qty ?? 0;
                 const price = Number(item.price || 0);
-                const lineTotal = Number(item.total_amount || item.amount || (qty * price));
+                
+                // تصحيح حقل المجموع للسطر بالاعتماد المباشر على الكمية × السعر لتفادي مشاكل القيم الصفرية أو الحقول الفارغة بقاعدة البيانات
+                const lineTotal = qty * price;
 
                 itemsSubtotal += lineTotal;
                 const prodName = product?.product_name || "منتج غير مدرج حالياً";
 
                 rows += `
                 <tr>
-                    <td style="padding:6px; border-bottom:1px solid #eee; text-align:right;">${prodName}</td>
-                    <td style="text-align:center; border-bottom:1px solid #eee;">${qty}</td>
-                    <td style="text-align:center; border-bottom:1px solid #eee;">${money(price)}</td>
-                    <td style="text-align:center; font-weight:bold; color:#2563eb; border-bottom:1px solid #eee;">${money(lineTotal)}</td>
+                    <td style="padding:6px; border-bottom:1px solid #eee; text-align:right;">\${prodName}</td>
+                    <td style="text-align:center; border-bottom:1px solid #eee;">\${qty}</td>
+                    <td style="text-align:center; border-bottom:1px solid #eee;">\${money(price)}</td>
+                    <td style="text-align:center; font-weight:bold; color:#2563eb; border-bottom:1px solid #eee;">\${money(lineTotal)}</td>
                 </tr>`;
 
-                itemsTextForShare += `- ${prodName} (الكمية: ${qty} | السعر: ${money(price)} ج.م)\n`;
+                itemsTextForShare += `- \${prodName} (الكمية: \${qty} | السعر: \${money(price)} ج.م)\n`;
             });
 
-            // جلب قيمة الشحن المضافة للفاتورة الرئيسية وحساب الإجمالي النهائي
             const shippingCost = Number(order.shipping_cost || order.delivery_fee || 0);
             const finalTotal = itemsSubtotal + shippingCost;
 
@@ -336,7 +341,6 @@
             const time = invoiceObj.toLocaleTimeString("ar-EG");
             const currentInvoiceSeller = order.seal_man || sellerName || "غير معروف";
 
-            // تخزين البيانات في الكائن لضمان عمل دالة المشاركة والنسخ
             currentOpenInvoiceData = {
                 id: id,
                 customerName: cust?.first_name || "بدون اسم",
@@ -349,7 +353,6 @@
                 total: money(finalTotal)
             };
 
-            // بناء هيكل الفاتورة الحرارية المعروضة متضمنة الشحن
             document.getElementById("invoiceContent").innerHTML = `
             <div style="width:80mm; background:#fff; border:1px solid #2563eb; border-radius:8px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#222; padding:2px;">
                 <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:10px; text-align:center;">
@@ -359,12 +362,12 @@
 
                 <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #ddd; line-height:1.7;">
                     <div style="display:flex; justify-content:space-between;">
-                        <span><b>رقم الفاتورة:</b> #${id}</span>
-                        <span>${date}</span>
+                        <span><b>رقم الفاتورة:</b> #\${id}</span>
+                        <span>\${date}</span>
                     </div>
-                    <div style="margin-top:2px;">👤 <b>العميل :</b> ${currentOpenInvoiceData.customerName}</div>
-                    <div>🛒 <b>البائع :</b> ${currentOpenInvoiceData.seller}</div>
-                    <div>🕒 ${time}</div>
+                    <div style="margin-top:2px;">👤 <b>العميل :</b> \${currentOpenInvoiceData.customerName}</div>
+                    <div>🛒 <b>البائع :</b> \${currentOpenInvoiceData.seller}</div>
+                    <div>🕒 \${time}</div>
                 </div>
 
                 <table style="width:100%; border-collapse:collapse; font-size:10px;">
@@ -376,21 +379,21 @@
                             <th style="padding:5px;">الجملة</th>
                         </tr>
                     </thead>
-                    <tbody>${rows}</tbody>
+                    <tbody>\${rows}</tbody>
                 </table>
 
                 <div style="padding:8px; background:#f8fafc; border-top:1px solid #ddd; font-size:10px; line-height: 1.6;">
                     <div style="display:flex; justify-content:space-between; color:#555;">
                         <span>إجمالي المنتجات:</span>
-                        <span>${money(itemsSubtotal)} ج.م</span>
+                        <span>\${money(itemsSubtotal)} ج.م</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; color:#555; margin-bottom:4px;">
                         <span>تكلفة الشحن:</span>
-                        <span>+ ${money(shippingCost)} ج.م</span>
+                        <span>+ \${money(shippingCost)} ج.م</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:6px; border-radius:6px; font-size:13px; font-weight:bold;">
                         <span>الإجمالي الكلي</span>
-                        <span>${money(finalTotal)} ج.م</span>
+                        <span>\${money(finalTotal)} ج.م</span>
                     </div>
                 </div>
 
@@ -399,17 +402,16 @@
                 </div>
             </div>`;
 
-            // تحديث قسم التفاصيل السريعة على جانب الصفحة
             document.getElementById("details").innerHTML = `
                 <div class="space-y-2">
-                    <p class="font-bold text-lg text-slate-800">فاتورة رقم: #${id}</p>
-                    <p><b>العميل:</b> ${currentOpenInvoiceData.customerName}</p>
-                    <p><b>التاريخ:</b> ${date}</p>
+                    <p class="font-bold text-lg text-slate-800">فاتورة رقم: #\${id}</p>
+                    <p><b>العميل:</b> \${currentOpenInvoiceData.customerName}</p>
+                    <p><b>التاريخ:</b> \${date}</p>
                     <div class="border-t pt-2 text-sm text-gray-600">
-                        <p>إجمالي الأصناف: ${money(itemsSubtotal)} ج.م</p>
-                        <p>تكلفة الشحن: ${money(shippingCost)} ج.م</p>
+                        <p>إجمالي الأصناف: \${money(itemsSubtotal)} ج.م</p>
+                        <p>تكلفة الشحن: \${money(shippingCost)} ج.م</p>
                     </div>
-                    <p class="text-xl font-bold text-blue-700 pt-1">الإجمالي الكلي: ${money(finalTotal)} ج.م</p>
+                    <p class="text-xl font-bold text-blue-700 pt-1">الإجمالي الكلي: \${money(finalTotal)} ج.م</p>
                 </div>`;
 
             const modal = document.getElementById("invoiceModal");
@@ -422,17 +424,17 @@
             if (!currentOpenInvoiceData) return "";
             let text = `🧾 *فاتورة مبيعات - مؤسسة علاء الدين* 🧾\n`;
             text += `------------------------------------\n`;
-            text += `🔢 *رقم الفاتورة:* #${currentOpenInvoiceData.id}\n`;
-            text += `👤 *العميل:* ${currentOpenInvoiceData.customerName}\n`;
-            text += `🛒 *البائع:* ${currentOpenInvoiceData.seller}\n`;
-            text += `📅 *التاريخ:* ${currentOpenInvoiceData.date}\n`;
+            text += `🔢 *رقم الفاتورة:* #\${currentOpenInvoiceData.id}\n`;
+            text += `👤 *العميل:* \${currentOpenInvoiceData.customerName}\n`;
+            text += `🛒 *البائع:* \${currentOpenInvoiceData.seller}\n`;
+            text += `📅 *التاريخ:* \${currentOpenInvoiceData.date}\n`;
             text += `------------------------------------\n`;
             text += `📦 *الأصناف والقطع:*\n`;
             text += currentOpenInvoiceData.itemsText;
             text += `------------------------------------\n`;
-            text += `💵 *إجمالي الأصناف:* ${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
-            text += `🛵 *تكلفة الشحن:* ${money(currentOpenInvoiceData.shipping)} ج.م\n`;
-            text += `💰 *الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.م\n\n`;
+            text += `💵 *إجمالي الأصناف:* \${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
+            text += `🛵 *تكلفة الشحن:* \${money(currentOpenInvoiceData.shipping)} ج.م\n`;
+            text += `💰 *الإجمالي الكلي:* \${currentOpenInvoiceData.total} ج.م\n\n`;
             text += `🌹 شكراً لتعاملكم معنا ونتمنى لكم يوماً سعيداً 🌹`;
             return text;
         }
@@ -443,7 +445,7 @@
             let phone = currentOpenInvoiceData.customerPhone.replace(/\D/g, '');
             if (phone.startsWith('01')) { phone = '20' + phone.substring(1); }
             
-            const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(shareText)}`;
+            const url = `https://api.whatsapp.com/send?phone=\${phone}&text=\${encodeURIComponent(shareText)}`;
             window.open(url, '_blank');
         }
 
@@ -462,14 +464,19 @@
             try {
                 const [{ data: ordersData, error: e1 }, { data: detailsData, error: e2 }] = await Promise.all([
                     supabaseClient.from("orders_o").select("*"),
-                    supabaseClient.from("orders_details").select("total_amount")
+                    supabaseClient.from("orders_details").select("*")
                 ]);
 
                 if (e1) throw e1;
                 if (e2) throw e2;
 
-                // احتساب المبيعات شاملة قيمة الشحن لكل الفواتير
-                const itemsSum = (detailsData || []).reduce((s, x) => s + Number(x.total_amount || 0), 0);
+                // تم تعديل احتساب إجمالي الإحصائيات هنا أيضاً لتتوافق مع طريقة الحساب الحية للمنتجات
+                const itemsSum = (detailsData || []).reduce((s, item) => {
+                    const qty = item.qte ?? item.quantity ?? item.qty ?? 0;
+                    const price = Number(item.price || 0);
+                    return s + (qty * price);
+                }, 0);
+
                 const shippingSum = (ordersData || []).reduce((s, o) => s + Number(o.shipping_cost || o.delivery_fee || 0), 0);
                 const totalSales = itemsSum + shippingSum;
 
