@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الفواتير الاحترافي FIXED</title>
+    <title>نظام الفواتير الاحترافي - المطور</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2=family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
         body { background: #eef2f7; font-family: 'Cairo', sans-serif; }
@@ -63,6 +63,7 @@
     </header>
 
     <div class="max-w-7xl mx-auto p-5">
+        <!-- عدادات النظام -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow p-5 text-center">
                 <div class="text-gray-500 mb-2">إجمالي المبيعات (بالشحن)</div>
@@ -83,6 +84,7 @@
         </div>
 
         <div class="grid lg:grid-cols-2 gap-5">
+            <!-- قائمة الفواتير -->
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <div class="bg-blue-700 text-white p-4 font-bold">📋 قائمة الفواتير</div>
                 <div class="overflow-auto">
@@ -103,6 +105,7 @@
                 </div>
             </div>
 
+            <!-- تفاصيل الفاتورة الجانبية -->
             <div class="bg-white rounded-xl shadow">
                 <div class="bg-green-700 text-white p-4 font-bold">🧾 تفاصيل الفاتورة</div>
                 <div id="details" class="p-6 text-gray-500">اختر فاتورة لعرض تفاصيلها</div>
@@ -110,6 +113,7 @@
         </div>
     </div>
 
+    <!-- مودال معاينة الفاتورة للطباعة والمشاركة -->
     <div id="invoiceModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
             
@@ -119,7 +123,8 @@
             </div>
             
             <div id="invoiceContent" class="bg-gray-100 p-4 overflow-y-auto flex justify-center grow">
-                </div>
+                <!-- سيتم تعبئة المحتوى الحراري هنا -->
+            </div>
 
             <div class="bg-white p-3 shrink-0 border-t flex flex-wrap gap-2 justify-center no-print">
                 <button onclick="shareInvoiceWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-xs transition">
@@ -157,7 +162,6 @@
         let productMap = new Map();
         let detailsMap = new Map();
 
-        // كائن عالمي لحفظ بيانات الفاتورة المفتوحة حالياً لتمريرها للأزرار
         let currentOpenInvoiceData = null;
 
         const money = v => Number(v || 0).toLocaleString();
@@ -251,7 +255,6 @@
         // ================= LOAD ORDERS =================
         async function loadOrders() {
             try {
-                // ملاحظة: تأكد أن حقل shipping_cost موجود في جدول orders_o بقاعدة البيانات
                 const { data, error } = await supabaseClient.from("orders_o").select("*").order("id_order", { ascending: false });
                 if (error) throw error;
 
@@ -277,7 +280,6 @@
                 const customer = customerMap.get(order.customer_id);
                 const items = detailsMap.get(order.id_order) || [];
                 
-                // حساب مجموع المنتجات + إضافة تكلفة الشحن المخزنة في الفاتورة الرئيسية
                 const itemsTotal = items.reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
                 const shippingCost = Number(order.shipping_cost || order.delivery_fee || 0); 
                 const finalTotal = itemsTotal + shippingCost;
@@ -326,8 +328,9 @@
                 itemsTextForShare += `- ${prodName} (الكمية: ${qty} | السعر: ${money(price)} ج.م)\n`;
             });
 
-            // جلب قيمة الشحن المضافة للفاتورة الرئيسية وحساب الإجمالي النهائي
+            // جلب حقول الشحن والوصف المقترحة من البيانات أو إسناد قيمة افتراضية
             const shippingCost = Number(order.shipping_cost || order.delivery_fee || 0);
+            const descriptionText = order.description || order.notes || "لا يوجد وصف أو ملاحظات";
             const finalTotal = itemsSubtotal + shippingCost;
 
             const invoiceDate = order.created_at || order.date_order || order.order_date || new Date().toISOString();
@@ -336,7 +339,6 @@
             const time = invoiceObj.toLocaleTimeString("ar-EG");
             const currentInvoiceSeller = order.seal_man || sellerName || "غير معروف";
 
-            // تخزين البيانات في الكائن لضمان عمل دالة المشاركة والنسخ
             currentOpenInvoiceData = {
                 id: id,
                 customerName: cust?.first_name || "بدون اسم",
@@ -345,11 +347,12 @@
                 date: date,
                 itemsText: itemsTextForShare,
                 shipping: shippingCost,
+                description: descriptionText,
                 subtotal: itemsSubtotal,
                 total: money(finalTotal)
             };
 
-            // بناء هيكل الفاتورة الحرارية المعروضة متضمنة الشحن
+            // بناء هيكل الفاتورة الحرارية مع حقول الشحن والوصف الجديدة
             document.getElementById("invoiceContent").innerHTML = `
             <div style="width:80mm; background:#fff; border:1px solid #2563eb; border-radius:8px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#222; padding:2px;">
                 <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:10px; text-align:center;">
@@ -388,9 +391,13 @@
                         <span>تكلفة الشحن:</span>
                         <span>+ ${money(shippingCost)} ج.م</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:6px; border-radius:6px; font-size:13px; font-weight:bold;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:6px; border-radius:6px; font-size:13px; font-weight:bold; margin-bottom:6px;">
                         <span>الإجمالي الكلي</span>
                         <span>${money(finalTotal)} ج.م</span>
+                    </div>
+                    <div style="border-top:1px solid #e2e8f0; pt-2; color:#475569;">
+                        <b>📝 الوصف / الملاحظات:</b>
+                        <p style="margin:2px 0 0 0; font-style:italic;">${descriptionText}</p>
                     </div>
                 </div>
 
@@ -399,17 +406,21 @@
                 </div>
             </div>`;
 
-            // تحديث قسم التفاصيل السريعة على جانب الصفحة
+            // تحديث قسم التفاصيل السريعة الجانبي
             document.getElementById("details").innerHTML = `
-                <div class="space-y-2">
+                <div class="space-y-3">
                     <p class="font-bold text-lg text-slate-800">فاتورة رقم: #${id}</p>
                     <p><b>العميل:</b> ${currentOpenInvoiceData.customerName}</p>
                     <p><b>التاريخ:</b> ${date}</p>
-                    <div class="border-t pt-2 text-sm text-gray-600">
+                    <div class="border-t pt-2 text-sm text-gray-600 space-y-1">
                         <p>إجمالي الأصناف: ${money(itemsSubtotal)} ج.م</p>
                         <p>تكلفة الشحن: ${money(shippingCost)} ج.م</p>
                     </div>
                     <p class="text-xl font-bold text-blue-700 pt-1">الإجمالي الكلي: ${money(finalTotal)} ج.م</p>
+                    <div class="bg-slate-50 p-3 rounded-lg border text-sm text-slate-700">
+                        <b class="block mb-1 text-slate-800">📝 الوصف:</b>
+                        ${descriptionText}
+                    </div>
                 </div>`;
 
             const modal = document.getElementById("invoiceModal");
@@ -432,7 +443,9 @@
             text += `------------------------------------\n`;
             text += `💵 *إجمالي الأصناف:* ${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
             text += `🛵 *تكلفة الشحن:* ${money(currentOpenInvoiceData.shipping)} ج.م\n`;
-            text += `💰 *الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.م\n\n`;
+            text += `💰 *الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.م\n`;
+            text += `📝 *الوصف:* ${currentOpenInvoiceData.description}\n`;
+            text += `------------------------------------\n\n`;
             text += `🌹 شكراً لتعاملكم معنا ونتمنى لكم يوماً سعيداً 🌹`;
             return text;
         }
@@ -451,7 +464,7 @@
             if (!currentOpenInvoiceData) return alert("الرجاء اختيار فاتورة أولاً!");
             const shareText = generateShareText();
             navigator.clipboard.writeText(shareText).then(() => {
-                alert("📋 تم نسخ نص الفاتورة المنظم بنجاح! يمكنك الآن لصقها في أي ميديا (تليجرام، ماسنجر، إيميل...).");
+                alert("📋 تم نسخ نص الفاتورة المنظم بنجاح بما يحتويه من تكلفة الشحن والوصف!");
             }).catch(() => {
                 alert("فشل نسخ النص، يرجى المحاولة يدوياً.");
             });
@@ -468,7 +481,6 @@
                 if (e1) throw e1;
                 if (e2) throw e2;
 
-                // احتساب المبيعات شاملة قيمة الشحن لكل الفواتير
                 const itemsSum = (detailsData || []).reduce((s, x) => s + Number(x.total_amount || 0), 0);
                 const shippingSum = (ordersData || []).reduce((s, o) => s + Number(o.shipping_cost || o.delivery_fee || 0), 0);
                 const totalSales = itemsSum + shippingSum;
