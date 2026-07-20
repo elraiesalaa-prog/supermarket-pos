@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الفواتير الاحترافي FIXED</title>
+    <title>نظام الفواتير الاحترافي - نسخة مستقرة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap" rel="stylesheet">
@@ -32,9 +32,6 @@
         }
         #invoiceContent tr:nth-child(even) {
             background: #f8fafc;
-        }
-        #invoiceContent h2 {
-            letter-spacing: 1px;
         }
 
         @media print {
@@ -89,7 +86,7 @@
                     <table class="min-w-full">
                         <thead>
                             <tr class="bg-slate-100">
-                                <th class="p-3">رقم</th>
+                                <th class="p-3">رقم الفاتورة</th>
                                 <th class="p-3">العميل</th>
                                 <th class="p-3">الإجمالي الكلي</th>
                             </tr>
@@ -105,7 +102,7 @@
 
             <div class="bg-white rounded-xl shadow">
                 <div class="bg-green-700 text-white p-4 font-bold">🧾 تفاصيل الفاتورة</div>
-                <div id="details" class="p-6 text-gray-500">اختر فاتورة لعرض تفاصيلها</div>
+                <div id="details" class="p-6 text-gray-500">اختر فاتورة من القائمة لعرض تفاصيلها المباشرة هنا</div>
             </div>
         </div>
     </div>
@@ -127,6 +124,7 @@
     </div>
 
     <script>
+        console.log("invoice.html:495 loading...");
         const { createClient } = window.supabase;
         const supabaseClient = createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
@@ -179,19 +177,27 @@
                     supabaseClient.from("products").select("*")
                 ]);
 
-                if (customersRes.error) console.error("Customers API Error:", customersRes.error);
-                if (productsRes.error) console.error("Products API Error:", productsRes.error);
-
                 customers = customersRes.data || [];
                 products = productsRes.data || [];
 
                 customerMap.clear();
                 productMap.clear();
 
-                customers.forEach(c => { if(c && c.id_customer) customerMap.set(c.id_customer, c); });
-                products.forEach(p => { if(p && p.id_product) productMap.set(p.id_product, p); });
+                customers.forEach(c => { 
+                    if(c) {
+                        const cid = c.id_customer || c.id || c.customer_id;
+                        if(cid) customerMap.set(cid, c); 
+                    }
+                });
+                
+                products.forEach(p => { 
+                    if(p) {
+                        const pid = p.id_product || p.id || p.product_id;
+                        if(pid) productMap.set(pid, p); 
+                    }
+                });
             } catch (err) {
-                console.error("CRITICAL MASTER DATA ERROR:", err);
+                console.error("Master data mapping error:", err);
             }
         }
 
@@ -204,28 +210,39 @@
                 detailsMap.clear();
 
                 details.forEach(item => {
-                    if (item && item.id_order) {
-                        if (!detailsMap.has(item.id_order)) {
-                            detailsMap.set(item.id_order, []);
+                    if (item) {
+                        const oid = item.id_order || item.order_id;
+                        if (oid) {
+                            if (!detailsMap.has(oid)) {
+                                detailsMap.set(oid, []);
+                            }
+                            detailsMap.get(oid).push(item);
                         }
-                        detailsMap.get(item.id_order).push(item);
                     }
                 });
             } catch (err) {
-                console.error("CRITICAL DETAILS ERROR:", err);
+                console.error("Details mapping error:", err);
             }
         }
 
         async function loadOrders() {
             try {
-                const { data, error } = await supabaseClient.from("orders_o").select("*").order("id_order", { ascending: false });
+                const { data, error } = await supabaseClient.from("orders_o").select("*");
                 if (error) throw error;
 
                 orders = data || [];
+                
+                // ترتيب الفواتير تنازلياً حسب المعرف المتاح
+                orders.sort((a, b) => {
+                    const idA = a.id_order || a.id || 0;
+                    const idB = b.id_order || b.id || 0;
+                    return idB - idA;
+                });
+
                 renderOrders();
             } catch (err) {
-                console.error("CRITICAL ORDERS ERROR:", err);
-                document.getElementById("invoices").innerHTML = `<tr><td colspan="3" class="p-4 text-red-500">حدث خطأ أثناء جلب البيانات من السيرفر</td></tr>`;
+                console.error("Orders error:", err);
+                document.getElementById("invoices").innerHTML = `<tr><td colspan="3" class="p-4 text-red-500">حدث خطأ أثناء عرض القائمة</td></tr>`;
             }
         }
 
@@ -240,39 +257,45 @@
 
             orders.forEach(order => {
                 try {
-                    if (!order || !order.id_order) return;
+                    if (!order) return;
+                    const orderId = order.id_order || order.id;
+                    if (!orderId) return;
                     
-                    const customer = customerMap.get(order.customer_id);
-                    const items = detailsMap.get(order.id_order) || [];
+                    const custId = order.customer_id || order.id_customer || order.user_id;
+                    const customer = customerMap.get(custId);
+                    const items = detailsMap.get(orderId) || [];
                     
                     const itemsTotal = items.reduce((sum, item) => {
                         if (!item) return sum;
                         const qty = item.qte ?? item.quantity ?? item.qty ?? 0;
-                        const price = Number(item.price || 0);
+                        const price = Number(item.price || item.unit_price || 0);
                         return sum + (qty * price);
                     }, 0);
 
-                    const shippingCost = Number(order.shipping_cost || order.delivery_fee || 0); 
+                    const shippingCost = Number(order.shipping_cost || order.delivery_fee || order.shipping || 0); 
                     const finalTotal = itemsTotal + shippingCost;
 
+                    const customerName = customer?.first_name || customer?.name || customer?.full_name || customer?.customer_name || "عميل غير معروف";
+
                     tbody.innerHTML += `
-                    <tr class="cursor-pointer hover:bg-blue-50 transition border-b" onclick="openOrder(\${order.id_order})">
-                        <td class="p-3">#\${order.id_order}</td>
-                        <td class="p-3">\${customer?.first_name || "بدون اسم"}</td>
+                    <tr class="cursor-pointer hover:bg-blue-50 transition border-b" onclick="openOrder(\${orderId})">
+                        <td class="p-3 font-semibold">#\${orderId}</td>
+                        <td class="p-3">\${customerName}</td>
                         <td class="p-3 font-bold text-green-600">\${money(finalTotal)} ج.م</td>
                     </tr>`;
                 } catch (e) {
-                    console.error("Error rendering specific row:", e, order);
+                    console.error("Row skipped due to field discrepancy:", e, order);
                 }
             });
         }
 
         function openOrder(id) {
             try {
-                const order = orders.find(o => o.id_order == id);
+                const order = orders.find(o => (o.id_order || o.id) == id);
                 if (!order) return alert("الفاتورة غير موجودة");
 
-                const cust = customerMap.get(order.customer_id);
+                const custId = order.customer_id || order.id_customer || order.user_id;
+                const cust = customerMap.get(custId);
                 const items = detailsMap.get(id) || [];
 
                 let itemsSubtotal = 0;
@@ -281,13 +304,14 @@
 
                 items.forEach((item) => {
                     if(!item) return;
-                    const product = productMap.get(item.id_product);
+                    const pid = item.id_product || item.product_id;
+                    const product = productMap.get(pid);
                     const qty = item.qte ?? item.quantity ?? item.qty ?? 0;
-                    const price = Number(item.price || 0);
+                    const price = Number(item.price || item.unit_price || 0);
                     const lineTotal = qty * price;
 
                     itemsSubtotal += lineTotal;
-                    const prodName = product?.product_name || "منتج غير مدرج حالياً";
+                    const prodName = product?.product_name || product?.name || product?.title || "صنف غير معرف";
 
                     rows += `
                     <tr>
@@ -297,22 +321,25 @@
                         <td style="text-align:center; font-weight:bold; color:#2563eb; border-bottom:1px solid #eee;">\${money(lineTotal)}</td>
                     </tr>`;
 
-                    itemsTextForShare += `- \text{\${prodName}} (الكمية: \${qty} | السعر: \${money(price)} ج.م)\n`;
+                    itemsTextForShare += `- \${prodName} (الكمية: \${qty} | السعر: \${money(price)} ج.م)\n`;
                 });
 
-                const shippingCost = Number(order.shipping_cost || order.delivery_fee || 0);
+                const shippingCost = Number(order.shipping_cost || order.delivery_fee || order.shipping || 0);
                 const finalTotal = itemsSubtotal + shippingCost;
 
                 const invoiceDate = order.created_at || order.date_order || order.order_date || new Date().toISOString();
                 const invoiceObj = new Date(invoiceDate);
                 const date = invoiceObj.toLocaleDateString("ar-EG");
                 const time = invoiceObj.toLocaleTimeString("ar-EG");
-                const currentInvoiceSeller = order.seal_man || sellerName || "غير معروف";
+                const currentInvoiceSeller = order.seal_man || order.seller_name || sellerName || "مؤسسة علاء الدين";
+
+                const customerName = cust?.first_name || cust?.name || cust?.full_name || cust?.customer_name || "عميل غير معروف";
+                const customerPhone = cust?.phone || cust?.telephone || cust?.mobile || "";
 
                 currentOpenInvoiceData = {
                     id: id,
-                    customerName: cust?.first_name || "بدون اسم",
-                    customerPhone: cust?.phone || "",
+                    customerName: customerName,
+                    customerPhone: customerPhone,
                     seller: currentInvoiceSeller,
                     date: date,
                     itemsText: itemsTextForShare,
@@ -332,8 +359,8 @@
                             <span><b>رقم الفاتورة:</b> #\${id}</span>
                             <span>\${date}</span>
                         </div>
-                        <div style="margin-top:2px;">👤 <b>العميل :</b> \${currentOpenInvoiceData.customerName}</div>
-                        <div>🛒 <b>البائع :</b> \${currentOpenInvoiceData.seller}</div>
+                        <div style="margin-top:2px;">👤 <b>العميل :</b> \${customerName}</div>
+                        <div>🛒 <b>البائع :</b> \${currentInvoiceSeller}</div>
                         <div>🕒 \${time}</div>
                     </div>
                     <table style="width:100%; border-collapse:collapse; font-size:10px;">
@@ -360,7 +387,7 @@
                 document.getElementById("details").innerHTML = `
                     <div class="space-y-2">
                         <p class="font-bold text-lg text-slate-800">فاتورة رقم: #\${id}</p>
-                        <p><b>العميل:</b> \${currentOpenInvoiceData.customerName}</p>
+                        <p><b>العميل:</b> \${customerName}</p>
                         <p><b>التاريخ:</b> \${date}</p>
                         <div class="border-t pt-2 text-sm text-gray-600">
                             <p>إجمالي الأصناف: \${money(itemsSubtotal)} ج.م</p>
@@ -379,12 +406,12 @@
 
         function generateShareText() {
             if (!currentOpenInvoiceData) return "";
-            let text = `🧾 *فاتورة مبيعات - مؤسسة علاء الدين* 🧾\n------------------------------------\n`;
-            text += `🔢 *رقم الفاتورة:* #\${currentOpenInvoiceData.id}\n👤 *العميل:* \${currentOpenInvoiceData.customerName}\n`;
-            text += `🛒 *البائع:* \${currentOpenInvoiceData.seller}\n📅 *التاريخ:* \${currentOpenInvoiceData.date}\n------------------------------------\n📦 *الأصناف والقطع:*\n`;
+            let text = `**فاتورة مبيعات - مؤسسة علاء الدين**\n------------------------------------\n`;
+            text += `*رقم الفاتورة:* #\${currentOpenInvoiceData.id}\n*العميل:* \${currentOpenInvoiceData.customerName}\n`;
+            text += `*البائع:* \${currentOpenInvoiceData.seller}\n*التاريخ:* \${currentOpenInvoiceData.date}\n------------------------------------\n*الأصناف والقطع:*\n`;
             text += currentOpenInvoiceData.itemsText;
-            text += `------------------------------------\n💵 *إجمالي الأصناف:* \${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
-            text += `🛵 *تكلفة الشحن:* \${money(currentOpenInvoiceData.shipping)} ج.م\n💰 *الإجمالي الكلي:* \${currentOpenInvoiceData.total} ج.م\n\n🌹 شكراً لتعاملكم معنا 🌹`;
+            text += `------------------------------------\n*إجمالي الأصناف:* \${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
+            text += `*تكلفة الشحن:* \${money(currentOpenInvoiceData.shipping)} ج.م\n*الإجمالي الكلي:* \${currentOpenInvoiceData.total} ج.م\n\nشكراً لتعاملكم معنا 🌹`;
             return text;
         }
 
@@ -411,10 +438,11 @@
                 const itemsSum = (detailsData || []).reduce((s, item) => {
                     if (!item) return s;
                     const qty = item.qte ?? item.quantity ?? item.qty ?? 0;
-                    return s + (qty * Number(item.price || 0));
+                    const price = Number(item.price || item.unit_price || 0);
+                    return s + (qty * price);
                 }, 0);
 
-                const shippingSum = (ordersData || []).reduce((s, o) => s + Number(o?.shipping_cost || o?.delivery_fee || 0), 0);
+                const shippingSum = (ordersData || []).reduce((s, o) => s + Number(o?.shipping_cost || o?.delivery_fee || o?.shipping || 0), 0);
                 
                 document.getElementById("sales").innerText = money(itemsSum + shippingSum) + " ج.م";
                 document.getElementById("invCount").innerText = (ordersData || []).length;
@@ -433,8 +461,9 @@
                 await loadDetails();
                 await loadOrders();
                 await loadStats();
+                console.log("invoice.html:501 done");
             } catch(e) {
-                console.error("Init dynamic failure:", e);
+                console.error("Init failure:", e);
             }
         }
 
