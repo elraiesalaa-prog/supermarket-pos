@@ -146,7 +146,7 @@
         let posDetailsMap = new Map();
 
         let webOrders = [];
-        let webOrdersMap = new Map();
+        let webOrdersList = [];
         let webDetailsMap = new Map();
 
         let customerMap = new Map();
@@ -236,13 +236,8 @@
                     supabaseClient.from("web_order_details").select("*")
                 ]);
 
-                webOrders = webOrdersRes.data || [];
+                webOrdersList = webOrdersRes.data || [];
                 const webDetails = webDetailsRes.data || [];
-
-                webOrdersMap.clear();
-                webOrders.forEach(w => {
-                    if (w && w.id_web_order) webOrdersMap.set(String(w.id_web_order), w);
-                });
 
                 webDetailsMap.clear();
                 webDetails.forEach(item => {
@@ -257,63 +252,92 @@
             }
         }
 
-        // إيجاد رقم طلب المتجر المكتوب داخل حقول الوصف في جدول orders_o أو orders_details
-        function extractWebOrderId(posOrder, posItems) {
+        // دالة الذكاء الاصطناعي لمطابقة طلب المتجر بالفاتورة المعتمدة بدقة متناهية
+        function findMatchedWebOrder(posOrder, posItems) {
+            const posId = String(posOrder.id_order);
             const strSources = [
                 posOrder.description_order,
                 posOrder.description,
-                ...(posItems || []).map(i => i.description_order)
-            ];
+                ...(posItems || []).map(i => i.description_order),
+                ...(posItems || []).map(i => i.description)
+            ].filter(Boolean).join(" ");
 
-            for (let text of strSources) {
-                if (!text) continue;
-                const match = String(text).match(/(\d+)/);
-                if (match && webOrdersMap.has(match[1])) {
-                    return match[1];
+            // 1. البحث عن طريق رقم الطلب المستخرج من النصوص
+            const foundNumbers = strSources.match(/\d+/g) || [];
+            for (let num of foundNumbers) {
+                const match = webOrdersList.find(w => String(w.id_web_order) === String(num));
+                if (match) return match;
+            }
+
+            // 2. المطابقة عن طريق اسم العميل إن وجد
+            if (posOrder.first_name || (posItems[0] && posItems[0].first_name)) {
+                const nameToMatch = (posOrder.first_name || posItems[0].first_name).trim().toLowerCase();
+                const match = webOrdersList.find(w => w.client_name && w.client_name.trim().toLowerCase().includes(nameToMatch));
+                if (match) return match;
+            }
+
+            // 3. المطابقة عن طريق رقم الهاتف المسجل في orders_o
+            if (posOrder.mob) {
+                const cleanMob = String(posOrder.mob).replace(/\D/g, '');
+                if (cleanMob.length >= 8) {
+                    const match = webOrdersList.find(w => w.client_phone && String(w.client_phone).replace(/\D/g, '').includes(cleanMob));
+                    if (match) return match;
                 }
             }
+
             return null;
         }
 
         function buildUnifiedList() {
             unifiedList = [];
 
-            // معالجة كل سجل في جدول orders_o (هو المحور الرئيسي لكل الأرقام المحجوزة المعتمدة id_order)
             posOrders.forEach(pos => {
                 const realInvoiceNo = String(pos.id_order);
                 const posItems = posDetailsMap.get(realInvoiceNo) || [];
                 
-                // التأكد مما إذا كانت هذه الفواتير قادمة من طلب متجر
-                const linkedWebOrderId = extractWebOrderId(pos, posItems);
-                const webOrder = linkedWebOrderId ? webOrdersMap.get(linkedWebOrderId) : null;
+                // البحث عن السجل المقابل في طلبات المتجر web_orders
+                const webOrder = findMatchedWebOrder(pos, posItems);
 
                 if (webOrder) {
-                    // النوع الأول: فاتورة متجر معتمدة يحجز لها رقم من جدول الفواتير id_order مع كامل البيانات من المتجر
-                    const webItems = webDetailsMap.get(linkedWebOrderId) || [];
+                    const wid = String(webOrder.id_web_order);
+                    const webItems = webDetailsMap.get(wid) || [];
                     const finalItems = webItems.length > 0 ? webItems : posItems;
 
+                    // حساب مجموع الأصناف
                     const itemsTotal = finalItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
-                    const shippingCost = Number(pos.shipping_cost || 0);
-                    const totalAmt = Number(webOrder.total_amount || (itemsTotal + shippingCost));
+
+                    // جلب الشحن بدقة: من orders_o أو الفرق من إجمالي طلب المتجر
+                    let shippingCost = Number(pos.shipping_cost || 0);
+                    const webTotalAmount = Number(webOrder.total_amount || 0);
+
+                    if (shippingCost === 0 && webTotalAmount > itemsTotal) {
+                        shippingCost = webTotalAmount - itemsTotal;
+                    }
+
+                    const finalGrandTotal = webTotalAmount > 0 ? webTotalAmount : (itemsTotal + shippingCost);
+
+                    // جلب الهاتف والعنوان بشكل مباشر مع الخطة البديلة
+                    const phone = webOrder.client_phone || pos.mob || "غير مدون";
+                    const address = webOrder.client_address || "غير مدون";
 
                     unifiedList.push({
                         uniqueKey: `INV_${realInvoiceNo}`,
-                        officialInvoiceNo: realInvoiceNo, // رقم الفاتورة الحقيقي المعتمد من id_order
-                        idWebOrder: linkedWebOrderId,
+                        officialInvoiceNo: realInvoiceNo, // الرقم الحقيقي المعتمد id_order
+                        idWebOrder: wid,
                         source: 'WEB',
                         sourceLabel: '🌐 المتجر الإلكتروني (معتمد)',
-                        customerName: webOrder.client_name || "عميل متجر",
-                        customerPhone: webOrder.client_phone || pos.mob || "غير مدون",
-                        address: webOrder.client_address || "غير مدون",
+                        customerName: webOrder.client_name || pos.first_name || "عميل متجر",
+                        customerPhone: phone,
+                        address: address,
                         date: pos.date_order || webOrder.date_created || new Date().toISOString(),
                         seller: pos.seal_man || "مؤسسة علاء الدين",
                         shipping: shippingCost,
                         itemsTotal: itemsTotal,
-                        totalAmount: totalAmt,
+                        totalAmount: finalGrandTotal,
                         items: finalItems
                     });
                 } else {
-                    // النوع الثاني: فاتورة من النظام الداخلي مباشرة (id_order)
+                    // فاتورة من النظام الداخلي مباشرة
                     const custObj = customerMap.get(String(pos.customer_id));
                     let custName = "عميل نقدي";
                     
@@ -328,7 +352,7 @@
 
                     unifiedList.push({
                         uniqueKey: `INV_${realInvoiceNo}`,
-                        officialInvoiceNo: realInvoiceNo, // رقم الفاتورة الحقيقي المعتمد من id_order
+                        officialInvoiceNo: realInvoiceNo,
                         idWebOrder: null,
                         source: 'POS',
                         sourceLabel: '🏢 النظام الداخلي',
@@ -345,7 +369,7 @@
                 }
             });
 
-            // ترتيب الفواتير المعتمدة من الأحدث إلى الأقدم
+            // الترتيب من الأحدث للأقدم
             unifiedList.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
 
