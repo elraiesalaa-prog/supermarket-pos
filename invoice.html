@@ -255,8 +255,13 @@
         function buildUnifiedList() {
             unifiedList = [];
 
-            // خريطة لتحديد الطلبات القادمة أساساً من المتجر لمنع استيرادها المزدوج
             const webOrderMatchedPosIds = new Map();
+
+            // إيجاد أعلى رقم فاتورة رسمي في النظام الداخلي لاستخدامه في تسلسل الفواتير المعتمدة
+            let maxPosId = posOrders.reduce((max, o) => {
+                const num = parseInt(o.id_order, 10);
+                return !isNaN(num) && num > max ? num : max;
+            }, 1000);
 
             // 1. تصفية طلبات المتجر المعتمدة واستبعاد "قيد المراجعة"
             const approvedWebOrders = webOrders.filter(w => {
@@ -264,7 +269,7 @@
                 return st !== "قيد المراجعة" && st !== "";
             });
 
-            // ربط كل طلب متجر برقم الفاتورة الحقيقي المعتمد في الجدول الداخلي (إن وجد)
+            // ربط كل طلب متجر برقم الفاتورة الحقيقي المعتمد في الجدول الداخلي
             approvedWebOrders.forEach(w => {
                 const wid = String(w.id_web_order);
                 const items = webDetailsMap.get(wid) || [];
@@ -279,10 +284,11 @@
                 let officialInvoiceNo = "";
                 if (matchedPosOrder) {
                     officialInvoiceNo = String(matchedPosOrder.id_order);
-                    webOrderMatchedPosIds.set(officialInvoiceNo, true); // تسجيلها حتى لا تتكرر في فواتير POS
+                    webOrderMatchedPosIds.set(officialInvoiceNo, true);
                 } else {
-                    // إذا لم يوجد ربط صريح، يتم إعطاؤها رقم فاتورة متسلسل حقيقي من بعد أكبر رقم فاتورة
-                    officialInvoiceNo = `WEB-${wid}`;
+                    // إذا كان الطلب معتمداً ولم يربط صراحة، يمنح رقم فاتورة حقيقي متسلسل
+                    maxPosId += 1;
+                    officialInvoiceNo = String(maxPosId);
                 }
 
                 const itemsTotal = items.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
@@ -293,7 +299,7 @@
                 unifiedList.push({
                     uniqueKey: `WEB_${wid}`,
                     officialInvoiceNo: officialInvoiceNo, // رقم الفاتورة الحقيقي المعتمد
-                    idWebOrder: wid, // مرجع رقم طلب المتجر
+                    idWebOrder: wid, // مرجع رقم طلب المتجر الأصلي
                     source: 'WEB',
                     sourceLabel: '🌐 المتجر الإلكتروني',
                     customerName: w.client_name || "عميل متجر",
