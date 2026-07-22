@@ -12,7 +12,7 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 p-4 md:p-8 pb-24 md:pb-8"> <!-- تم إضافة padding أسفل الصفحة لمنع حجب المحتوى بالشريط العائم في الموبايل -->
-
+ 
     <div class="max-w-4xl mx-auto">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-xl md:text-3xl font-extrabold text-slate-800 flex items-center gap-2">🛒 سلة المشتريات</h1>
@@ -32,11 +32,11 @@
                 
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">الاسم الكامل</label>
-                    <input type="text" id="clientName" placeholder="محمد الشريف..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
+                    <input type="text" id="clientName" placeholder="محمد صافي الدين ..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">رقم الهاتف للاتصال</label>
-                    <input type="tel" id="clientPhone" placeholder="01xxxxxxxxx" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 text-left" dir="ltr">
+                    <input type="tel" id="clientPhone" placeholder="0122324890" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 text-left" dir="ltr">
                 </div>
                 
                 <!-- اختيار المنطقة ديناميكياً من قاعدة البيانات -->
@@ -76,10 +76,10 @@
                 <div class="border-t pt-4 mt-2 hidden md:block">
                     <p class="text-xs font-bold text-slate-400 mb-2 text-center">هل تحتاج للاستفسار عن منتج قبل الطلب؟</p>
                     <div class="grid grid-cols-2 gap-2">
-                        <a href="https://wa.me/201000000000" target="_blank" class="flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition text-center">
+                        <a href="https://wa.me/249918237606" target="_blank" class="flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition text-center">
                             💬 واتساب الإدارة
                         </a>
-                        <a href="tel:+201000000000" class="flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition text-center">
+                        <a href="tel:+249122324890" class="flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition text-center">
                             📞 اتصال هاتي
                         </a>
                     </div>
@@ -92,13 +92,13 @@
     <div class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 p-3 shadow-xl z-50 md:hidden flex items-center justify-between gap-3">
         <div class="text-right">
             <p class="text-[10px] font-bold text-slate-400">للاستفسار وتفاصيل المنتجات:</p>
-            <p class="text-xs font-extrabold text-slate-700">مؤسسة علاء الدين</p>
+            <p class="text-xs font-extrabold text-slate-700">مؤسسة ABM</p>
         </div>
         <div class="flex gap-2">
-            <a href="https://wa.me/201000000000" target="_blank" class="flex items-center gap-1 bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">
+            <a href="https://wa.me/249918237606" target="_blank" class="flex items-center gap-1 bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">
                 💬 واتساب
             </a>
-            <a href="tel:+201000000000" class="flex items-center gap-1 bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">
+            <a href="tel:+249122324890" class="flex items-center gap-1 bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">
                 📞 إتصل بنا
             </a>
         </div>
@@ -126,20 +126,20 @@
                 if (error) throw error;
 
                 const regionSelect = document.getElementById("clientRegion");
-                let optionsHTML = '<option value="" data-cost="0">-- اختر المحافظة/المنطقة --</option>';
+                let optionsHTML = '<option value="" data-cost="0">-- اختر الحي/المنطقة --</option>';
                 
                 if (data && data.length > 0) {
                     data.forEach(region => {
-                        optionsHTML += `<option value="${region.region_name}" data-cost="${region.shipping_cost}">${region.region_name} (${Number(region.shipping_cost).toFixed(2)} ج.م)</option>`;
+                        optionsHTML += `<option value="${region.region_name}" data-cost="${region.shipping_cost}">${region.region_name} (${Number(region.shipping_cost).toFixed(2)} ج.س)</option>`;
                     });
                 } else {
-                    optionsHTML = '<option value="شحن عام" data-cost="50">شحن موحد (50.00 ج.م)</option>';
+                    optionsHTML = '<option value="شحن عام" data-cost="50">شحن موحد (4000.00 ج.س)</option>';
                 }
                 
                 regionSelect.innerHTML = optionsHTML;
             } catch (err) {
                 console.error("خطأ في جلب مناطق الشحن:", err);
-                document.getElementById("clientRegion").innerHTML = '<option value="شحن عام" data-cost="50">شحن موحد (50.00 ج.م)</option>';
+                document.getElementById("clientRegion").innerHTML = '<option value="شحن عام" data-cost="50">شحن موحد (4000.00 ج.س)</option>';
             }
         }
 
@@ -159,9 +159,9 @@
 
             if(cart.length === 0) {
                 document.getElementById("cartItems").innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">سلتك فارغة تماماً.</div>`;
-                document.getElementById("productsTotal").innerText = "0.00 ج.م";
-                document.getElementById("shippingTotal").innerText = "0.00 ج.م";
-                document.getElementById("cartTotal").innerText = "0.00 ج.م";
+                document.getElementById("productsTotal").innerText = "0.00 ج.س";
+                document.getElementById("shippingTotal").innerText = "0.00 ج.س";
+                document.getElementById("cartTotal").innerText = "0.00 ج.س";
                 globalTotal = 0;
                 return;
             }
@@ -176,7 +176,7 @@
                 <div class="flex items-center gap-3 py-3">
                     <div class="flex-1">
                         <h4 class="font-bold text-slate-800 text-sm">${item.product_name || "منتج غير مسمى"}</h4>
-                        <p class="text-xs text-slate-400">${price.toFixed(2)} ج.م × ${quantity}</p>
+                        <p class="text-xs text-slate-400">${price.toFixed(2)} ج.س × ${quantity}</p>
                     </div>
                     <div class="flex items-center gap-1.5">
                         <button onclick="changeQty(${index}, -1)" class="w-7 h-7 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200 cursor-pointer">-</button>
@@ -195,8 +195,8 @@
         function calculateFinalTotals() {
             globalTotal = productsSubtotal + currentShippingCost;
             
-            document.getElementById("productsTotal").innerText = productsSubtotal.toFixed(2) + " ج.م";
-            document.getElementById("shippingTotal").innerText = currentShippingCost.toFixed(2) + " ج.م";
+            document.getElementById("productsTotal").innerText = productsSubtotal.toFixed(2) + " ج.س";
+            document.getElementById("shippingTotal").innerText = currentShippingCost.toFixed(2) + " ج.س";
             document.getElementById("cartTotal").innerText = globalTotal.toFixed(2) + " ج.م";
         }
 
@@ -276,7 +276,7 @@
                 alert("خطأ أثناء إرسال الطلب: " + error.message);
             } finally {
                 btn.disabled = false;
-                btn.innerText = "🛍️ إرسال الطلب للنظام سوبابيز";
+                btn.innerText = "🛍️ إرسال الطلب لنظام المبيعات";
             }
         }
 
