@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام المبيعات والفواتير المعتمدة الموحد</title>
+    <title>نظام الفواتير المعتمدة والمدمجة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap" rel="stylesheet">
@@ -79,19 +79,19 @@
         <div class="grid lg:grid-cols-2 gap-5">
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <div class="bg-blue-700 text-white p-4 font-bold flex justify-between items-center">
-                    <span>📋 قائمة الفواتير المعتمدة والمدمجة</span>
+                    <span>📋 قائمة الفواتير (برقم الفاتورة الحقيقي)</span>
                     <select id="sourceFilter" onchange="renderUnifiedOrders()" class="bg-blue-800 text-white text-xs px-3 py-1.5 rounded-lg border border-blue-500 focus:outline-none">
                         <option value="ALL">عرض جميع الفواتير</option>
                         <option value="POS_ONLY">🏢 النظام الداخلي فقط</option>
-                        <option value="WEB_ONLY">🌐 المتجر الإلكتروني فقط</option>
+                        <option value="WEB_ONLY">🌐 المتجر الإلكتروني المعتمد فقط</option>
                     </select>
                 </div>
                 <div class="overflow-auto max-h-[600px]">
                     <table class="min-w-full text-right">
                         <thead>
                             <tr class="bg-slate-100 border-b text-slate-700 text-xs">
-                                <th class="p-3 text-center">رقم الفاتورة الحقيقي</th>
-                                <th class="p-3">اسم العميل (من المتجر)</th>
+                                <th class="p-3 text-center">رقم الفاتورة (id_order)</th>
+                                <th class="p-3">اسم العميل</th>
                                 <th class="p-3 text-center">المصدر</th>
                                 <th class="p-3 text-center">الإجمالي</th>
                             </tr>
@@ -106,9 +106,9 @@
             </div>
 
             <div class="bg-white rounded-xl shadow p-6">
-                <div class="bg-green-700 text-white p-4 rounded-t-xl font-bold -m-6 mb-6">🧾 معاينة الفاتورة المدمجة</div>
+                <div class="bg-green-700 text-white p-4 rounded-t-xl font-bold -m-6 mb-6">🧾 معاينة الفاتورة المعتمدة</div>
                 <div id="details" class="text-gray-500 text-center py-12">
-                    اختر فاتورة من القائمة لعرض بياناتها المدمجة الكاملة
+                    اختر فاتورة من القائمة لعرض بياناتها الكاملة
                 </div>
             </div>
         </div>
@@ -118,7 +118,7 @@
     <div id="invoiceModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50 p-2 sm:p-4">
         <div class="modal-box bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[92vh]">
             <div class="bg-gradient-to-l from-blue-900 to-blue-700 text-white px-4 py-3 flex justify-between items-center shrink-0">
-                <h2 class="font-bold text-base">📄 معاينة وتصدير الفاتورة المدمجة</h2>
+                <h2 class="font-bold text-base">📄 معاينة وتصدير الفاتورة الرسمية</h2>
                 <button onclick="closeInvoice()" class="bg-red-500 hover:bg-red-600 text-white rounded-lg px-2.5 py-0.5 font-bold text-sm">✕</button>
             </div>
             
@@ -134,7 +134,6 @@
     </div>
 
     <script>
-        console.log("Loading Unified & Merged Invoice System...");
         const { createClient } = window.supabase;
         const supabaseClient = createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
@@ -147,6 +146,7 @@
         let posDetailsMap = new Map();
 
         let webOrders = [];
+        let webOrdersMap = new Map();
         let webDetailsMap = new Map();
 
         let customerMap = new Map();
@@ -239,12 +239,17 @@
                 webOrders = webOrdersRes.data || [];
                 const webDetails = webDetailsRes.data || [];
 
+                webOrdersMap.clear();
+                webOrders.forEach(w => {
+                    if (w && w.id_web_order) webOrdersMap.set(String(w.id_web_order), w);
+                });
+
                 webDetailsMap.clear();
                 webDetails.forEach(item => {
                     if (item && item.id_web_order) {
-                        const oid = String(item.id_web_order);
-                        if (!webDetailsMap.has(oid)) webDetailsMap.set(oid, []);
-                        webDetailsMap.get(oid).push(item);
+                        const wid = String(item.id_web_order);
+                        if (!webDetailsMap.has(wid)) webDetailsMap.set(wid, []);
+                        webDetailsMap.get(wid).push(item);
                     }
                 });
             } catch (err) {
@@ -252,128 +257,95 @@
             }
         }
 
-        // دالة المساعدة للبحث عن رقم طلب المتجر داخل نص الوصف في orders_o
-        function extractWebOrderIdFromText(text) {
-            if (!text) return null;
-            const str = String(text);
-            const match = str.match(/(\d+)/);
-            return match ? match[1] : null;
+        // إيجاد رقم طلب المتجر المكتوب داخل حقول الوصف في جدول orders_o أو orders_details
+        function extractWebOrderId(posOrder, posItems) {
+            const strSources = [
+                posOrder.description_order,
+                posOrder.description,
+                ...(posItems || []).map(i => i.description_order)
+            ];
+
+            for (let text of strSources) {
+                if (!text) continue;
+                const match = String(text).match(/(\d+)/);
+                if (match && webOrdersMap.has(match[1])) {
+                    return match[1];
+                }
+            }
+            return null;
         }
 
         function buildUnifiedList() {
             unifiedList = [];
-            const matchedPosOrderIds = new Set();
-            const matchedWebOrderIds = new Set();
 
-            // خريطة لربط رقم طلب المتجر برقم الفاتورة الداخلي orders_o
-            const webToPosMap = new Map();
-
+            // معالجة كل سجل في جدول orders_o (هو المحور الرئيسي لكل الأرقام المحجوزة المعتمدة id_order)
             posOrders.forEach(pos => {
-                const descText = `${pos.description_order || ''} ${pos.description || ''}`;
-                const extractedWebId = extractWebOrderIdFromText(descText);
-                if (extractedWebId) {
-                    webToPosMap.set(String(extractedWebId), pos);
-                }
-            });
-
-            // 1. معالجة طلبات المتجر وتطبيق الدمج مع الفاتورة المعتمدة
-            webOrders.forEach(web => {
-                const wid = String(web.id_web_order);
-                const status = (web.order_status || "").trim();
+                const realInvoiceNo = String(pos.id_order);
+                const posItems = posDetailsMap.get(realInvoiceNo) || [];
                 
-                // البحث عن الفاتورة الداخلية المقابلة من جدول orders_o
-                const matchedPos = webToPosMap.get(wid);
+                // التأكد مما إذا كانت هذه الفواتير قادمة من طلب متجر
+                const linkedWebOrderId = extractWebOrderId(pos, posItems);
+                const webOrder = linkedWebOrderId ? webOrdersMap.get(linkedWebOrderId) : null;
 
-                if (matchedPos) {
-                    matchedPosOrderIds.add(String(matchedPos.id_order));
-                    matchedWebOrderIds.add(wid);
-
-                    const webItems = webDetailsMap.get(wid) || [];
-                    const posItems = posDetailsMap.get(String(matchedPos.id_order)) || [];
+                if (webOrder) {
+                    // النوع الأول: فاتورة متجر معتمدة يحجز لها رقم من جدول الفواتير id_order مع كامل البيانات من المتجر
+                    const webItems = webDetailsMap.get(linkedWebOrderId) || [];
                     const finalItems = webItems.length > 0 ? webItems : posItems;
 
                     const itemsTotal = finalItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
-                    const shippingCost = Number(matchedPos.shipping_cost || 0);
-                    const rawTotal = Number(web.total_amount || 0);
-                    const finalTotal = rawTotal > 0 ? rawTotal : (itemsTotal + shippingCost);
+                    const shippingCost = Number(pos.shipping_cost || 0);
+                    const totalAmt = Number(webOrder.total_amount || (itemsTotal + shippingCost));
 
                     unifiedList.push({
-                        uniqueKey: `MERGED_${matchedPos.id_order}_${wid}`,
-                        officialInvoiceNo: String(matchedPos.id_order), // الرقم الحقيقي المعتمد
-                        idWebOrder: wid, // رقم مرجع طلب المتجر
+                        uniqueKey: `INV_${realInvoiceNo}`,
+                        officialInvoiceNo: realInvoiceNo, // رقم الفاتورة الحقيقي المعتمد من id_order
+                        idWebOrder: linkedWebOrderId,
                         source: 'WEB',
-                        sourceLabel: '🌐 مدمج (متجر + سيستم)',
-                        customerName: web.client_name || "عميل المتجر",
-                        customerPhone: web.client_phone || matchedPos.mob || "غير مدون",
-                        address: web.client_address || "غير مدون",
-                        status: web.order_status || 'معتمد',
-                        date: matchedPos.date_order || web.date_created || new Date().toISOString(),
-                        seller: matchedPos.seal_man || "مؤسسة علاء الدين",
+                        sourceLabel: '🌐 المتجر الإلكتروني (معتمد)',
+                        customerName: webOrder.client_name || "عميل متجر",
+                        customerPhone: webOrder.client_phone || pos.mob || "غير مدون",
+                        address: webOrder.client_address || "غير مدون",
+                        date: pos.date_order || webOrder.date_created || new Date().toISOString(),
+                        seller: pos.seal_man || "مؤسسة علاء الدين",
                         shipping: shippingCost,
                         itemsTotal: itemsTotal,
-                        totalAmount: finalTotal,
+                        totalAmount: totalAmt,
                         items: finalItems
                     });
-                } else if (status !== "قيد المراجعة" && status !== "") {
-                    // طلب متجر معتمد ولم يُربط بعد بسجل orders_o
-                    const webItems = webDetailsMap.get(wid) || [];
-                    const itemsTotal = webItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
-                    const finalTotal = Number(web.total_amount || itemsTotal);
+                } else {
+                    // النوع الثاني: فاتورة من النظام الداخلي مباشرة (id_order)
+                    const custObj = customerMap.get(String(pos.customer_id));
+                    let custName = "عميل نقدي";
+                    
+                    if (posItems.length > 0 && posItems[0].first_name) {
+                        custName = posItems[0].first_name;
+                    } else if (custObj) {
+                        custName = custObj.first_name || custObj.name || "عميل نقدي";
+                    }
+
+                    const itemsTotal = posItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
+                    const shipping = Number(pos.shipping_cost || 0);
 
                     unifiedList.push({
-                        uniqueKey: `WEB_${wid}`,
-                        officialInvoiceNo: `متجر #${wid}`,
-                        idWebOrder: wid,
-                        source: 'WEB',
-                        sourceLabel: '🌐 المتجر الإلكتروني',
-                        customerName: web.client_name || "عميل متجر",
-                        customerPhone: web.client_phone || "غير مسجل",
-                        address: web.client_address || "غير مدون",
-                        status: status,
-                        date: web.date_created || new Date().toISOString(),
-                        seller: "المتجر الإلكتروني",
-                        shipping: 0,
+                        uniqueKey: `INV_${realInvoiceNo}`,
+                        officialInvoiceNo: realInvoiceNo, // رقم الفاتورة الحقيقي المعتمد من id_order
+                        idWebOrder: null,
+                        source: 'POS',
+                        sourceLabel: '🏢 النظام الداخلي',
+                        customerName: custName,
+                        customerPhone: pos.mob || custObj?.phone || "غير مدون",
+                        address: custObj?.address || custObj?.city || "غير مدون",
+                        date: pos.date_order || new Date().toISOString(),
+                        seller: pos.seal_man || "مؤسسة علاء الدين",
+                        shipping: shipping,
                         itemsTotal: itemsTotal,
-                        totalAmount: finalTotal,
-                        items: webItems
+                        totalAmount: itemsTotal + shipping,
+                        items: posItems
                     });
                 }
             });
 
-            // 2. إضافة فواتير النظام الداخلي المتبقية التي لم تربط بطلبات متجر
-            posOrders.forEach(pos => {
-                const posId = String(pos.id_order);
-                if (matchedPosOrderIds.has(posId)) return; // تم دمجها سابقاً
-
-                const posItems = posDetailsMap.get(posId) || [];
-                const custObj = customerMap.get(String(pos.customer_id));
-
-                let custName = "عميل نقدي";
-                if (custObj) custName = custObj.first_name || custObj.name || "عميل نقدي";
-
-                const itemsTotal = posItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
-                const shipping = Number(pos.shipping_cost || 0);
-
-                unifiedList.push({
-                    uniqueKey: `POS_${posId}`,
-                    officialInvoiceNo: posId,
-                    idWebOrder: null,
-                    source: 'POS',
-                    sourceLabel: '🏢 النظام الداخلي',
-                    customerName: custName,
-                    customerPhone: pos.mob || custObj?.phone || "غير مدون",
-                    address: custObj?.address || custObj?.city || "غير مدون",
-                    status: 'معتمد',
-                    date: pos.date_order || new Date().toISOString(),
-                    seller: pos.seal_man || "مؤسسة علاء الدين",
-                    shipping: shipping,
-                    itemsTotal: itemsTotal,
-                    totalAmount: itemsTotal + shipping,
-                    items: posItems
-                });
-            });
-
-            // ترتيب الفواتير المدمجة من الأحدث إلى الأقدم
+            // ترتيب الفواتير المعتمدة من الأحدث إلى الأقدم
             unifiedList.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
 
@@ -401,7 +373,7 @@
                 <tr class="border-b transition hover:bg-blue-50" onclick="openInvoice('${item.uniqueKey}')">
                     <td class="p-3 text-center">
                         <div class="font-bold text-blue-700">#${item.officialInvoiceNo}</div>
-                        ${item.idWebOrder && item.officialInvoiceNo !== item.idWebOrder ? `<div class="text-[10px] text-gray-400">(طلب متجر #${item.idWebOrder})</div>` : ''}
+                        ${item.idWebOrder ? `<div class="text-[10px] text-gray-400">(طلب متجر #${item.idWebOrder})</div>` : ''}
                     </td>
                     <td class="p-3 font-medium text-slate-800">${item.customerName}</td>
                     <td class="p-3 text-center"><span class="text-xs px-2 py-0.5 rounded font-bold ${badgeColor}">${item.sourceLabel}</span></td>
@@ -420,7 +392,7 @@
             invoice.items.forEach(item => {
                 const qty = Number(item.qte || 1);
                 const price = Number(item.price || 0);
-                const lineTotal = qty * price;
+                const lineTotal = Number(item.total_amount || item.amount || (qty * price));
 
                 let prodName = item.product_name;
                 if (!prodName && item.id_product) {
@@ -465,7 +437,7 @@
                 <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:8px 10px; text-align:center; shrink:0;">
                     <div style="font-size:16px; font-weight:bold;">مؤسسة علاء الدين</div>
                     <div style="font-size:11px; margin-top:1px;">فاتورة مبيعات رقم #${invoice.officialInvoiceNo}</div>
-                    ${invoice.idWebOrder && invoice.officialInvoiceNo !== invoice.idWebOrder ? `<div style="font-size:9px; opacity:0.85;">(مرجع طلب المتجر: #${invoice.idWebOrder})</div>` : ''}
+                    ${invoice.idWebOrder ? `<div style="font-size:9px; opacity:0.85;">(مرجع طلب المتجر: #${invoice.idWebOrder})</div>` : ''}
                 </div>
 
                 <div style="padding:6px 10px; background:#f8fafc; border-bottom:1px solid #e2e8f0; line-height:1.5; font-size:10px; shrink:0;">
@@ -518,7 +490,7 @@
                     <div class="flex justify-between items-center border-b pb-2">
                         <div>
                             <span class="font-bold text-xl text-slate-800">فاتورة رقم: #${invoice.officialInvoiceNo}</span>
-                            ${invoice.idWebOrder && invoice.officialInvoiceNo !== invoice.idWebOrder ? `<p class="text-xs text-gray-500">(مرجع طلب المتجر: #${invoice.idWebOrder})</p>` : ''}
+                            ${invoice.idWebOrder ? `<p class="text-xs text-gray-500">(مرجع طلب المتجر: #${invoice.idWebOrder})</p>` : ''}
                         </div>
                         <span class="text-xs px-2.5 py-1 rounded font-bold bg-blue-100 text-blue-800">${invoice.sourceLabel}</span>
                     </div>
