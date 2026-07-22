@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>النظام الموحد للفواتير والمبيعات</title>
+    <title>نظام المبيعات والفواتير المعتمدة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap" rel="stylesheet">
@@ -44,20 +44,20 @@
 
     <header class="bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg">
         <div class="max-w-7xl mx-auto flex items-center justify-between p-4">
-            <h1 class="text-2xl font-bold">📦 نظام الفواتير الموحد (المبيعات + المتجر)</h1>
-            <div class="text-sm opacity-80">Unified Invoice System</div>
+            <h1 class="text-2xl font-bold">🧾 سجل الفواتير والمبيعات المعتمدة</h1>
+            <div class="text-sm opacity-80">Official Approved Invoices</div>
         </div>
     </header>
 
     <div class="max-w-7xl mx-auto p-5">
-        <!-- الإحصائيات الشاملة -->
+        <!-- الإحصائيات -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">إجمالي المبيعات الشاملة</div>
+                <div class="text-gray-500 mb-2">إجمالي المبيعات المعتمدة</div>
                 <div id="sales" class="text-2xl font-bold text-green-600">جاري الحساب...</div>
             </div>
             <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">إجمالي الفواتير والطلبات</div>
+                <div class="text-gray-500 mb-2">إجمالي الفواتير</div>
                 <div id="invCount" class="text-2xl font-bold text-blue-700">0</div>
             </div>
             <div class="bg-white rounded-xl shadow p-5 text-center">
@@ -65,7 +65,7 @@
                 <div id="posInvCount" class="text-2xl font-bold text-orange-600">0</div>
             </div>
             <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">طلبات المتجر الإلكتروني</div>
+                <div class="text-gray-500 mb-2">فواتير المتجر المعتمدة</div>
                 <div id="webInvCount" class="text-2xl font-bold text-purple-700">0</div>
             </div>
         </div>
@@ -74,27 +74,26 @@
         <div class="grid lg:grid-cols-2 gap-5">
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <div class="bg-blue-700 text-white p-4 font-bold flex justify-between items-center">
-                    <span>📋 قائمة الفواتير الموحدة</span>
-                    <select id="statusFilter" onchange="renderUnifiedOrders()" class="bg-blue-800 text-white text-xs px-3 py-1.5 rounded-lg border border-blue-500 focus:outline-none">
-                        <option value="ALL">عرض الكل</option>
-                        <option value="POS_ONLY">🏢 فواتير المبيعات فقط</option>
-                        <option value="WEB_ONLY">🌐 طلبات المتجر فقط</option>
-                        <option value="APPROVED_WEB">🌐 طلبات المتجر المعتمدة/المكتملة</option>
+                    <span>📋 قائمة الفواتير الرسمية</span>
+                    <select id="sourceFilter" onchange="renderUnifiedOrders()" class="bg-blue-800 text-white text-xs px-3 py-1.5 rounded-lg border border-blue-500 focus:outline-none">
+                        <option value="ALL">عرض جميع الفواتير المعتمدة</option>
+                        <option value="POS_ONLY">🏢 فواتير النظام الداخلي</option>
+                        <option value="WEB_ONLY">🌐 فواتير المتجر المعتمدة</option>
                     </select>
                 </div>
                 <div class="overflow-auto max-h-[600px]">
                     <table class="min-w-full text-right">
                         <thead>
                             <tr class="bg-slate-100 border-b text-slate-700 text-xs">
-                                <th class="p-3 text-center">المصدر والرقم</th>
+                                <th class="p-3 text-center">رقم الفاتورة الرسمية</th>
                                 <th class="p-3">اسم العميل</th>
-                                <th class="p-3 text-center">الحالة</th>
+                                <th class="p-3 text-center">المصدر</th>
                                 <th class="p-3 text-center">الإجمالي</th>
                             </tr>
                         </thead>
                         <tbody id="invoices">
                             <tr>
-                                <td colspan="4" class="p-6 text-gray-500 text-center">جاري تحميل وتجميع الفواتير...</td>
+                                <td colspan="4" class="p-6 text-gray-500 text-center">جاري تحميل الفواتير المعتمدة...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -102,9 +101,9 @@
             </div>
 
             <div class="bg-white rounded-xl shadow p-6">
-                <div class="bg-green-700 text-white p-4 rounded-t-xl font-bold -m-6 mb-6">🧾 معاينة سريعة</div>
+                <div class="bg-green-700 text-white p-4 rounded-t-xl font-bold -m-6 mb-6">🧾 معاينة الفاتورة</div>
                 <div id="details" class="text-gray-500 text-center py-12">
-                    اضغط على أي فاتورة من القائمة على اليمين لعرض تفاصيلها المباشرة هنا
+                    اختر فاتورة من القائمة لعرض بياناتها الرسمية وطباعتها
                 </div>
             </div>
         </div>
@@ -114,7 +113,7 @@
     <div id="invoiceModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
             <div class="bg-gradient-to-l from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center shrink-0">
-                <h2 class="font-bold text-lg">📄 معاينة الطباعة والمشاركة</h2>
+                <h2 class="font-bold text-lg">📄 طباعة ومشاركة الفاتورة</h2>
                 <button onclick="closeInvoice()" class="bg-red-500 hover:bg-red-600 text-white rounded-lg px-3 py-1 font-bold">✕</button>
             </div>
             <div id="invoiceContent" class="bg-gray-100 p-4 overflow-y-auto flex justify-center grow"></div>
@@ -128,7 +127,7 @@
     </div>
 
     <script>
-        console.log("Loading Unified Invoice System...");
+        console.log("Loading Official Approved Invoice System...");
         const { createClient } = window.supabase;
         const supabaseClient = createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
@@ -146,7 +145,7 @@
         let customerMap = new Map();
         let productMap = new Map();
         
-        let unifiedList = []; // القائمة المدمجة
+        let unifiedList = [];
         let currentOpenInvoiceData = null;
 
         const money = v => Number(v || 0).toLocaleString('ar-EG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -164,13 +163,12 @@
             w.document.write(`
             <!DOCTYPE html>
             <html lang="ar" dir="rtl">
-            <head><meta charset="UTF-8"><title>فاتورة</title><style>body{font-family:Cairo,Arial;padding:10px;direction:rtl;display:flex;justify-content:center;}@media print{body{margin:0;}}</style></head>
+            <head><meta charset="UTF-8"><title>فاتورة رسمية</title><style>body{font-family:Cairo,Arial;padding:10px;direction:rtl;display:flex;justify-content:center;}@media print{body{margin:0;}}</style></head>
             <body>${content}<script>window.onload=function(){window.print();window.close();}<\/script></body>
             </html>`);
             w.document.close();
         }
 
-        // جلب البيانات الأساسية
         async function loadMasterData() {
             try {
                 const [custRes, prodRes] = await Promise.all([
@@ -191,7 +189,6 @@
             }
         }
 
-        // جلب فواتير المبيعات الداخلية
         async function loadPOSData() {
             try {
                 const [ordersRes, detailsRes] = await Promise.all([
@@ -215,7 +212,6 @@
             }
         }
 
-        // جلب طلبات المتجر الإلكتروني
         async function loadWebData() {
             try {
                 const [webOrdersRes, webDetailsRes] = await Promise.all([
@@ -239,21 +235,20 @@
             }
         }
 
-        // توحيد وتنسيق القائمتين معاً
         function buildUnifiedList() {
             unifiedList = [];
 
-            // 1. تحويل فواتير النظام الداخلي
+            // 1. إضافة فواتير النظام الداخلي (تعتبر معتمدة تلقائياً)
             posOrders.forEach(o => {
                 const oid = String(o.id_order);
                 const items = posDetailsMap.get(oid) || [];
                 
-                let custName = "عميل غير معروف";
+                let custName = "عميل نقدي";
                 if (items.length > 0 && items[0].first_name) {
                     custName = items[0].first_name;
                 } else if (o.customer_id) {
                     const c = customerMap.get(String(o.customer_id));
-                    if (c) custName = c.first_name || c.name || "عميل غير معروف";
+                    if (c) custName = c.first_name || c.name || "عميل نقدي";
                 }
 
                 const itemsTotal = items.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
@@ -261,9 +256,10 @@
 
                 unifiedList.push({
                     uniqueKey: `POS_${oid}`,
-                    id: oid,
+                    officialInvoiceNo: oid, // رقم الفاتورة في جداول المبيعات
+                    idWebOrder: null,
                     source: 'POS',
-                    sourceLabel: '🏢 مبيعات',
+                    sourceLabel: '🏢 النظام الداخلي',
                     customerName: custName,
                     customerPhone: customerMap.get(String(o.customer_id))?.phone || "",
                     status: 'معتمد',
@@ -272,13 +268,23 @@
                     shipping: shipping,
                     itemsTotal: itemsTotal,
                     totalAmount: itemsTotal + shipping,
-                    items: items,
-                    raw: o
+                    items: items
                 });
             });
 
-            // 2. تحويل طلبات المتجر الإلكتروني
-            webOrders.forEach(w => {
+            // 2. تصفية واستخراج طلبات المتجر المعتمدة فقط واستبعاد (قيد المراجعة)
+            const approvedWebOrders = webOrders.filter(w => {
+                const st = (w.order_status || "").trim();
+                // استبعاد قيد المراجعة وإبقاء الحالات المعتمدة والمكتملة
+                return st !== "قيد المراجعة" && st !== "";
+            });
+
+            // إنشاء تسلسل أرقام فواتير حقيقي للطلبات المستوردة من المتجر
+            // يبدأ من أكبر رقم فاتورة في النظام الداخلي لمنع التكرار
+            let maxPosId = posOrders.reduce((max, o) => Math.max(max, Number(o.id_order || 0)), 0);
+
+            approvedWebOrders.forEach(w => {
+                maxPosId++; // تخصيص رقم فاتورة حقيقي متسلسل
                 const wid = String(w.id_web_order);
                 const items = webDetailsMap.get(wid) || [];
                 
@@ -289,24 +295,24 @@
 
                 unifiedList.push({
                     uniqueKey: `WEB_${wid}`,
-                    id: wid,
+                    officialInvoiceNo: String(maxPosId), // رقم الفاتورة الرسمي الحقيقي
+                    idWebOrder: wid, // رقم طلب المتجر الأصلي للمرجعية
                     source: 'WEB',
-                    sourceLabel: '🌐 المتجر',
-                    customerName: w.client_name || "عميل موقع",
+                    sourceLabel: '🌐 المتجر الإلكتروني',
+                    customerName: w.client_name || "عميل متجر",
                     customerPhone: w.client_phone || "",
                     address: w.client_address || "",
-                    status: w.order_status || 'قيد المراجعة',
+                    status: w.order_status || 'معتمد',
                     date: w.date_created || new Date().toISOString(),
                     seller: "المتجر الإلكتروني",
                     shipping: shipping,
                     itemsTotal: itemsTotal,
                     totalAmount: finalTotal,
-                    items: items,
-                    raw: w
+                    items: items
                 });
             });
 
-            // ترتيب الفواتير من الأحدث للأقدم
+            // ترتيب الفواتير المعتمدة من الأحدث للأقدم
             unifiedList.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
 
@@ -314,37 +320,30 @@
             const tbody = document.getElementById("invoices");
             tbody.innerHTML = "";
 
-            const filterValue = document.getElementById("statusFilter").value;
+            const filterValue = document.getElementById("sourceFilter").value;
 
-            // فلترة الفواتير بناءً على الاختيار
             const filteredList = unifiedList.filter(item => {
                 if (filterValue === "POS_ONLY") return item.source === "POS";
                 if (filterValue === "WEB_ONLY") return item.source === "WEB";
-                if (filterValue === "APPROVED_WEB") {
-                    if (item.source === "POS") return true; // الفواتير الداخلية دائماً معتمدة
-                    const st = (item.status || "").trim();
-                    return st === "تم التسليم" || st === "معتمد" || st === "مكتمل" || st === "تم الشحن";
-                }
-                return true; // ALL
+                return true;
             });
 
             if (!filteredList.length) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-gray-400 text-center">لا توجد فواتير طابقة للفلتر المSelected</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-gray-400 text-center">لا توجد فواتير معتمدة حالياً</td></tr>`;
                 return;
             }
 
             filteredList.forEach(item => {
                 const badgeColor = item.source === 'POS' ? 'bg-slate-100 text-slate-700' : 'bg-blue-100 text-blue-800';
-                const statusColor = (item.status === 'معتمد' || item.status === 'تم التسليم') ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
 
                 tbody.innerHTML += `
                 <tr class="border-b transition hover:bg-blue-50" onclick="openInvoice('${item.uniqueKey}')">
                     <td class="p-3 text-center">
-                        <span class="text-xs px-2 py-0.5 rounded font-bold ${badgeColor}">${item.sourceLabel}</span>
-                        <div class="font-bold text-blue-700 mt-1">#${item.id}</div>
+                        <div class="font-bold text-blue-700">#${item.officialInvoiceNo}</div>
+                        ${item.idWebOrder ? `<div class="text-[10px] text-gray-400">(طلب موقع #${item.idWebOrder})</div>` : ''}
                     </td>
                     <td class="p-3 font-medium text-slate-800">${item.customerName}</td>
-                    <td class="p-3 text-center"><span class="text-xs px-2 py-1 rounded-full ${statusColor}">${item.status}</span></td>
+                    <td class="p-3 text-center"><span class="text-xs px-2 py-0.5 rounded font-bold ${badgeColor}">${item.sourceLabel}</span></td>
                     <td class="p-3 font-bold text-green-600 text-center">${money(item.totalAmount)} ج.م</td>
                 </tr>`;
             });
@@ -362,7 +361,6 @@
                 const price = Number(item.price || 0);
                 const lineTotal = qty * price;
 
-                // إيجاد اسم الصنف سواء من جدول المبيعات أو المتجر أو الأصناف
                 let prodName = item.product_name;
                 if (!prodName && item.id_product) {
                     const p = productMap.get(String(item.id_product));
@@ -386,7 +384,8 @@
             const timeStr = invoiceObj.toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' });
 
             currentOpenInvoiceData = {
-                id: invoice.id,
+                officialNo: invoice.officialInvoiceNo,
+                webOrderId: invoice.idWebOrder,
                 source: invoice.sourceLabel,
                 customerName: invoice.customerName,
                 customerPhone: invoice.customerPhone,
@@ -403,17 +402,17 @@
             <div style="width:80mm; background:#fff; border:1px solid #2563eb; border-radius:8px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#222; padding:2px;">
                 <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:10px; text-align:center;">
                     <div style="font-size:18px; font-weight:bold;">مؤسسة علاء الدين</div>
-                    <div style="font-size:11px; margin-top:2px;">${invoice.sourceLabel} - فاتورة رقم #${invoice.id}</div>
+                    <div style="font-size:12px; margin-top:2px;">فاتورة مبيعات رقم #${invoice.officialInvoiceNo}</div>
+                    ${invoice.idWebOrder ? `<div style="font-size:10px; opacity:0.8;">(مرجع طلب المتجر: #${invoice.idWebOrder})</div>` : ''}
                 </div>
                 <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #ddd; line-height:1.7;">
                     <div style="display:flex; justify-content:space-between;">
                         <span><b>التاريخ:</b> ${dateStr}</span>
-                        <span><b>الحالة:</b> ${invoice.status}</span>
+                        <span><b>المصدر:</b> ${invoice.source === 'POS' ? 'داخلي' : 'المتجر'}</span>
                     </div>
                     <div style="margin-top:2px;">👤 <b>العميل :</b> ${invoice.customerName}</div>
                     ${invoice.customerPhone ? `<div>📞 <b>الهاتف :</b> ${invoice.customerPhone}</div>` : ''}
                     ${invoice.address ? `<div>📍 <b>العنوان :</b> ${invoice.address}</div>` : ''}
-                    <div>🛒 <b>المسؤول :</b> ${invoice.seller}</div>
                     <div>🕒 ${timeStr}</div>
                 </div>
                 <table style="width:100%; border-collapse:collapse; font-size:10px;">
@@ -440,13 +439,15 @@
             document.getElementById("details").innerHTML = `
                 <div class="space-y-3 text-right">
                     <div class="flex justify-between items-center border-b pb-2">
-                        <span class="font-bold text-xl text-slate-800">فاتورة: #${invoice.id}</span>
+                        <div>
+                            <span class="font-bold text-xl text-slate-800">فاتورة رقم: #${invoice.officialInvoiceNo}</span>
+                            ${invoice.idWebOrder ? `<p class="text-xs text-gray-500">(مرجع طلب الموقع: #${invoice.idWebOrder})</p>` : ''}
+                        </div>
                         <span class="text-xs px-2.5 py-1 rounded font-bold bg-blue-100 text-blue-800">${invoice.sourceLabel}</span>
                     </div>
                     <p><b>اسم العميل:</b> ${invoice.customerName}</p>
                     ${invoice.customerPhone ? `<p><b>الهاتف:</b> ${invoice.customerPhone}</p>` : ''}
-                    <p><b>تاريخ الطلب:</b> ${dateStr} - ${timeStr}</p>
-                    <p><b>حالة الفاتورة:</b> ${invoice.status}</p>
+                    <p><b>تاريخ الفاتورة:</b> ${dateStr} - ${timeStr}</p>
                     <div class="border-t pt-3 text-sm text-gray-600 space-y-1">
                         <p>مجموع المنتجات: ${money(invoice.itemsTotal)} ج.م</p>
                         <p>رسوم الشحن: ${money(invoice.shipping)} ج.م</p>
@@ -461,8 +462,8 @@
 
         function generateShareText() {
             if (!currentOpenInvoiceData) return "";
-            let text = `*فاتورة مبيعات (${currentOpenInvoiceData.source}) - مؤسسة علاء الدين*\n------------------------------------\n`;
-            text += `*رقم الفاتورة:* #${currentOpenInvoiceData.id}\n*العميل:* ${currentOpenInvoiceData.customerName}\n`;
+            let text = `*فاتورة مبيعات معتمدة (#${currentOpenInvoiceData.officialNo}) - مؤسسة علاء الدين*\n------------------------------------\n`;
+            text += `*العميل:* ${currentOpenInvoiceData.customerName}\n`;
             if (currentOpenInvoiceData.customerPhone) text += `*الهاتف:* ${currentOpenInvoiceData.customerPhone}\n`;
             text += `*التاريخ:* ${currentOpenInvoiceData.date}\n------------------------------------\n*الأصناف:*\n`;
             text += currentOpenInvoiceData.itemsText;
