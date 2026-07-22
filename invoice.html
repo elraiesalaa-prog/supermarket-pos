@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الفواتير الاحترافي</title>
+    <title>نظام فواتير المتجر الإلكتروني</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap" rel="stylesheet">
@@ -44,7 +44,7 @@
 
     <header class="bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg">
         <div class="max-w-7xl mx-auto flex items-center justify-between p-4">
-            <h1 class="text-2xl font-bold">📦 نظام الفواتير الاحترافي</h1>
+            <h1 class="text-2xl font-bold">📦 طلبات المتجر الإلكتروني (Web Orders)</h1>
             <div class="text-sm opacity-80">Professional Invoice System</div>
         </div>
     </header>
@@ -53,11 +53,11 @@
         <!-- الإحصائيات -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">إجمالي المبيعات (بالشحن)</div>
+                <div class="text-gray-500 mb-2">إجمالي المبيعات</div>
                 <div id="sales" class="text-2xl font-bold text-green-600">جاري الحساب...</div>
             </div>
             <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">عدد الفواتير</div>
+                <div class="text-gray-500 mb-2">عدد الطلبات</div>
                 <div id="invCount" class="text-2xl font-bold text-blue-700">0</div>
             </div>
             <div class="bg-white rounded-xl shadow p-5 text-center">
@@ -65,7 +65,7 @@
                 <div id="cusCount" class="text-2xl font-bold text-orange-600">0</div>
             </div>
             <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">المنتجات</div>
+                <div class="text-gray-500 mb-2">المنتجات المباعة</div>
                 <div id="proCount" class="text-2xl font-bold text-purple-700">0</div>
             </div>
         </div>
@@ -73,19 +73,20 @@
         <!-- قائمة الفواتير والتفاصيل -->
         <div class="grid lg:grid-cols-2 gap-5">
             <div class="bg-white rounded-xl shadow overflow-hidden">
-                <div class="bg-blue-700 text-white p-4 font-bold">📋 قائمة الفواتير</div>
+                <div class="bg-blue-700 text-white p-4 font-bold">📋 قائمة طلبات الموقع</div>
                 <div class="overflow-auto max-h-[600px]">
                     <table class="min-w-full text-right">
                         <thead>
                             <tr class="bg-slate-100 border-b text-slate-700">
-                                <th class="p-3 text-center">رقم الفاتورة</th>
+                                <th class="p-3 text-center">رقم الطلب</th>
                                 <th class="p-3">اسم العميل</th>
+                                <th class="p-3 text-center">حالة الطلب</th>
                                 <th class="p-3 text-center">الإجمالي الكلي</th>
                             </tr>
                         </thead>
                         <tbody id="invoices">
                             <tr>
-                                <td colspan="3" class="p-6 text-gray-500 text-center">جاري تحميل البيانات...</td>
+                                <td colspan="4" class="p-6 text-gray-500 text-center">جاري تحميل البيانات...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -119,25 +120,20 @@
     </div>
 
     <script>
-        console.log("invoice loading...");
+        console.log("Loading Web Orders System...");
         const { createClient } = window.supabase;
         const supabaseClient = createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
             "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
         );
 
-        let customers = [];
-        let products = [];
-        let orders = [];
-        let details = [];
-
-        let customerMap = new Map();
-        let productMap = new Map();
+        let webOrders = [];
+        let webOrderDetails = [];
         let detailsMap = new Map();
         let currentOpenInvoiceData = null;
 
         const money = v => Number(v || 0).toLocaleString('ar-EG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-        let sellerName = "مؤسسة علاء الدين";
+        let sellerName = "متجر الموقع الإلكتروني";
 
         function closeInvoice() {
             const modal = document.getElementById("invoiceModal");
@@ -151,54 +147,23 @@
             w.document.write(`
             <!DOCTYPE html>
             <html lang="ar" dir="rtl">
-            <head><meta charset="UTF-8"><title>فاتورة</title><style>body{font-family:Cairo,Arial;padding:10px;direction:rtl;display:flex;justify-content:center;}@media print{body{margin:0;}}</style></head>
+            <head><meta charset="UTF-8"><title>فاتورة طلب موقع</title><style>body{font-family:Cairo,Arial;padding:10px;direction:rtl;display:flex;justify-content:center;}@media print{body{margin:0;}}</style></head>
             <body>${content}<script>window.onload=function(){window.print();window.close();}<\/script></body>
             </html>`);
             w.document.close();
         }
 
-        async function loadMaster() {
+        async function loadWebDetails() {
             try {
-                const [customersRes, productsRes] = await Promise.all([
-                    supabaseClient.from("customers").select("*"),
-                    supabaseClient.from("products").select("*")
-                ]);
-
-                customers = customersRes.data || [];
-                products = productsRes.data || [];
-
-                customerMap.clear();
-                productMap.clear();
-
-                customers.forEach(c => { 
-                    if(c) {
-                        const id = c.id_customer ?? c.id;
-                        if(id !== undefined) customerMap.set(String(id), c); 
-                    }
-                });
-                
-                products.forEach(p => { 
-                    if(p) {
-                        const id = p.id_product ?? p.id;
-                        if(id !== undefined) productMap.set(String(id), p); 
-                    }
-                });
-            } catch (err) {
-                console.error("Master data error:", err);
-            }
-        }
-
-        async function loadDetails() {
-            try {
-                const { data, error } = await supabaseClient.from("orders_details").select("*");
+                const { data, error } = await supabaseClient.from("web_order_details").select("*");
                 if (error) throw error;
 
-                details = data || [];
+                webOrderDetails = data || [];
                 detailsMap.clear();
 
-                details.forEach(item => {
-                    if (item && item.id_order) {
-                        const oid = String(item.id_order);
+                webOrderDetails.forEach(item => {
+                    if (item && item.id_web_order) {
+                        const oid = String(item.id_web_order);
                         if (!detailsMap.has(oid)) {
                             detailsMap.set(oid, []);
                         }
@@ -206,94 +171,81 @@
                     }
                 });
             } catch (err) {
-                console.error("Details mapping error:", err);
+                console.error("Web order details error:", err);
             }
         }
 
-        async function loadOrders() {
+        async function loadWebOrders() {
             try {
-                const { data, error } = await supabaseClient.from("orders_o").select("*");
+                const { data, error } = await supabaseClient.from("web_orders").select("*");
                 if (error) throw error;
 
-                orders = data || [];
-                orders.sort((a, b) => Number(b.id_order || 0) - Number(a.id_order || 0));
+                webOrders = data || [];
+                webOrders.sort((a, b) => Number(b.id_web_order || 0) - Number(a.id_web_order || 0));
 
                 renderOrders();
             } catch (err) {
-                console.error("Orders error:", err);
-                document.getElementById("invoices").innerHTML = `<tr><td colspan="3" class="p-4 text-red-500 text-center">حدث خطأ أثناء عرض القائمة</td></tr>`;
+                console.error("Web orders error:", err);
+                document.getElementById("invoices").innerHTML = `<tr><td colspan="4" class="p-4 text-red-500 text-center">حدث خطأ في تحميل الطلبات</td></tr>`;
             }
-        }
-
-        function getCustomerName(order, items) {
-            if (items && items.length > 0) {
-                const detailCustomerName = items.find(i => i.first_name)?.first_name;
-                if (detailCustomerName) return detailCustomerName;
-            }
-
-            if (order && order.customer_id) {
-                const c = customerMap.get(String(order.customer_id));
-                if (c) return c.first_name || c.name || c.full_name || "عميل غير معروف";
-            }
-
-            return "عميل غير معروف";
         }
 
         function renderOrders() {
             const tbody = document.getElementById("invoices");
             tbody.innerHTML = "";
 
-            if (!orders || !orders.length) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-gray-400 text-center">لا توجد فواتير مسجلة</td></tr>`;
+            if (!webOrders || !webOrders.length) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-gray-400 text-center">لا توجد طلبات مسجلة بالموقع</td></tr>`;
                 return;
             }
 
-            orders.forEach(order => {
-                const orderId = order.id_order;
+            webOrders.forEach(order => {
+                const orderId = order.id_web_order;
                 if (!orderId) return;
+
+                const customerName = order.client_name || "عميل بدون اسم";
+                const orderStatus = order.order_status || "قيد المراجعة";
                 
+                // حساب إجمالي أصناف الفاتورة
                 const items = detailsMap.get(String(orderId)) || [];
-                const customerName = getCustomerName(order, items);
-                
                 const itemsTotal = items.reduce((sum, item) => {
                     const qte = Number(item.qte || 0);
                     const price = Number(item.price || 0);
-                    const total = item.total_amount || item.amount || (qte * price);
-                    return sum + Number(total || 0);
+                    return sum + (qte * price);
                 }, 0);
 
-                const shippingCost = Number(order.shipping_cost || 0);
-                const finalTotal = itemsTotal + shippingCost;
+                // إجمالي الطلب المسجل بالجدول أو المحسوب من العناصر
+                const finalTotal = Number(order.total_amount || 0) || itemsTotal;
 
                 tbody.innerHTML += `
                 <tr class="border-b transition hover:bg-blue-50" onclick="openOrder(${orderId})">
                     <td class="p-3 font-semibold text-center text-blue-700">#${orderId}</td>
                     <td class="p-3 font-medium text-slate-800">${customerName}</td>
+                    <td class="p-3 text-center"><span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${orderStatus}</span></td>
                     <td class="p-3 font-bold text-green-600 text-center">${money(finalTotal)} ج.م</td>
                 </tr>`;
             });
         }
 
         function openOrder(id) {
-            const order = orders.find(o => String(o.id_order) === String(id));
-            if (!order) return alert("الفاتورة غير موجودة");
+            const order = webOrders.find(o => String(o.id_web_order) === String(id));
+            if (!order) return alert("الطلب غير موجود");
 
             const items = detailsMap.get(String(id)) || [];
-            const customerName = getCustomerName(order, items);
+            const customerName = order.client_name || "عميل بدون اسم";
 
             let itemsSubtotal = 0;
             let rows = "";
             let itemsTextForShare = "";
 
             items.forEach((item) => {
-                const pid = item.id_product;
-                const product = productMap.get(String(pid));
                 const qty = Number(item.qte || 0);
                 const price = Number(item.price || 0);
-                const lineTotal = item.total_amount || item.amount || (qty * price);
+                // حساب الجملة تلقائياً من (الكمية × السعر) لمنع أي أخطاء في الجدول
+                const lineTotal = qty * price;
 
-                itemsSubtotal += Number(lineTotal);
-                const prodName = product?.product_name || product?.name || "صنف غير معرف";
+                itemsSubtotal += lineTotal;
+                const prodName = item.product_name || "صنف غير محدد";
 
                 rows += `
                 <tr>
@@ -306,23 +258,29 @@
                 itemsTextForShare += `- ${prodName} (الكمية: ${qty} | السعر: ${money(price)} ج.م)\n`;
             });
 
-            const shippingCost = Number(order.shipping_cost || 0);
+            // حساب الفرق بين إجمالي الطلب الكلي ومجموع المنتجات لمعرفة تكلفة الشحن الضمنية (إن وجدت)
+            const orderTotalAmount = Number(order.total_amount || 0);
+            let shippingCost = 0;
+            if (orderTotalAmount > itemsSubtotal) {
+                shippingCost = orderTotalAmount - itemsSubtotal;
+            }
+
             const finalTotal = itemsSubtotal + shippingCost;
 
-            const invoiceDate = order.date_order || new Date().toISOString();
+            const invoiceDate = order.date_created || new Date().toISOString();
             const invoiceObj = new Date(invoiceDate);
             const date = invoiceObj.toLocaleDateString("ar-EG");
             const time = invoiceObj.toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' });
-            const currentInvoiceSeller = order.seal_man || sellerName;
 
-            const cust = customerMap.get(String(order.customer_id));
-            const customerPhone = cust?.phone || cust?.telephone || cust?.mobile || "";
+            const customerPhone = order.client_phone || "";
+            const customerAddress = order.client_address || "غير مدون";
 
             currentOpenInvoiceData = {
                 id: id,
                 customerName: customerName,
                 customerPhone: customerPhone,
-                seller: currentInvoiceSeller,
+                customerAddress: customerAddress,
+                seller: sellerName,
                 date: date,
                 itemsText: itemsTextForShare,
                 shipping: shippingCost,
@@ -334,15 +292,16 @@
             <div style="width:80mm; background:#fff; border:1px solid #2563eb; border-radius:8px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#222; padding:2px;">
                 <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:10px; text-align:center;">
                     <div style="font-size:18px; font-weight:bold;">مؤسسة علاء الدين</div>
-                    <div style="font-size:12px; margin-top:2px;">فاتورة مبيعات</div>
+                    <div style="font-size:12px; margin-top:2px;">طلب موقع إلكتروني</div>
                 </div>
                 <div style="padding:8px; background:#f8fafc; border-bottom:1px solid #ddd; line-height:1.7;">
                     <div style="display:flex; justify-content:space-between;">
-                        <span><b>رقم الفاتورة:</b> #${id}</span>
+                        <span><b>رقم الطلب:</b> #${id}</span>
                         <span>${date}</span>
                     </div>
                     <div style="margin-top:2px;">👤 <b>العميل :</b> ${customerName}</div>
-                    <div>🛒 <b>البائع :</b> ${currentInvoiceSeller}</div>
+                    <div>📞 <b>الهاتف :</b> ${customerPhone}</div>
+                    <div>📍 <b>العنوان :</b> ${customerAddress}</div>
                     <div>🕒 ${time}</div>
                 </div>
                 <table style="width:100%; border-collapse:collapse; font-size:10px;">
@@ -358,23 +317,24 @@
                 </table>
                 <div style="padding:8px; background:#f8fafc; border-top:1px solid #ddd; font-size:10px; line-height: 1.6;">
                     <div style="display:flex; justify-content:space-between; color:#555;"><span>إجمالي المنتجات:</span><span>${money(itemsSubtotal)} ج.م</span></div>
-                    <div style="display:flex; justify-content:space-between; color:#555; margin-bottom:4px;"><span>تكلفة الشحن:</span><span>+ ${money(shippingCost)} ج.م</span></div>
+                    <div style="display:flex; justify-content:space-between; color:#555; margin-bottom:4px;"><span>تكلفة الشحن الضمنية:</span><span>+ ${money(shippingCost)} ج.م</span></div>
                     <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:6px; border-radius:6px; font-size:13px; font-weight:bold;">
                         <span>الإجمالي الكلي</span><span>${money(finalTotal)} ج.م</span>
                     </div>
                 </div>
-                <div style="padding:10px; text-align:center; font-size:10px; color:#666; border-top:1px dashed #ccc;">شكراً لتعاملكم معنا 🌹</div>
+                <div style="padding:10px; text-align:center; font-size:10px; color:#666; border-top:1px dashed #ccc;">شكراً لطلبكم من موقعنا 🌹</div>
             </div>`;
 
             document.getElementById("details").innerHTML = `
                 <div class="space-y-3 text-right">
-                    <p class="font-bold text-xl text-slate-800 border-b pb-2">فاتورة رقم: #${id}</p>
+                    <p class="font-bold text-xl text-slate-800 border-b pb-2">طلب رقم: #${id}</p>
                     <p><b>اسم العميل:</b> ${customerName}</p>
+                    <p><b>رقم الهاتف:</b> ${customerPhone}</p>
+                    <p><b>العنوان:</b> ${customerAddress}</p>
                     <p><b>تاريخ الطلب:</b> ${date} - ${time}</p>
-                    <p><b>مسؤول المبيعات:</b> ${currentInvoiceSeller}</p>
                     <div class="border-t pt-3 text-sm text-gray-600 space-y-1">
                         <p>مجموع المنتجات: ${money(itemsSubtotal)} ج.م</p>
-                        <p>رسوم الشحن: ${money(shippingCost)} ج.م</p>
+                        <p>تكلفة الشحن: ${money(shippingCost)} ج.م</p>
                     </div>
                     <p class="text-2xl font-bold text-blue-700 pt-2 border-t">الإجمالي: ${money(finalTotal)} ج.م</p>
                 </div>`;
@@ -386,12 +346,13 @@
 
         function generateShareText() {
             if (!currentOpenInvoiceData) return "";
-            let text = `*فاتورة مبيعات - مؤسسة علاء الدين*\n------------------------------------\n`;
-            text += `*رقم الفاتورة:* #${currentOpenInvoiceData.id}\n*العميل:* ${currentOpenInvoiceData.customerName}\n`;
-            text += `*البائع:* ${currentOpenInvoiceData.seller}\n*التاريخ:* ${currentOpenInvoiceData.date}\n------------------------------------\n*الأصناف:*\n`;
+            let text = `*طلب موقع إلكتروني - مؤسسة علاء الدين*\n------------------------------------\n`;
+            text += `*رقم الطلب:* #${currentOpenInvoiceData.id}\n*العميل:* ${currentOpenInvoiceData.customerName}\n`;
+            text += `*الهاتف:* ${currentOpenInvoiceData.customerPhone}\n*العنوان:* ${currentOpenInvoiceData.customerAddress}\n`;
+            text += `*التاريخ:* ${currentOpenInvoiceData.date}\n------------------------------------\n*الأصناف:*\n`;
             text += currentOpenInvoiceData.itemsText;
             text += `------------------------------------\n*إجمالي المنتجات:* ${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
-            text += `*تكلفة الشحن:* ${money(currentOpenInvoiceData.shipping)} ج.م\n*الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.م\n\nشكراً لتعاملكم معنا 🌹`;
+            text += `*الشحن:* ${money(currentOpenInvoiceData.shipping)} ج.م\n*الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.م\n\nشكراً لتعاملكم معنا 🌹`;
             return text;
         }
 
@@ -410,19 +371,18 @@
 
         async function loadStats() {
             try {
-                const itemsSum = details.reduce((s, item) => {
-                    const qte = Number(item.qte || 0);
-                    const price = Number(item.price || 0);
-                    const total = item.total_amount || item.amount || (qte * price);
-                    return s + Number(total || 0);
-                }, 0);
+                let totalSalesSum = 0;
+                let uniqueClients = new Set();
 
-                const shippingSum = orders.reduce((s, o) => s + Number(o?.shipping_cost || 0), 0);
-                
-                document.getElementById("sales").innerText = money(itemsSum + shippingSum) + " ج.م";
-                document.getElementById("invCount").innerText = orders.length;
-                document.getElementById("cusCount").innerText = customers.length;
-                document.getElementById("proCount").innerText = products.length;
+                webOrders.forEach(o => {
+                    totalSalesSum += Number(o.total_amount || 0);
+                    if (o.client_name) uniqueClients.add(o.client_name);
+                });
+
+                document.getElementById("sales").innerText = money(totalSalesSum) + " ج.م";
+                document.getElementById("invCount").innerText = webOrders.length;
+                document.getElementById("cusCount").innerText = uniqueClients.size;
+                document.getElementById("proCount").innerText = webOrderDetails.length;
             } catch (err) {
                 console.error("Stats error:", err);
             }
@@ -430,9 +390,8 @@
 
         async function init() {
             try {
-                await loadMaster();
-                await loadDetails();
-                await loadOrders();
+                await loadWebDetails();
+                await loadWebOrders();
                 await loadStats();
             } catch(e) {
                 console.error("Init failure:", e);
