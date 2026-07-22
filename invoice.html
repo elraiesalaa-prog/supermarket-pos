@@ -79,7 +79,7 @@
         <div class="grid lg:grid-cols-2 gap-5">
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <div class="bg-blue-700 text-white p-4 font-bold flex justify-between items-center">
-                    <span>📋 قائمة الفواتير المعتمدة (بدون تكرار)</span>
+                    <span>📋 قائمة الفواتير المعتمدة</span>
                     <select id="sourceFilter" onchange="renderUnifiedOrders()" class="bg-blue-800 text-white text-xs px-3 py-1.5 rounded-lg border border-blue-500 focus:outline-none">
                         <option value="ALL">عرض جميع الفواتير</option>
                         <option value="POS_ONLY">🏢 النظام الداخلي فقط</option>
@@ -90,7 +90,7 @@
                     <table class="min-w-full text-right">
                         <thead>
                             <tr class="bg-slate-100 border-b text-slate-700 text-xs">
-                                <th class="p-3 text-center">رقم الفاتورة الرسمية</th>
+                                <th class="p-3 text-center">رقم الفاتورة المحجوز</th>
                                 <th class="p-3">اسم العميل</th>
                                 <th class="p-3 text-center">المصدر</th>
                                 <th class="p-3 text-center">الإجمالي</th>
@@ -134,7 +134,7 @@
     </div>
 
     <script>
-        console.log("Loading Deduplicated Approved Invoice System...");
+        console.log("Loading Approved Invoice System...");
         const { createClient } = window.supabase;
         const supabaseClient = createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
@@ -254,41 +254,39 @@
 
         function buildUnifiedList() {
             unifiedList = [];
-
             const webOrderMatchedPosIds = new Map();
 
-            // إيجاد أعلى رقم فاتورة رسمي في النظام الداخلي لاستخدامه في تسلسل الفواتير المعتمدة
-            let maxPosId = posOrders.reduce((max, o) => {
-                const num = parseInt(o.id_order, 10);
-                return !isNaN(num) && num > max ? num : max;
-            }, 1000);
-
-            // 1. تصفية طلبات المتجر المعتمدة واستبعاد "قيد المراجعة"
+            // 1. تصفية طلبات المتجر المعتمدة
             const approvedWebOrders = webOrders.filter(w => {
                 const st = (w.order_status || "").trim();
                 return st !== "قيد المراجعة" && st !== "";
             });
 
-            // ربط كل طلب متجر برقم الفاتورة الحقيقي المعتمد في الجدول الداخلي
             approvedWebOrders.forEach(w => {
-                const wid = String(w.id_web_order);
+                const wid = String(w.id_web_order || w.id);
                 const items = webDetailsMap.get(wid) || [];
                 
-                // البحث عن رقم الفاتورة الداخلي المطابق لطلب المتجر
+                // البحث عن السجل المطابق في جدول الفواتير الداخلي (orders_o)
                 let matchedPosOrder = posOrders.find(o => 
                     String(o.id_web_order || o.web_order_id || '') === wid ||
                     String(o.note || '').includes(`طلب متجر #${wid}`) ||
                     String(o.note || '').includes(`#${wid}`)
                 );
 
-                let officialInvoiceNo = "";
+                // جلب رقم الفاتورة المحجوز والفعلي من البيانات
+                let reservedInvoiceNo = matchedPosOrder?.id_order || 
+                                         matchedPosOrder?.invoice_no || 
+                                         w.id_order || 
+                                         w.invoice_no || 
+                                         w.invoice_number || 
+                                         w.num_facture || 
+                                         w.pos_order_id || 
+                                         w.pos_id || 
+                                         w.order_id || 
+                                         wid;
+
                 if (matchedPosOrder) {
-                    officialInvoiceNo = String(matchedPosOrder.id_order);
-                    webOrderMatchedPosIds.set(officialInvoiceNo, true);
-                } else {
-                    // إذا كان الطلب معتمداً ولم يربط صراحة، يمنح رقم فاتورة حقيقي متسلسل
-                    maxPosId += 1;
-                    officialInvoiceNo = String(maxPosId);
+                    webOrderMatchedPosIds.set(String(matchedPosOrder.id_order), true);
                 }
 
                 const itemsTotal = items.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
@@ -298,8 +296,8 @@
 
                 unifiedList.push({
                     uniqueKey: `WEB_${wid}`,
-                    officialInvoiceNo: officialInvoiceNo, // رقم الفاتورة الحقيقي المعتمد
-                    idWebOrder: wid, // مرجع رقم طلب المتجر الأصلي
+                    officialInvoiceNo: String(reservedInvoiceNo),
+                    idWebOrder: wid,
                     source: 'WEB',
                     sourceLabel: '🌐 المتجر الإلكتروني',
                     customerName: w.client_name || "عميل متجر",
@@ -315,11 +313,10 @@
                 });
             });
 
-            // 2. إضافة فواتير النظام الداخلي الفعلية (التي لم تأتِ من المتجر)
+            // 2. إضافة فواتير النظام الداخلي المعتمدة (orders_o)
             posOrders.forEach(o => {
-                const oid = String(o.id_order);
+                const oid = String(o.id_order || o.invoice_no);
 
-                // استبعاد أي فاتورة هي في الأصل مستوردة من المتجر لتجنب التكرار
                 if (webOrderMatchedPosIds.has(oid)) return;
 
                 const items = posDetailsMap.get(oid) || [];
@@ -341,7 +338,7 @@
                 unifiedList.push({
                     uniqueKey: `POS_${oid}`,
                     officialInvoiceNo: oid,
-                    idWebOrder: null,
+                    idWebOrder: o.id_web_order || null,
                     source: 'POS',
                     sourceLabel: '🏢 النظام الداخلي',
                     customerName: custName,
@@ -357,7 +354,6 @@
                 });
             });
 
-            // ترتيب الفواتير من الأحدث للأقدم
             unifiedList.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
 
@@ -385,7 +381,7 @@
                 <tr class="border-b transition hover:bg-blue-50" onclick="openInvoice('${item.uniqueKey}')">
                     <td class="p-3 text-center">
                         <div class="font-bold text-blue-700">#${item.officialInvoiceNo}</div>
-                        ${item.idWebOrder ? `<div class="text-[10px] text-gray-400">(طلب متجر #${item.idWebOrder})</div>` : ''}
+                        ${item.idWebOrder && item.idWebOrder !== item.officialInvoiceNo ? `<div class="text-[10px] text-gray-400">(طلب متجر #${item.idWebOrder})</div>` : ''}
                     </td>
                     <td class="p-3 font-medium text-slate-800">${item.customerName}</td>
                     <td class="p-3 text-center"><span class="text-xs px-2 py-0.5 rounded font-bold ${badgeColor}">${item.sourceLabel}</span></td>
@@ -449,7 +445,7 @@
                 <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:8px 10px; text-align:center; shrink:0;">
                     <div style="font-size:16px; font-weight:bold;">مؤسسة علاء الدين</div>
                     <div style="font-size:11px; margin-top:1px;">فاتورة مبيعات رقم #${invoice.officialInvoiceNo}</div>
-                    ${invoice.idWebOrder ? `<div style="font-size:9px; opacity:0.85;">(مرجع طلب المتجر: #${invoice.idWebOrder})</div>` : ''}
+                    ${invoice.idWebOrder && invoice.idWebOrder !== invoice.officialInvoiceNo ? `<div style="font-size:9px; opacity:0.85;">(مرجع طلب المتجر: #${invoice.idWebOrder})</div>` : ''}
                 </div>
 
                 <div style="padding:6px 10px; background:#f8fafc; border-bottom:1px solid #e2e8f0; line-height:1.5; font-size:10px; shrink:0;">
@@ -502,7 +498,7 @@
                     <div class="flex justify-between items-center border-b pb-2">
                         <div>
                             <span class="font-bold text-xl text-slate-800">فاتورة رقم: #${invoice.officialInvoiceNo}</span>
-                            ${invoice.idWebOrder ? `<p class="text-xs text-gray-500">(مرجع طلب الموقع: #${invoice.idWebOrder})</p>` : ''}
+                            ${invoice.idWebOrder && invoice.idWebOrder !== invoice.officialInvoiceNo ? `<p class="text-xs text-gray-500">(مرجع طلب الموقع: #${invoice.idWebOrder})</p>` : ''}
                         </div>
                         <span class="text-xs px-2.5 py-1 rounded font-bold bg-blue-100 text-blue-800">${invoice.sourceLabel}</span>
                     </div>
