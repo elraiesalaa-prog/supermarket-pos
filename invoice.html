@@ -49,8 +49,8 @@
 
     <header class="bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg">
         <div class="max-w-7xl mx-auto flex items-center justify-between p-4">
-            <h1 class="text-2xl font-bold">🧾 سجل الفواتير والمبيعات المعتمدة الموحد</h1>
-            <div class="text-sm opacity-80">Approved Invoices System</div>
+            <h1 class="text-2xl font-bold">🧾 سجل الفواتير والمبيعات المعتمدة (النسخة المحسنة)</h1>
+            <div class="text-sm opacity-80">System Approved Invoices</div>
         </div>
     </header>
 
@@ -79,7 +79,7 @@
         <div class="grid lg:grid-cols-2 gap-5">
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <div class="bg-blue-700 text-white p-4 font-bold flex justify-between items-center">
-                    <span>📋 قائمة الفواتير المعتمدة (بدون تكرار)</span>
+                    <span>📋 قائمة الفواتير الرسمية (بدون تكرار)</span>
                     <select id="sourceFilter" onchange="renderUnifiedOrders()" class="bg-blue-800 text-white text-xs px-3 py-1.5 rounded-lg border border-blue-500 focus:outline-none">
                         <option value="ALL">عرض جميع الفواتير</option>
                         <option value="POS_ONLY">🏢 النظام الداخلي فقط</option>
@@ -134,7 +134,7 @@
     </div>
 
     <script>
-        console.log("Loading Deduplicated Approved Invoice System...");
+        console.log("Loading Absolute Deduplicated Invoice System...");
         const { createClient } = window.supabase;
         const supabaseClient = createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
@@ -254,54 +254,71 @@
 
         function buildUnifiedList() {
             unifiedList = [];
+            const matchedPosOrderIds = new Set(); // لتخزين رقم الفاتورة الداخلي الذي تم ربطه لمنع تكراره
 
-            // خريطة لتحديد الطلبات القادمة أساساً من المتجر لمنع استيرادها المزدوج
-            const webOrderMatchedPosIds = new Map();
-
-            // 1. تصفية طلبات المتجر المعتمدة واستبعاد "قيد المراجعة"
+            // 1. معالجة طلبات المتجر المعتمدة أولاً
             const approvedWebOrders = webOrders.filter(w => {
                 const st = (w.order_status || "").trim();
                 return st !== "قيد المراجعة" && st !== "";
             });
 
-            // ربط كل طلب متجر برقم الفاتورة الحقيقي المعتمد في الجدول الداخلي (إن وجد)
             approvedWebOrders.forEach(w => {
                 const wid = String(w.id_web_order);
                 const items = webDetailsMap.get(wid) || [];
                 
-                // البحث عن رقم الفاتورة الداخلي المطابق لطلب المتجر
-                let matchedPosOrder = posOrders.find(o => 
-                    String(o.id_web_order || o.web_order_id || '') === wid ||
-                    String(o.note || '').includes(`طلب متجر #${wid}`) ||
-                    String(o.note || '').includes(`#${wid}`)
-                );
-
-                let officialInvoiceNo = "";
-                if (matchedPosOrder) {
-                    officialInvoiceNo = String(matchedPosOrder.id_order);
-                    webOrderMatchedPosIds.set(officialInvoiceNo, true); // تسجيلها حتى لا تتكرر في فواتير POS
-                } else {
-                    // إذا لم يوجد ربط صريح، يتم إعطاؤها رقم فاتورة متسلسل حقيقي من بعد أكبر رقم فاتورة
-                    officialInvoiceNo = `WEB-${wid}`;
-                }
-
                 const itemsTotal = items.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
                 const rawTotal = Number(w.total_amount || 0);
                 const shipping = rawTotal > itemsTotal ? (rawTotal - itemsTotal) : 0;
                 const finalTotal = rawTotal > 0 ? rawTotal : (itemsTotal + shipping);
 
+                // البحث الشديد عن الفاتورة المعتمدة المطابقة في النظام الداخلي
+                let matchedPosOrder = posOrders.find(o => {
+                    if (matchedPosOrderIds.has(String(o.id_order))) return false;
+
+                    const oWebId = String(o.id_web_order || o.web_order_id || '');
+                    const oNote = String(o.note || o.observation || o.comment || '');
+                    
+                    // المطابقة الصريحة برقم الطلب
+                    if (oWebId === wid || oNote.includes(`#${wid}`) || oNote.includes(`متجر ${wid}`)) {
+                        return true;
+                    }
+
+                    // المطابقة الضمنية: إذا كان المبلغ متطابقاً والاسم متشابهاً
+                    const posItems = posDetailsMap.get(String(o.id_order)) || [];
+                    const posTotal = posItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0) + Number(o.shipping_cost || 0);
+
+                    if (Math.abs(posTotal - finalTotal) < 1) { // المبلغ متطابق تماماً
+                        const clientNameWeb = (w.client_name || "").trim().toLowerCase();
+                        const clientNamePos = (o.client_name || posItems[0]?.first_name || "").trim().toLowerCase();
+                        if (clientNameWeb && clientNamePos && (clientNameWeb.includes(clientNamePos) || clientNamePos.includes(clientNameWeb))) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                });
+
+                let officialInvoiceNo = "";
+                if (matchedPosOrder) {
+                    officialInvoiceNo = String(matchedPosOrder.id_order);
+                    matchedPosOrderIds.add(officialInvoiceNo); // تعليم الفاتورة الداخلية كمربوطة لمنع ظهورها مرة ثانية!
+                } else {
+                    // إذا لم توجد في الفواتير الداخلية بعد، يُعرض رقم طلب المتجر بشكل مؤقت
+                    officialInvoiceNo = `طلب-${wid}`;
+                }
+
                 unifiedList.push({
                     uniqueKey: `WEB_${wid}`,
-                    officialInvoiceNo: officialInvoiceNo, // رقم الفاتورة الحقيقي المعتمد
-                    idWebOrder: wid, // مرجع رقم طلب المتجر
+                    officialInvoiceNo: officialInvoiceNo, // استبدال رقم الطلب برقم الفاتورة الحقيقي
+                    idWebOrder: wid, // المرجع الأصلي لطلب الموقع
                     source: 'WEB',
                     sourceLabel: '🌐 المتجر الإلكتروني',
                     customerName: w.client_name || "عميل متجر",
                     customerPhone: w.client_phone || "غير مسجل",
                     address: w.client_address || "غير مدون",
                     status: w.order_status || 'معتمد',
-                    date: w.date_created || matchedPosOrder?.date_order || new Date().toISOString(),
-                    seller: w.seller_name || "المتجر الإلكتروني",
+                    date: matchedPosOrder?.date_order || w.date_created || new Date().toISOString(),
+                    seller: w.seller_name || matchedPosOrder?.seal_man || "المتجر الإلكتروني",
                     shipping: shipping,
                     itemsTotal: itemsTotal,
                     totalAmount: finalTotal,
@@ -309,18 +326,18 @@
                 });
             });
 
-            // 2. إضافة فواتير النظام الداخلي الفعلية (التي لم تأتِ من المتجر)
+            // 2. إضافة باقي فواتير النظام الداخلي (التي أنشئت محلياً فقط ولم تأتِ من المتجر)
             posOrders.forEach(o => {
                 const oid = String(o.id_order);
 
-                // استبعاد أي فاتورة هي في الأصل مستوردة من المتجر لتجنب التكرار
-                if (webOrderMatchedPosIds.has(oid)) return;
+                // تجنب التكرار: إذا كانت هذه الفاتورة تم ربطها بطلب متجر أعلاه، نتجاهلها هنا تماماً!
+                if (matchedPosOrderIds.has(oid)) return;
 
                 const items = posDetailsMap.get(oid) || [];
                 const custObj = customerMap.get(String(o.customer_id));
                 
                 let custName = "عميل نقدي";
-                let phone = o.client_phone || o.phone || custObj?.phone || "";
+                let phone = o.client_phone || o.phone || custObj?.phone || "غير مدون";
                 let address = o.client_address || o.address || custObj?.address || custObj?.city || "غير مدون";
 
                 if (items.length > 0 && items[0].first_name) {
@@ -339,7 +356,7 @@
                     source: 'POS',
                     sourceLabel: '🏢 النظام الداخلي',
                     customerName: custName,
-                    customerPhone: phone || "غير مدون",
+                    customerPhone: phone,
                     address: address,
                     status: 'معتمد',
                     date: o.date_order || o.created_at || new Date().toISOString(),
@@ -351,7 +368,7 @@
                 });
             });
 
-            // ترتيب الفواتير من الأحدث للأقدم
+            // ترتيب القائمة من الأحدث للأقدم
             unifiedList.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
 
