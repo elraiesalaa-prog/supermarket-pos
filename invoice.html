@@ -4,27 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام المبيعات والفواتير المعتمدة الموحد</title>
+    <title>سجل الفواتير - عرض بيانات المتجر</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap" rel="stylesheet">
     
     <style>
-        body { background: #eef2f7; font-family: 'Cairo', sans-serif; }
+        body { background: #f8fafc; font-family: 'Cairo', sans-serif; }
         
         .invoice-table {
             width: 100%;
             border-collapse: collapse;
         }
         .invoice-table th {
-            background: #2563eb;
+            background: #1e40af;
             color: white;
             padding: 6px 4px;
             border: 1px solid #cbd5e1;
             font-size: 11px;
-            position: sticky;
-            top: 0;
-            z-index: 5;
         }
         .invoice-table td {
             padding: 5px 4px;
@@ -36,132 +33,87 @@
             button, .no-print { display: none !important; }
             body { background: white; margin: 0; padding: 0; }
             #invoiceModal { position: static; background: none; padding: 0; display: block !important; }
-            .modal-box { max-height: none !important; width: 100% !important; box-shadow: none !important; }
-            .items-scroll-area { max-height: none !important; overflow: visible !important; }
+            .modal-box { width: 100% !important; box-shadow: none !important; }
         }
-
-        tbody tr { cursor: pointer; }
-        tbody tr:hover { background: #eff6ff; }
     </style>
 </head>
 
 <body class="bg-slate-100">
 
-    <header class="bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg">
-        <div class="max-w-7xl mx-auto flex items-center justify-between p-4">
-            <h1 class="text-2xl font-bold">🧾 سجل الفواتير والمبيعات المعتمدة النهائي</h1>
-            <div class="text-sm opacity-80">Official Approved Invoices</div>
+    <header class="bg-blue-900 text-white p-4 shadow-md">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">📋 عرض بيانات الفواتير المعتمدة والهاتف والمنطقة</h1>
         </div>
     </header>
 
-    <div class="max-w-7xl mx-auto p-5">
-        <!-- الإحصائيات -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">إجمالي المبيعات المعتمدة</div>
-                <div id="sales" class="text-2xl font-bold text-green-600">جاري الحساب...</div>
-            </div>
-            <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">إجمالي الفواتير المعتمدة</div>
-                <div id="invCount" class="text-2xl font-bold text-blue-700">0</div>
-            </div>
-            <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">فواتير النظام الداخلي</div>
-                <div id="posInvCount" class="text-2xl font-bold text-orange-600">0</div>
-            </div>
-            <div class="bg-white rounded-xl shadow p-5 text-center">
-                <div class="text-gray-500 mb-2">فواتير المتجر المعتمدة</div>
-                <div id="webInvCount" class="text-2xl font-bold text-purple-700">0</div>
+    <div class="max-w-7xl mx-auto p-4 grid lg:grid-cols-2 gap-5">
+        
+        <!-- قائمة الفواتير -->
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <div class="bg-blue-800 text-white p-3 font-bold">قائمة الفواتير</div>
+            <div class="overflow-auto max-h-[600px]">
+                <table class="min-w-full text-right">
+                    <thead>
+                        <tr class="bg-slate-100 border-b text-xs">
+                            <th class="p-3 text-center">رقم الفاتورة</th>
+                            <th class="p-3">اسم العميل</th>
+                            <th class="p-3">الهاتف</th>
+                            <th class="p-3 text-center">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoicesList">
+                        <tr>
+                            <td colspan="4" class="p-6 text-gray-500 text-center">جاري تحميل البيانات...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- قائمة الفواتير والتفاصيل -->
-        <div class="grid lg:grid-cols-2 gap-5">
-            <div class="bg-white rounded-xl shadow overflow-hidden">
-                <div class="bg-blue-700 text-white p-4 font-bold flex justify-between items-center">
-                    <span>📋 قائمة الفواتير المعتمدة</span>
-                    <select id="sourceFilter" onchange="renderUnifiedOrders()" class="bg-blue-800 text-white text-xs px-3 py-1.5 rounded-lg border border-blue-500 focus:outline-none">
-                        <option value="ALL">عرض جميع الفواتير</option>
-                        <option value="POS_ONLY">🏢 النظام الداخلي فقط</option>
-                        <option value="WEB_ONLY">🌐 المتجر الإلكتروني فقط</option>
-                    </select>
-                </div>
-                <div class="overflow-auto max-h-[600px]">
-                    <table class="min-w-full text-right">
-                        <thead>
-                            <tr class="bg-slate-100 border-b text-slate-700 text-xs">
-                                <th class="p-3 text-center">رقم الفاتورة الرسمية</th>
-                                <th class="p-3">اسم العميل</th>
-                                <th class="p-3 text-center">المصدر</th>
-                                <th class="p-3 text-center">الإجمالي</th>
-                            </tr>
-                        </thead>
-                        <tbody id="invoices">
-                            <tr>
-                                <td colspan="4" class="p-6 text-gray-500 text-center">جاري تحميل الفواتير...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow p-6">
-                <div class="bg-green-700 text-white p-4 rounded-t-xl font-bold -m-6 mb-6">🧾 معاينة الفاتورة المختارة</div>
-                <div id="details" class="text-gray-500 text-center py-12">
-                    اختر فاتورة من القائمة لعرض بياناتها الكاملة
-                </div>
+        <!-- تفاصيل الفاتورة -->
+        <div class="bg-white rounded-xl shadow p-5">
+            <div class="bg-slate-800 text-white p-3 rounded-t-lg font-bold -m-5 mb-5">معاينة البيانات والجلب</div>
+            <div id="invoiceDetails" class="text-gray-500 text-center py-12">
+                اضغط على أي فاتورة لعرض رقم الهاتف والمنطقة والتفاصيل.
             </div>
         </div>
+
     </div>
 
     <!-- نافذة المعاينة والطباعة -->
-    <div id="invoiceModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50 p-2 sm:p-4">
-        <div class="modal-box bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[92vh]">
-            <div class="bg-gradient-to-l from-blue-900 to-blue-700 text-white px-4 py-3 flex justify-between items-center shrink-0">
-                <h2 class="font-bold text-base">📄 معاينة وتصدير الفاتورة</h2>
-                <button onclick="closeInvoice()" class="bg-red-500 hover:bg-red-600 text-white rounded-lg px-2.5 py-0.5 font-bold text-sm">✕</button>
+    <div id="invoiceModal" class="fixed inset-0 hidden items-center justify-center bg-black/60 z-50 p-4">
+        <div class="modal-box bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-blue-900 text-white px-4 py-3 flex justify-between items-center">
+                <h2 class="font-bold text-sm">📄 الفاتورة الرسمية</h2>
+                <button onclick="closeInvoice()" class="bg-red-500 text-white rounded px-2 py-0.5 font-bold text-xs">✕</button>
             </div>
             
-            <div id="invoiceContent" class="bg-slate-200 p-2 overflow-hidden flex justify-center grow"></div>
+            <div id="invoiceContent" class="p-3 overflow-y-auto grow flex justify-center bg-slate-100"></div>
             
-            <div class="bg-white p-3 shrink-0 border-t flex flex-wrap gap-2 justify-center no-print">
-                <button onclick="shareInvoiceWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl font-bold text-xs transition">📱 واتساب</button>
-                <button onclick="copyInvoiceText()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-xl font-bold text-xs transition">📋 نسخ النص</button>
-                <button onclick="printInvoice()" class="bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-xl font-bold text-xs transition">🖨 طباعة</button>
-                <button onclick="closeInvoice()" class="bg-gray-200 hover:bg-gray-300 text-slate-800 px-3 py-2 rounded-xl font-bold text-xs transition">إغلاق</button>
+            <div class="bg-white p-3 border-t flex justify-center gap-2 no-print">
+                <button onclick="printInvoice()" class="bg-blue-700 text-white px-4 py-1.5 rounded font-bold text-xs">🖨 طباعة</button>
+                <button onclick="closeInvoice()" class="bg-gray-200 text-slate-800 px-4 py-1.5 rounded font-bold text-xs">إغلاق</button>
             </div>
         </div>
     </div>
 
     <script>
-        console.log("Loading Complete Data Sync Approved Invoice System...");
         const { createClient } = window.supabase;
         const supabaseClient = createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
             "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
         );
 
-        let customers = [];
-        let products = [];
         let posOrders = [];
-        let posDetailsMap = new Map();
-
         let webOrdersMap = new Map();
-        let webOrdersList = [];
-        let webDetailsMap = new Map();
+        let posDetailsMap = new Map();
+        let unifiedInvoices = [];
 
-        let customerMap = new Map();
-        let productMap = new Map();
-        
-        let unifiedList = [];
-        let currentOpenInvoiceData = null;
-
-        const money = v => Number(v || 0).toLocaleString('ar-EG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        const money = v => Number(v || 0).toLocaleString('ar-EG');
 
         function closeInvoice() {
-            const modal = document.getElementById("invoiceModal");
-            modal.classList.add("hidden");
-            modal.classList.remove("flex");
+            document.getElementById("invoiceModal").classList.add("hidden");
+            document.getElementById("invoiceModal").classList.remove("flex");
         }
 
         function printInvoice() {
@@ -172,14 +124,12 @@
             <html lang="ar" dir="rtl">
             <head>
                 <meta charset="UTF-8">
-                <title>فاتورة رسمية</title>
+                <title>طباعة الفاتورة</title>
                 <style>
-                    body { font-family: Cairo, Arial, sans-serif; padding: 0; margin: 0; direction: rtl; display: flex; justify-content: center; }
-                    .items-scroll-area { max-height: none !important; overflow: visible !important; }
+                    body { font-family: Cairo, sans-serif; padding: 10px; direction: rtl; }
                     table { width: 100%; border-collapse: collapse; }
-                    th, td { border: 1px solid #cbd5e1; padding: 5px 4px; font-size: 11px; }
-                    th { background: #2563eb !important; color: white !important; }
-                    @media print { body { margin: 0; padding: 0; } }
+                    th, td { border: 1px solid #ccc; padding: 4px; font-size: 11px; }
+                    th { background: #1e40af; color: white; }
                 </style>
             </head>
             <body>${content}<script>window.onload=function(){window.print();window.close();}<\/script></body>
@@ -187,406 +137,154 @@
             w.document.close();
         }
 
-        async function loadMasterData() {
+        async function fetchData() {
             try {
-                const [custRes, prodRes] = await Promise.all([
-                    supabaseClient.from("customers").select("*"),
-                    supabaseClient.from("products").select("*")
-                ]);
+                // 1. جلب طلبات المتجر (التي تحتوي الهاتف والمنطقة/العنوان)
+                const { data: webData } = await supabaseClient.from("web_orders").select("*");
+                if (webData) {
+                    webData.forEach(w => {
+                        if (w.id_web_order) {
+                            webOrdersMap.set(String(w.id_web_order), w);
+                        }
+                    });
+                }
 
-                customers = custRes.data || [];
-                products = prodRes.data || [];
+                // 2. جلب طلبات النظام الداخلي
+                const { data: posData } = await supabaseClient.from("orders_o").select("*");
+                posOrders = posData || [];
 
-                customerMap.clear();
-                productMap.clear();
-
-                customers.forEach(c => { if(c && c.id_customer !== undefined) customerMap.set(String(c.id_customer), c); });
-                products.forEach(p => { if(p && p.id_product !== undefined) productMap.set(String(p.id_product), p); });
-            } catch (err) {
-                console.error("Master data error:", err);
-            }
-        }
-
-        async function loadPOSData() {
-            try {
-                const [ordersRes, detailsRes] = await Promise.all([
-                    supabaseClient.from("orders_o").select("*"),
-                    supabaseClient.from("orders_details").select("*")
-                ]);
-
-                posOrders = ordersRes.data || [];
-                const posDetails = detailsRes.data || [];
-
-                posDetailsMap.clear();
-                posDetails.forEach(item => {
-                    if (item && item.id_order) {
-                        const oid = String(item.id_order);
+                // 3. جلب تفاصيل الاصناف
+                const { data: detailsData } = await supabaseClient.from("orders_details").select("*");
+                if (detailsData) {
+                    detailsData.forEach(d => {
+                        const oid = String(d.id_order);
                         if (!posDetailsMap.has(oid)) posDetailsMap.set(oid, []);
-                        posDetailsMap.get(oid).push(item);
-                    }
-                });
+                        posDetailsMap.get(oid).push(d);
+                    });
+                }
+
+                buildInvoices();
+                renderInvoices();
             } catch (err) {
-                console.error("POS Data Load Error:", err);
+                console.error("خطأ في جلب البيانات:", err);
             }
         }
 
-        async function loadWebData() {
-            try {
-                const [webOrdersRes, webDetailsRes] = await Promise.all([
-                    supabaseClient.from("web_orders").select("*"),
-                    supabaseClient.from("web_order_details").select("*")
-                ]);
-
-                webOrdersList = webOrdersRes.data || [];
-                const webDetails = webDetailsRes.data || [];
-
-                webOrdersMap.clear();
-                webOrdersList.forEach(w => {
-                    if (w && w.id_web_order) {
-                        webOrdersMap.set(String(w.id_web_order), w);
-                    }
-                });
-
-                webDetailsMap.clear();
-                webDetails.forEach(item => {
-                    if (item && item.id_web_order) {
-                        const wid = String(item.id_web_order);
-                        if (!webDetailsMap.has(wid)) webDetailsMap.set(wid, []);
-                        webDetailsMap.get(wid).push(item);
-                    }
-                });
-            } catch (err) {
-                console.error("Web Data Load Error:", err);
-            }
-        }
-
-        function buildUnifiedList() {
-            unifiedList = [];
+        function buildInvoices() {
+            unifiedInvoices = [];
 
             posOrders.forEach(o => {
-                const officialInvoiceNo = String(o.id_order);
-                
-                // 1. طريقة ربط متعددة واحترافية لمطابقة طلب المتجر
-                let matchedWebOrder = null;
-                let webOrderId = o.id_web_order || o.web_order_id || null;
+                const officialNo = String(o.id_order);
+                const webOrderId = o.id_web_order ? String(o.id_web_order) : null;
 
-                // أ) الفحص الصريح برقم الطلب
-                if (webOrderId && webOrdersMap.has(String(webOrderId))) {
-                    matchedWebOrder = webOrdersMap.get(String(webOrderId));
-                }
+                // **الخطوة الأساسية: جلب سجل المتجر المرتبط للحصول على الهاتف والمنطقة**
+                let webOrder = webOrderId ? webOrdersMap.get(webOrderId) : null;
 
-                // ب) الفحص عن طريق استخراج الأرقام من حقول الملاحظات
-                if (!matchedWebOrder) {
-                    const noteText = [o.note, o.observation, o.comment, o.remark].filter(Boolean).join(" ");
-                    const matches = noteText.match(/\d+/g);
-                    if (matches) {
-                        for (let num of matches) {
-                            if (webOrdersMap.has(String(num))) {
-                                matchedWebOrder = webOrdersMap.get(String(num));
-                                webOrderId = num;
-                                break;
-                            }
-                        }
-                    }
-                }
+                // استخراج الهاتف والمنطقة مباشرة من بيانات سلة المتجر
+                let phone = webOrder?.client_phone || webOrder?.phone || o.client_phone || o.phone || "غير مدون";
+                let address = webOrder?.client_address || webOrder?.address || webOrder?.city || webOrder?.region || o.client_address || o.address || "غير مدون";
+                let clientName = webOrder?.client_name || o.client_name || "عميل نقدي";
 
-                // ج) الفحص عن طريق الاسم المتقارب وقيمة الطلب (Matching Fallback)
-                if (!matchedWebOrder) {
-                    const posItems = posDetailsMap.get(officialInvoiceNo) || [];
-                    const posTotal = posItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0) + Number(o.shipping_cost || 0);
-                    
-                    matchedWebOrder = webOrdersList.find(w => {
-                        const wTotal = Number(w.total_amount || 0);
-                        if (Math.abs(wTotal - posTotal) < 2) {
-                            const wName = (w.client_name || "").trim().toLowerCase();
-                            const posName = (o.client_name || (posItems[0] ? posItems[0].first_name : '') || "").trim().toLowerCase();
-                            if (wName && posName && (wName.includes(posName) || posName.includes(wName))) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    });
-                    if (matchedWebOrder) webOrderId = matchedWebOrder.id_web_order;
-                }
+                let items = posDetailsMap.get(officialNo) || [];
+                let itemsTotal = items.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
 
-                // 2. تجميع الأصناف
-                let items = posDetailsMap.get(officialInvoiceNo) || [];
-                if (matchedWebOrder && webDetailsMap.has(String(matchedWebOrder.id_web_order))) {
-                    const webItems = webDetailsMap.get(String(matchedWebOrder.id_web_order));
-                    if (webItems && webItems.length > 0) {
-                        items = webItems;
-                    }
-                }
-
-                // 3. جلب بيانات العميل الكاملة (الاسم، الهاتف، العنوان)
-                const custObj = customerMap.get(String(o.customer_id));
-                
-                let custName = matchedWebOrder?.client_name || o.client_name || (items.length > 0 ? items[0].first_name : null) || custObj?.first_name || custObj?.name || "عميل نقدي";
-                
-                let phone = matchedWebOrder?.client_phone || matchedWebOrder?.phone || o.client_phone || o.phone || custObj?.phone || "غير مدون";
-                
-                let address = matchedWebOrder?.client_address || matchedWebOrder?.address || matchedWebOrder?.city || o.client_address || o.address || custObj?.address || custObj?.city || "غير مدون";
-                
-                let seller = matchedWebOrder?.seller_name || o.seal_man || o.seller_name || "مؤسسة علاء الدين";
-
-                // 4. احتساب الشحن والإجمالي بدقة
-                const itemsTotal = items.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
-                let shipping = Number(o.shipping_cost || o.shipping || 0);
-
-                if (matchedWebOrder) {
-                    const webTotal = Number(matchedWebOrder.total_amount || 0);
-                    if (webTotal > itemsTotal) {
-                        shipping = webTotal - itemsTotal;
-                    } else if (Number(matchedWebOrder.shipping_cost || 0) > 0) {
-                        shipping = Number(matchedWebOrder.shipping_cost);
-                    }
-                }
-
-                // 5. تحديد المصدر بشكل موثوق
-                const isWebSource = !!matchedWebOrder || !!webOrderId;
-
-                unifiedList.push({
-                    uniqueKey: `INV_${officialInvoiceNo}`,
-                    officialInvoiceNo: officialInvoiceNo,
-                    idWebOrder: webOrderId ? String(webOrderId) : null,
-                    source: isWebSource ? 'WEB' : 'POS',
-                    sourceLabel: isWebSource ? '🌐 المتجر الإلكتروني' : '🏢 النظام الداخلي',
-                    customerName: custName,
-                    customerPhone: phone,
+                unifiedInvoices.push({
+                    officialNo: officialNo,
+                    webOrderId: webOrderId,
+                    clientName: clientName,
+                    phone: phone,
                     address: address,
-                    status: 'معتمد',
-                    date: o.date_order || matchedWebOrder?.date_created || o.created_at || new Date().toISOString(),
-                    seller: seller,
-                    shipping: shipping,
                     itemsTotal: itemsTotal,
-                    totalAmount: itemsTotal + shipping,
+                    date: o.date_order || new Date().toISOString(),
                     items: items
                 });
             });
-
-            // ترتيب الفواتير من الأحدث للأقدم
-            unifiedList.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
 
-        function renderUnifiedOrders() {
-            const tbody = document.getElementById("invoices");
+        function renderInvoices() {
+            const tbody = document.getElementById("invoicesList");
             tbody.innerHTML = "";
 
-            const filterValue = document.getElementById("sourceFilter").value;
-
-            const filteredList = unifiedList.filter(item => {
-                if (filterValue === "POS_ONLY") return item.source === "POS";
-                if (filterValue === "WEB_ONLY") return item.source === "WEB";
-                return true;
-            });
-
-            if (!filteredList.length) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-gray-400 text-center">لا توجد فواتير معتمدة حالياً</td></tr>`;
+            if (!unifiedInvoices.length) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">لا توجد فواتير</td></tr>`;
                 return;
             }
 
-            filteredList.forEach(item => {
-                const badgeColor = item.source === 'POS' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800';
-
+            unifiedInvoices.forEach(inv => {
                 tbody.innerHTML += `
-                <tr class="border-b transition hover:bg-blue-50" onclick="openInvoice('${item.uniqueKey}')">
-                    <td class="p-3 text-center">
-                        <div class="font-bold text-blue-700">#${item.officialInvoiceNo}</div>
-                        ${item.idWebOrder ? `<div class="text-[10px] text-gray-400">(مرجع طلب #${item.idWebOrder})</div>` : ''}
-                    </td>
-                    <td class="p-3 font-medium text-slate-800">${item.customerName}</td>
-                    <td class="p-3 text-center"><span class="text-xs px-2.5 py-1 rounded-full font-bold ${badgeColor}">${item.sourceLabel}</span></td>
-                    <td class="p-3 font-bold text-green-600 text-center">${money(item.totalAmount)} ج.م</td>
+                <tr class="border-b hover:bg-blue-50 cursor-pointer text-xs" onclick="openInvoice('${inv.officialNo}')">
+                    <td class="p-3 text-center font-bold text-blue-700">#${inv.officialNo}</td>
+                    <td class="p-3 font-semibold">${inv.clientName}</td>
+                    <td class="p-3 text-gray-600">${inv.phone}</td>
+                    <td class="p-3 text-center font-bold text-green-700">${money(inv.itemsTotal)} ج.م</td>
                 </tr>`;
             });
         }
 
-        function openInvoice(uniqueKey) {
-            const invoice = unifiedList.find(i => i.uniqueKey === uniqueKey);
-            if (!invoice) return alert("الفاتورة غير موجودة");
+        function openInvoice(officialNo) {
+            const inv = unifiedInvoices.find(i => i.officialNo === officialNo);
+            if (!inv) return;
 
             let rows = "";
-            let itemsTextForShare = "";
-
-            invoice.items.forEach(item => {
+            inv.items.forEach(item => {
                 const qty = Number(item.qte || 1);
                 const price = Number(item.price || 0);
-                const lineTotal = qty * price;
-
-                let prodName = item.product_name;
-                if (!prodName && item.id_product) {
-                    const p = productMap.get(String(item.id_product));
-                    prodName = p?.product_name || p?.name;
-                }
-                if (!prodName) prodName = "صنف غير معرف";
-
                 rows += `
                 <tr>
-                    <td style="padding:5px 4px; text-align:right;">${prodName}</td>
-                    <td style="padding:5px 4px; text-align:center;">${qty}</td>
-                    <td style="padding:5px 4px; text-align:center;">${money(price)}</td>
-                    <td style="padding:5px 4px; text-align:center; font-weight:bold; color:#2563eb;">${money(lineTotal)}</td>
+                    <td style="text-align:right;">${item.product_name || 'صنف'}</td>
+                    <td style="text-align:center;">${qty}</td>
+                    <td style="text-align:center;">${money(price)}</td>
+                    <td style="text-align:center; font-weight:bold;">${money(qty * price)}</td>
                 </tr>`;
-
-                itemsTextForShare += `- ${prodName} (الكمية: ${qty} | السعر: ${money(price)} ج.م)\n`;
             });
 
-            const invoiceObj = new Date(invoice.date);
-            const dateStr = invoiceObj.toLocaleDateString("ar-EG");
-            const timeStr = invoiceObj.toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' });
-
-            currentOpenInvoiceData = {
-                officialNo: invoice.officialInvoiceNo,
-                webOrderId: invoice.idWebOrder,
-                source: invoice.sourceLabel,
-                customerName: invoice.customerName,
-                customerPhone: invoice.customerPhone,
-                address: invoice.address,
-                seller: invoice.seller,
-                date: dateStr,
-                itemsText: itemsTextForShare,
-                shipping: invoice.shipping,
-                subtotal: invoice.itemsTotal,
-                total: money(invoice.totalAmount)
-            };
-
+            // عرض تفاصيل الفاتورة مع إبراز الهاتف والمنطقة المجلوبة من سلة المتجر
             document.getElementById("invoiceContent").innerHTML = `
-            <div style="width:100%; max-width:80mm; background:#fff; border:1px solid #2563eb; border-radius:10px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#1e293b; display:flex; flex-direction:column; max-height:100%;">
+            <div style="width:100%; max-width:80mm; background:#fff; border:1px solid #1e40af; border-radius:8px; padding:10px; font-size:11px;">
+                <div style="text-align:center; font-weight:bold; font-size:14px; color:#1e40af; border-b:1px solid #ccc; padding-bottom:5px; margin-bottom:8px;">
+                    فاتورة مبيعات #${inv.officialNo}
+                </div>
                 
-                <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:8px 10px; text-align:center; shrink:0;">
-                    <div style="font-size:16px; font-weight:bold;">مؤسسة علاء الدين</div>
-                    <div style="font-size:11px; margin-top:1px;">فاتورة مبيعات رقم #${invoice.officialInvoiceNo}</div>
-                    ${invoice.idWebOrder ? `<div style="font-size:9px; opacity:0.85;">(مرجع طلب المتجر: #${invoice.idWebOrder})</div>` : ''}
+                <div style="background:#f1f5f9; padding:6px; border-radius:5px; margin-bottom:8px; font-size:10.5px; line-height:1.6;">
+                    <div>👤 <b>العميل:</b> ${inv.clientName}</div>
+                    <div>📞 <b>رقم الهاتف:</b> ${inv.phone}</div>
+                    <div>📍 <b>العنوان / المنطقة:</b> ${inv.address}</div>
                 </div>
 
-                <div style="padding:6px 10px; background:#f8fafc; border-bottom:1px solid #e2e8f0; line-height:1.5; font-size:10px; shrink:0;">
-                    <div style="display:flex; justify-content:space-between; font-weight:bold; color:#1e3a8a;">
-                        <span>📅 ${dateStr} - ${timeStr}</span>
-                        <span>👤 البائع: ${invoice.seller}</span>
-                    </div>
-                    <div style="margin-top:3px;">🧑‍💼 <b>العميل :</b> ${invoice.customerName}</div>
-                    <div>📞 <b>الهاتف :</b> ${invoice.customerPhone}</div>
-                    <div>📍 <b>العنوان/المنطقة :</b> ${invoice.address}</div>
-                </div>
+                <table class="invoice-table" style="margin-bottom:8px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:right;">الصنف</th>
+                            <th>الكمية</th>
+                            <th>السعر</th>
+                            <th>الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
 
-                <div class="items-scroll-area" style="padding:2px 4px; overflow-y:auto; max-height: 220px; grow:1;">
-                    <table class="invoice-table">
-                        <thead>
-                            <tr>
-                                <th style="text-align:right;">الصنف</th>
-                                <th>الكمية</th>
-                                <th>السعر</th>
-                                <th>الجملة</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                </div>
-
-                <div style="padding:8px 10px; background:#f1f5f9; border-top:1px solid #cbd5e1; font-size:10.5px; line-height:1.6; shrink:0;">
-                    <div style="display:flex; justify-content:space-between; color:#475569;">
-                        <span>إجمالي المنتجات:</span>
-                        <span>${money(invoice.itemsTotal)} ج.م</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; color:#475569; margin-bottom:3px;">
-                        <span>رسوم الشحن والخدمة:</span>
-                        <span>+ ${money(invoice.shipping)} ج.م</span>
-                    </div>
-                    
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:#1e40af; color:#fff; padding:6px 10px; border-radius:6px; font-size:12.5px; font-weight:bold;">
-                        <span>الإجمالي الكلي</span>
-                        <span>${money(invoice.totalAmount)} ج.م</span>
-                    </div>
-                </div>
-
-                <div style="padding:5px; text-align:center; font-size:9.5px; color:#64748b; border-top:1px dashed #cbd5e1; background:#fff; shrink:0;">
-                    شكراً لتعاملكم معنا 🌹
+                <div style="text-align:left; font-weight:bold; font-size:12px; border-top:1px solid #ccc; padding-top:5px; color:#1e40af;">
+                    الإجمالي: ${money(inv.itemsTotal)} ج.م
                 </div>
             </div>`;
 
-            document.getElementById("details").innerHTML = `
-                <div class="space-y-3 text-right">
-                    <div class="flex justify-between items-center border-b pb-2">
-                        <div>
-                            <span class="font-bold text-xl text-slate-800">فاتورة رقم: #${invoice.officialInvoiceNo}</span>
-                            ${invoice.idWebOrder ? `<p class="text-xs text-gray-500">(مرجع طلب الموقع: #${invoice.idWebOrder})</p>` : ''}
-                        </div>
-                        <span class="text-xs px-2.5 py-1 rounded font-bold bg-blue-100 text-blue-800">${invoice.sourceLabel}</span>
-                    </div>
-                    <p><b>اسم العميل:</b> ${invoice.customerName}</p>
-                    <p><b>رقم الهاتف:</b> ${invoice.customerPhone}</p>
-                    <p><b>المنطقة/العنوان:</b> ${invoice.address}</p>
-                    <p><b>البائع المسؤول:</b> ${invoice.seller}</p>
-                    <p><b>تاريخ الفاتورة:</b> ${dateStr} - ${timeStr}</p>
-                    <div class="border-t pt-3 text-sm text-gray-600 space-y-1">
-                        <p>مجموع المنتجات: ${money(invoice.itemsTotal)} ج.م</p>
-                        <p>رسوم الشحن: ${money(invoice.shipping)} ج.م</p>
-                    </div>
-                    <p class="text-2xl font-bold text-blue-700 pt-2 border-t">الإجمالي الكلي: ${money(invoice.totalAmount)} ج.م</p>
+            // المعاينة الجانبية
+            document.getElementById("invoiceDetails").innerHTML = `
+                <div class="text-right space-y-2 text-sm">
+                    <p class="text-lg font-bold text-blue-800">فاتورة رقم: #${inv.officialNo}</p>
+                    <hr>
+                    <p><b>اسم العميل:</b> ${inv.clientName}</p>
+                    <p class="text-green-700 font-bold"><b>رقم الهاتف (من المتجر):</b> ${inv.phone}</p>
+                    <p class="text-blue-700 font-bold"><b>العنوان / المنطقة (من المتجر):</b> ${inv.address}</p>
+                    <hr>
+                    <p class="text-xl font-bold">الإجمالي: ${money(inv.itemsTotal)} ج.م</p>
                 </div>`;
 
-            const modal = document.getElementById("invoiceModal");
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
+            document.getElementById("invoiceModal").classList.remove("hidden");
+            document.getElementById("invoiceModal").classList.add("flex");
         }
 
-        function generateShareText() {
-            if (!currentOpenInvoiceData) return "";
-            let text = `*فاتورة مبيعات معتمدة (#${currentOpenInvoiceData.officialNo}) - مؤسسة علاء الدين*\n------------------------------------\n`;
-            text += `*العميل:* ${currentOpenInvoiceData.customerName}\n`;
-            if (currentOpenInvoiceData.customerPhone) text += `*الهاتف:* ${currentOpenInvoiceData.customerPhone}\n`;
-            if (currentOpenInvoiceData.address) text += `*العنوان/المنطقة:* ${currentOpenInvoiceData.address}\n`;
-            text += `*البائع:* ${currentOpenInvoiceData.seller}\n`;
-            text += `*التاريخ:* ${currentOpenInvoiceData.date}\n------------------------------------\n*الأصناف:*\n`;
-            text += currentOpenInvoiceData.itemsText;
-            text += `------------------------------------\n*إجمالي المنتجات:* ${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
-            text += `*الشحن:* ${money(currentOpenInvoiceData.shipping)} ج.م\n*الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.م\n\nشكراً لتعاملكم معنا 🌹`;
-            return text;
-        }
-
-        function shareInvoiceWhatsApp() {
-            if (!currentOpenInvoiceData) return alert("الرجاء اختيار فاتورة أولاً!");
-            const shareText = generateShareText();
-            let phone = (currentOpenInvoiceData.customerPhone || "").replace(/\D/g, '');
-            if (phone.startsWith('01')) { phone = '20' + phone.substring(1); }
-            window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(shareText)}`, '_blank');
-        }
-
-        function copyInvoiceText() {
-            if (!currentOpenInvoiceData) return alert("الرجاء اختيار فاتورة أولاً!");
-            navigator.clipboard.writeText(generateShareText()).then(() => alert("📋 تم نسخ النص!")).catch(() => alert("فشل نسخ النص."));
-        }
-
-        function updateStats() {
-            let grandTotalSales = 0;
-            let posCount = 0;
-            let webCount = 0;
-
-            unifiedList.forEach(item => {
-                grandTotalSales += Number(item.totalAmount || 0);
-                if (item.source === 'POS') posCount++;
-                if (item.source === 'WEB') webCount++;
-            });
-
-            document.getElementById("sales").innerText = money(grandTotalSales) + " ج.م";
-            document.getElementById("invCount").innerText = unifiedList.length;
-            document.getElementById("posInvCount").innerText = posCount;
-            document.getElementById("webInvCount").innerText = webCount;
-        }
-
-        async function init() {
-            try {
-                await loadMasterData();
-                await Promise.all([loadPOSData(), loadWebData()]);
-                buildUnifiedList();
-                renderUnifiedOrders();
-                updateStats();
-            } catch(e) {
-                console.error("Init failure:", e);
-            }
-        }
-
-        init();
+        fetchData();
     </script>
 </body>
 </html>
