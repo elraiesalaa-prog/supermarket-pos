@@ -13,20 +13,21 @@
         body { background: #eef2f7; font-family: 'Cairo', sans-serif; }
         
         /* تنسيقات الجدول داخل الفاتورة */
-        #invoiceContent table {
+        .invoice-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 6px;
-            margin-bottom: 6px;
         }
-        #invoiceContent th {
+        .invoice-table th {
             background: #2563eb;
             color: white;
             padding: 6px 4px;
             border: 1px solid #cbd5e1;
             font-size: 11px;
+            position: sticky;
+            top: 0;
+            z-index: 5;
         }
-        #invoiceContent td {
+        .invoice-table td {
             padding: 5px 4px;
             border: 1px solid #cbd5e1;
             font-size: 11px;
@@ -35,8 +36,9 @@
         @media print {
             button, .no-print { display: none !important; }
             body { background: white; margin: 0; padding: 0; }
-            #invoiceModal { position: static; background: none; padding: 0; }
+            #invoiceModal { position: static; background: none; padding: 0; display: block !important; }
             .modal-box { max-height: none !important; width: 100% !important; box-shadow: none !important; }
+            .items-scroll-area { max-height: none !important; overflow: visible !important; }
         }
 
         tbody tr { cursor: pointer; }
@@ -113,19 +115,19 @@
         </div>
     </div>
 
-    <!-- نافذة المعاينة والطباعة المحدثة -->
+    <!-- نافذة المعاينة والطباعة الذكية -->
     <div id="invoiceModal" class="fixed inset-0 hidden items-center justify-center bg-black/70 z-50 p-2 sm:p-4">
-        <div class="modal-box bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[96vh]">
-            <!-- الهيدر العلوي -->
+        <div class="modal-box bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[92vh]">
+            <!-- الهيدر -->
             <div class="bg-gradient-to-l from-blue-900 to-blue-700 text-white px-4 py-3 flex justify-between items-center shrink-0">
-                <h2 class="font-bold text-base">📄 طباعة ومشاركة الفاتورة</h2>
+                <h2 class="font-bold text-base">📄 معاينة وطباعة الفاتورة</h2>
                 <button onclick="closeInvoice()" class="bg-red-500 hover:bg-red-600 text-white rounded-lg px-2.5 py-0.5 font-bold text-sm">✕</button>
             </div>
             
-            <!-- جسم الفاتورة بتصميم قابل للتمدد بدون قص -->
-            <div id="invoiceContent" class="bg-slate-200 p-3 overflow-y-auto flex justify-center grow"></div>
+            <!-- جسم الفاتورة بتصميم ذكي مقسّم لا يختفي فيه الإجمالي -->
+            <div id="invoiceContent" class="bg-slate-200 p-2 overflow-hidden flex justify-center grow"></div>
             
-            <!-- أزرار الإجراءات السفلية -->
+            <!-- أزرار الإجراءات -->
             <div class="bg-white p-3 shrink-0 border-t flex flex-wrap gap-2 justify-center no-print">
                 <button onclick="shareInvoiceWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl font-bold text-xs transition">📱 واتساب</button>
                 <button onclick="copyInvoiceText()" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded-xl font-bold text-xs transition">📋 نسخ النص</button>
@@ -136,7 +138,7 @@
     </div>
 
     <script>
-        console.log("Loading Optimized Official Approved Invoice System...");
+        console.log("Loading Fixed Approved Invoice System...");
         const { createClient } = window.supabase;
         const supabaseClient = createClient(
             "https://vmxbedovoahuggfpcmyk.supabase.co",
@@ -158,7 +160,7 @@
         let currentOpenInvoiceData = null;
 
         const money = v => Number(v || 0).toLocaleString('ar-EG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-        let sellerName = "مؤسسة علاء الدين";
+        let sellerNameDefault = "مؤسسة علاء الدين";
 
         function closeInvoice() {
             const modal = document.getElementById("invoiceModal");
@@ -172,7 +174,18 @@
             w.document.write(`
             <!DOCTYPE html>
             <html lang="ar" dir="rtl">
-            <head><meta charset="UTF-8"><title>فاتورة رسمية</title><style>body{font-family:Cairo,Arial,sans-serif;padding:0;margin:0;direction:rtl;display:flex;justify-content:center;}@media print{body{margin:0;padding:0;}}</style></head>
+            <head>
+                <meta charset="UTF-8">
+                <title>فاتورة رسمية</title>
+                <style>
+                    body { font-family: Cairo, Arial, sans-serif; padding: 0; margin: 0; direction: rtl; display: flex; justify-content: center; }
+                    .items-scroll-area { max-height: none !important; overflow: visible !important; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th, td { border: 1px solid #cbd5e1; padding: 5px 4px; font-size: 11px; }
+                    th { background: #2563eb !important; color: white !important; }
+                    @media print { body { margin: 0; padding: 0; } }
+                </style>
+            </head>
             <body>${content}<script>window.onload=function(){window.print();window.close();}<\/script></body>
             </html>`);
             w.document.close();
@@ -252,12 +265,15 @@
                 const oid = String(o.id_order);
                 const items = posDetailsMap.get(oid) || [];
                 
+                const custObj = customerMap.get(String(o.customer_id));
                 let custName = "عميل نقدي";
+                let phone = o.client_phone || o.phone || custObj?.phone || "";
+                let address = o.client_address || o.address || custObj?.address || custObj?.city || "غير مدون";
+
                 if (items.length > 0 && items[0].first_name) {
                     custName = items[0].first_name;
-                } else if (o.customer_id) {
-                    const c = customerMap.get(String(o.customer_id));
-                    if (c) custName = c.first_name || c.name || "عميل نقدي";
+                } else if (custObj) {
+                    custName = custObj.first_name || custObj.name || "عميل نقدي";
                 }
 
                 const itemsTotal = items.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
@@ -270,10 +286,11 @@
                     source: 'POS',
                     sourceLabel: '🏢 النظام الداخلي',
                     customerName: custName,
-                    customerPhone: customerMap.get(String(o.customer_id))?.phone || "",
+                    customerPhone: phone,
+                    address: address,
                     status: 'معتمد',
                     date: o.date_order || o.created_at || new Date().toISOString(),
-                    seller: o.seal_man || sellerName,
+                    seller: o.seal_man || o.seller_name || sellerNameDefault,
                     shipping: shipping,
                     itemsTotal: itemsTotal,
                     totalAmount: itemsTotal + shipping,
@@ -307,10 +324,10 @@
                     sourceLabel: '🌐 المتجر الإلكتروني',
                     customerName: w.client_name || "عميل متجر",
                     customerPhone: w.client_phone || "",
-                    address: w.client_address || "",
+                    address: w.client_address || "غير مدون",
                     status: w.order_status || 'معتمد',
                     date: w.date_created || new Date().toISOString(),
-                    seller: "المتجر الإلكتروني",
+                    seller: w.seller_name || "مسؤول المتجر",
                     shipping: shipping,
                     itemsTotal: itemsTotal,
                     totalAmount: finalTotal,
@@ -394,7 +411,7 @@
                 source: invoice.sourceLabel,
                 customerName: invoice.customerName,
                 customerPhone: invoice.customerPhone,
-                address: invoice.address || "غير مدون",
+                address: invoice.address,
                 seller: invoice.seller,
                 date: dateStr,
                 itemsText: itemsTextForShare,
@@ -403,62 +420,61 @@
                 total: money(invoice.totalAmount)
             };
 
-            // بناء هيكل الفاتورة المحسّن بدون أبعاد ثابتة لتجنب اختفاء الجزء السفلي
+            // بناء هيكل ذكي يمنع ضياع الإجمالي الكلي بوجود منطقة تمرير داخلية للجدول
             document.getElementById("invoiceContent").innerHTML = `
-            <div style="width:100%; max-width:80mm; background:#fff; border:1px solid #2563eb; border-radius:10px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+            <div style="width:100%; max-width:80mm; background:#fff; border:1px solid #2563eb; border-radius:10px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#1e293b; display:flex; flex-direction:column; max-height:100%;">
                 
-                <!-- رأس الفاتورة -->
-                <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:10px; text-align:center;">
-                    <div style="font-size:16px; font-weight:bold; letter-spacing:-0.5px;">مؤسسة علاء الدين</div>
-                    <div style="font-size:11px; margin-top:2px;">فاتورة مبيعات رقم #${invoice.officialInvoiceNo}</div>
+                <!-- 1. الهيدر العالي الثابت -->
+                <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:8px 10px; text-align:center; shrink:0;">
+                    <div style="font-size:16px; font-weight:bold;">مؤسسة علاء الدين</div>
+                    <div style="font-size:11px; margin-top:1px;">فاتورة مبيعات رقم #${invoice.officialInvoiceNo}</div>
                     ${invoice.idWebOrder ? `<div style="font-size:9px; opacity:0.85;">(مرجع طلب المتجر: #${invoice.idWebOrder})</div>` : ''}
                 </div>
 
-                <!-- بيانات الفاتورة والعميل -->
-                <div style="padding:8px 10px; background:#f8fafc; border-bottom:1px solid #e2e8f0; line-height:1.6; font-size:10px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
-                        <span><b>التاريخ:</b> ${dateStr}</span>
-                        <span><b>الوقت:</b> ${timeStr}</span>
+                <!-- 2. بيانات الفاتورة والعميل الكاملة (البائع، الهاتف، العنوان) -->
+                <div style="padding:6px 10px; background:#f8fafc; border-bottom:1px solid #e2e8f0; line-height:1.5; font-size:10px; shrink:0;">
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; color:#1e3a8a;">
+                        <span>📅 ${dateStr} - ${timeStr}</span>
+                        <span>👤 البائع: ${invoice.seller}</span>
                     </div>
-                    <div style="margin-top:1px;">👤 <b>العميل :</b> ${invoice.customerName}</div>
-                    ${invoice.customerPhone ? `<div>📞 <b>الهاتف :</b> ${invoice.customerPhone}</div>` : ''}
-                    ${invoice.address ? `<div>📍 <b>العنوان :</b> ${invoice.address}</div>` : ''}
+                    <div style="margin-top:3px;">🧑‍💼 <b>العميل :</b> ${invoice.customerName}</div>
+                    <div>📞 <b>الهاتف :</b> ${invoice.customerPhone || "غير مسجل"}</div>
+                    <div>📍 <b>العنوان/المنطقة :</b> ${invoice.address || "غير مدون"}</div>
                 </div>
 
-                <!-- جدول المنتجات -->
-                <div style="padding:4px;">
-                    <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                <!-- 3. منطقة الأصناف القابلة للتمرير الداخلي لمنع اختفاء الإجمالي -->
+                <div class="items-scroll-area" style="padding:2px 4px; overflow-y:auto; max-height: 220px; grow:1;">
+                    <table class="invoice-table">
                         <thead>
-                            <tr style="background:#2563eb; color:#fff;">
-                                <th style="padding:4px; text-align:right;">الصنف</th>
-                                <th style="padding:4px;">الكمية</th>
-                                <th style="padding:4px;">السعر</th>
-                                <th style="padding:4px;">الجملة</th>
+                            <tr>
+                                <th style="text-align:right;">الصنف</th>
+                                <th>الكمية</th>
+                                <th>السعر</th>
+                                <th>الجملة</th>
                             </tr>
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>
                 </div>
 
-                <!-- ختام الفاتورة والإجمالي الكلي الظاهر بوضوح -->
-                <div style="padding:8px 10px; background:#f1f5f9; border-top:1px solid #e2e8f0; font-size:10.5px; line-height:1.7;">
+                <!-- 4. صندوق الإجمالي الكلي والشحن (ثابت في الأسفل دائماً) -->
+                <div style="padding:8px 10px; background:#f1f5f9; border-top:1px solid #cbd5e1; font-size:10.5px; line-height:1.6; shrink:0;">
                     <div style="display:flex; justify-content:space-between; color:#475569;">
                         <span>إجمالي المنتجات:</span>
                         <span>${money(invoice.itemsTotal)} ج.م</span>
                     </div>
-                    <div style="display:flex; justify-content:space-between; color:#475569; margin-bottom:4px;">
-                        <span>رسوم الشحن:</span>
+                    <div style="display:flex; justify-content:space-between; color:#475569; margin-bottom:3px;">
+                        <span>رسوم الشحن والخدمة:</span>
                         <span>+ ${money(invoice.shipping)} ج.م</span>
                     </div>
                     
-                    <!-- صندوق الإجمالي المميز والتنفيذي -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:#1e40af; color:#fff; padding:7px 10px; border-radius:6px; font-size:13px; font-weight:bold; margin-top:4px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#1e40af; color:#fff; padding:6px 10px; border-radius:6px; font-size:12.5px; font-weight:bold;">
                         <span>الإجمالي الكلي</span>
                         <span>${money(invoice.totalAmount)} ج.م</span>
                     </div>
                 </div>
 
-                <div style="padding:8px; text-align:center; font-size:10px; color:#64748b; border-top:1px dashed #cbd5e1; background:#fff;">
+                <div style="padding:5px; text-align:center; font-size:9.5px; color:#64748b; border-top:1px dashed #cbd5e1; background:#fff; shrink:0;">
                     شكراً لتعاملكم معنا 🌹
                 </div>
             </div>`;
@@ -473,13 +489,15 @@
                         <span class="text-xs px-2.5 py-1 rounded font-bold bg-blue-100 text-blue-800">${invoice.sourceLabel}</span>
                     </div>
                     <p><b>اسم العميل:</b> ${invoice.customerName}</p>
-                    ${invoice.customerPhone ? `<p><b>الهاتف:</b> ${invoice.customerPhone}</p>` : ''}
+                    <p><b>رقم الهاتف:</b> ${invoice.customerPhone || "غير مدون"}</p>
+                    <p><b>المنطقة/العنوان:</b> ${invoice.address || "غير مدون"}</p>
+                    <p><b>البائع المسؤول:</b> ${invoice.seller}</p>
                     <p><b>تاريخ الفاتورة:</b> ${dateStr} - ${timeStr}</p>
                     <div class="border-t pt-3 text-sm text-gray-600 space-y-1">
                         <p>مجموع المنتجات: ${money(invoice.itemsTotal)} ج.م</p>
                         <p>رسوم الشحن: ${money(invoice.shipping)} ج.م</p>
                     </div>
-                    <p class="text-2xl font-bold text-blue-700 pt-2 border-t">الإجمالي: ${money(invoice.totalAmount)} ج.م</p>
+                    <p class="text-2xl font-bold text-blue-700 pt-2 border-t">الإجمالي الكلي: ${money(invoice.totalAmount)} ج.م</p>
                 </div>`;
 
             const modal = document.getElementById("invoiceModal");
@@ -492,6 +510,8 @@
             let text = `*فاتورة مبيعات معتمدة (#${currentOpenInvoiceData.officialNo}) - مؤسسة علاء الدين*\n------------------------------------\n`;
             text += `*العميل:* ${currentOpenInvoiceData.customerName}\n`;
             if (currentOpenInvoiceData.customerPhone) text += `*الهاتف:* ${currentOpenInvoiceData.customerPhone}\n`;
+            if (currentOpenInvoiceData.address) text += `*العنوان/المنطقة:* ${currentOpenInvoiceData.address}\n`;
+            text += `*البائع:* ${currentOpenInvoiceData.seller}\n`;
             text += `*التاريخ:* ${currentOpenInvoiceData.date}\n------------------------------------\n*الأصناف:*\n`;
             text += currentOpenInvoiceData.itemsText;
             text += `------------------------------------\n*إجمالي المنتجات:* ${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
