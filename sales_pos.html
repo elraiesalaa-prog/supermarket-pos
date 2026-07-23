@@ -47,7 +47,7 @@
 <select id="product" class="border p-2 w-full mb-3"></select>
 
 <div class="flex gap-2 mb-3">
-<input id="price"placeholder="سعر البيع"type="number"step="0.01"class="border p-2 w-full"/>
+<input id="price" placeholder="سعر البيع" type="number" step="0.01" class="border p-2 w-full"/>
 <input id="stock" class="border p-2 w-full" placeholder="المخزون" readonly/>
 </div>
 
@@ -176,23 +176,34 @@ select.appendChild(op)
 })
 }
 
-/* تحميل المنتجات */
+/* تحميل المنتجات - التي كميتها أكبر من 0 فقط */
 async function loadProducts(){
 const {data,error} = await supabase
 .from("products")
 .select("id_product,product_name,seal_price,qte_in_stock")
+.gt("qte_in_stock", 0) // 👈 عدم عرض المنتجات التي نفدت (0 أو أقل)
 
 if(error){ alert(error.message); return }
 
-products = data
+products = data || []
 
 let select = document.getElementById("product")
 select.innerHTML = ""
 
-data.forEach(p=>{
+if(products.length === 0) {
+let op = document.createElement("option")
+op.value = ""
+op.textContent = "لا توجد منتجات متوفرة بالمخزن"
+select.appendChild(op)
+document.getElementById("price").value = ""
+document.getElementById("stock").value = "0"
+return
+}
+
+products.forEach(p=>{
 let op = document.createElement("option")
 op.value = p.id_product
-op.textContent = p.product_name
+op.textContent = `${p.product_name} (المتوفر: ${p.qte_in_stock})`
 select.appendChild(op)
 })
 
@@ -205,7 +216,11 @@ window.showProduct = function(){
 let id = document.getElementById("product").value
 let p = products.find(x=>x.id_product==id)
 
-if(!p) return
+if(!p) {
+document.getElementById("price").value = ""
+document.getElementById("stock").value = "0"
+return
+}
 
 document.getElementById("price").value = p.seal_price
 document.getElementById("stock").value = p.qte_in_stock
@@ -241,13 +256,18 @@ window.addItem = function(){
     let productId = document.getElementById("product").value;
     let qte = parseFloat(document.getElementById("qte").value);
     
-    // قراءة السعر الحالي من حقل الإدخال مباشرة (حتى لو تم تعديله يدوياً)
+    // قراءة السعر الحالي من حقل الإدخال مباشرة
     let currentPrice = parseFloat(document.getElementById("price").value);
 
     let product = products.find(p => p.id_product == productId);
 
+    if(!product){
+        alert("يرجى اختيار منتج متوفر");
+        return;
+    }
+
     if(!qte || qte <= 0){
-        alert("ادخل الكمية");
+        alert("ادخل الكمية الصحيحة");
         return;
     }
 
@@ -256,8 +276,13 @@ window.addItem = function(){
         return;
     }
 
+    if(product.qte_in_stock <= 0){
+        alert("عذراً، هذا المنتج نفد من المخزن!");
+        return;
+    }
+
     if(qte > product.qte_in_stock){
-        alert("الكمية أكبر من المخزون");
+        alert(`الكمية المتاحة في المخزن هي (${product.qte_in_stock}) فقط`);
         return;
     }
 
@@ -457,11 +482,11 @@ window.saveInvoice = async function(){
             }]);
     }
 
-    alert(`تمت عملية البيع بنجاح! رقم الفاتورة: ${orderId}`);
+    alert(`تمت عملية البيع بنجاح! رقم الفاتورة: #${orderId}`);
     
     cart = [];
     window.renderCart();
-    await loadProducts();
+    await loadProducts(); // إعادة تحميل المنتجات لتحديث المخزون وإخفاء ما نفد بعد البيع
     btn.disabled = false;
 };
 
