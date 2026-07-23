@@ -252,7 +252,6 @@
             }
         }
 
-        // دالة الذكاء الاصطناعي لمطابقة طلب المتجر بالفاتورة المعتمدة بدقة متناهية
         function findMatchedWebOrder(posOrder, posItems) {
             const posId = String(posOrder.id_order);
             const strSources = [
@@ -262,21 +261,18 @@
                 ...(posItems || []).map(i => i.description)
             ].filter(Boolean).join(" ");
 
-            // 1. البحث عن طريق رقم الطلب المستخرج من النصوص
             const foundNumbers = strSources.match(/\d+/g) || [];
             for (let num of foundNumbers) {
                 const match = webOrdersList.find(w => String(w.id_web_order) === String(num));
                 if (match) return match;
             }
 
-            // 2. المطابقة عن طريق اسم العميل إن وجد
             if (posOrder.first_name || (posItems[0] && posItems[0].first_name)) {
                 const nameToMatch = (posOrder.first_name || posItems[0].first_name).trim().toLowerCase();
                 const match = webOrdersList.find(w => w.client_name && w.client_name.trim().toLowerCase().includes(nameToMatch));
                 if (match) return match;
             }
 
-            // 3. المطابقة عن طريق رقم الهاتف المسجل في orders_o
             if (posOrder.mob) {
                 const cleanMob = String(posOrder.mob).replace(/\D/g, '');
                 if (cleanMob.length >= 8) {
@@ -295,7 +291,6 @@
                 const realInvoiceNo = String(pos.id_order);
                 const posItems = posDetailsMap.get(realInvoiceNo) || [];
                 
-                // البحث عن السجل المقابل في طلبات المتجر web_orders
                 const webOrder = findMatchedWebOrder(pos, posItems);
 
                 if (webOrder) {
@@ -303,10 +298,8 @@
                     const webItems = webDetailsMap.get(wid) || [];
                     const finalItems = webItems.length > 0 ? webItems : posItems;
 
-                    // حساب مجموع الأصناف
                     const itemsTotal = finalItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
 
-                    // جلب الشحن بدقة: من orders_o أو الفرق من إجمالي طلب المتجر
                     let shippingCost = Number(pos.shipping_cost || 0);
                     const webTotalAmount = Number(webOrder.total_amount || 0);
 
@@ -316,13 +309,12 @@
 
                     const finalGrandTotal = webTotalAmount > 0 ? webTotalAmount : (itemsTotal + shippingCost);
 
-                    // جلب الهاتف والعنوان بشكل مباشر مع الخطة البديلة
                     const phone = webOrder.client_phone || pos.mob || "غير مدون";
                     const address = webOrder.client_address || "غير مدون";
 
                     unifiedList.push({
                         uniqueKey: `INV_${realInvoiceNo}`,
-                        officialInvoiceNo: realInvoiceNo, // الرقم الحقيقي المعتمد id_order
+                        officialInvoiceNo: realInvoiceNo,
                         idWebOrder: wid,
                         source: 'WEB',
                         sourceLabel: '🌐 المتجر الإلكتروني (معتمد)',
@@ -337,7 +329,6 @@
                         items: finalItems
                     });
                 } else {
-                    // فاتورة من النظام الداخلي مباشرة
                     const custObj = customerMap.get(String(pos.customer_id));
                     let custName = "عميل محلي";
                     
@@ -369,7 +360,6 @@
                 }
             });
 
-            // الترتيب من الأحدث للأقدم
             unifiedList.sort((a, b) => new Date(b.date) - new Date(a.date));
         }
 
@@ -411,7 +401,7 @@
             if (!invoice) return alert("الفاتورة غير موجودة");
 
             let rows = "";
-            let itemsTextForShare = "";
+            let rawItemsList = [];
 
             invoice.items.forEach(item => {
                 const qty = Number(item.qte || 1);
@@ -433,7 +423,7 @@
                     <td style="padding:5px 4px; text-align:center; font-weight:bold; color:#2563eb;">${money(lineTotal)}</td>
                 </tr>`;
 
-                itemsTextForShare += `- ${prodName} (الكمية: ${qty} | السعر: ${money(price)} ج.س)\n`;
+                rawItemsList.push({ name: prodName, qty: qty, price: price, total: lineTotal });
             });
 
             const invoiceObj = new Date(invoice.date);
@@ -448,11 +438,11 @@
                 customerPhone: invoice.customerPhone,
                 address: invoice.address,
                 seller: invoice.seller,
-                date: dateStr,
-                itemsText: itemsTextForShare,
+                date: `${dateStr} - ${timeStr}`,
+                itemsList: rawItemsList,
                 shipping: invoice.shipping,
                 subtotal: invoice.itemsTotal,
-                total: money(invoice.totalAmount)
+                totalAmount: invoice.totalAmount
             };
 
             document.getElementById("invoiceContent").innerHTML = `
@@ -535,17 +525,37 @@
             modal.classList.add("flex");
         }
 
+        // دالة توليد نص الفاتورة المنظم والمصمم للواتساب بشكل جدول أنيق
         function generateShareText() {
             if (!currentOpenInvoiceData) return "";
-            let text = `*فاتورة مبيعات معتمدة (#${currentOpenInvoiceData.officialNo}) - مؤسسة ABM *\n------------------------------------\n`;
-            text += `*العميل:* ${currentOpenInvoiceData.customerName}\n`;
-            if (currentOpenInvoiceData.customerPhone) text += `*الهاتف:* ${currentOpenInvoiceData.customerPhone}\n`;
-            if (currentOpenInvoiceData.address) text += `*العنوان/المنطقة:* ${currentOpenInvoiceData.address}\n`;
-            text += `*البائع:* ${currentOpenInvoiceData.seller}\n`;
-            text += `*التاريخ:* ${currentOpenInvoiceData.date}\n------------------------------------\n*الأصناف:*\n`;
-            text += currentOpenInvoiceData.itemsText;
-            text += `------------------------------------\n*إجمالي المنتجات:* ${money(currentOpenInvoiceData.subtotal)} ج.س\n`;
-            text += `*الشحن:* ${money(currentOpenInvoiceData.shipping)} ج.س\n*الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.س\n\nشكراً لتعاملكم معنا 🌹`;
+            
+            const data = currentOpenInvoiceData;
+            
+            let text = `🧾 *مؤسسة ABM - فاتورة مبيعات معتمدة*\n`;
+            text += `==============================\n`;
+            text += `📄 *رقم الفاتورة:* #${data.officialNo}\n`;
+            if (data.webOrderId) text += `🌐 *مرجع المتجر:* #${data.webOrderId}\n`;
+            text += `📅 *التاريخ:* ${data.date}\n`;
+            text += `👤 *العميل:* ${data.customerName}\n`;
+            text += `📞 *الهاتف:* ${data.customerPhone}\n`;
+            text += `📍 *العنوان:* ${data.address}\n`;
+            text += `👨‍💼 *البائع:* ${data.seller}\n`;
+            text += `==============================\n`;
+            text += `📦 *تفاصيل الأصناف والمشتريات:*\n\n`;
+
+            data.itemsList.forEach((item, index) => {
+                text += `*${index + 1}. ${item.name}*\n`;
+                text += `   ↳  الكمية: *${item.qty}* × السعر: *${money(item.price)}* = *${money(item.total)} ج.س*\n`;
+            });
+
+            text += `----------------------------------------------\n`;
+            text += `💵 *إجمالي المنتجات:* ${money(data.subtotal)} ج.س\n`;
+            text += `🚚 *رسوم الشحن:* ${money(data.shipping)} ج.س\n`;
+            text += `==============================\n`;
+            text += `💰 *الإجمالي الكلي النهائي: ${money(data.totalAmount)} ج.س*\n`;
+            text += `==============================\n\n`;
+            text += `✨ *شكراً لتعاملكم معنا! نتمنى لكم يوماً سعيداً 🌹*`;
+
             return text;
         }
 
@@ -559,7 +569,7 @@
 
         function copyInvoiceText() {
             if (!currentOpenInvoiceData) return alert("الرجاء اختيار فاتورة أولاً!");
-            navigator.clipboard.writeText(generateShareText()).then(() => alert("📋 تم نسخ النص!")).catch(() => alert("فشل نسخ النص."));
+            navigator.clipboard.writeText(generateShareText()).then(() => alert("📋 تم نسخ الفاتورة بنفس التنسيق بنجاح!")).catch(() => alert("فشل نسخ النص."));
         }
 
         function updateStats() {
