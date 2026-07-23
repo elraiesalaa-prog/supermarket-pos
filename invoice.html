@@ -334,8 +334,14 @@
                     if (posItems.length > 0 && posItems[0].first_name) {
                         custName = posItems[0].first_name;
                     } else if (custObj) {
-                        custName = custObj.first_name || custObj.name || "عميل محلي";
+                        custName = custObj.first_name || "عميل محلي";
                     }
+
+                    // جلب الهاتف من pos.mob أو custObj.tel أو custObj.whatsapp
+                    const custPhone = pos.mob || custObj?.tel || custObj?.whatsapp || "غير مسجل";
+                    
+                    // جلب البريد/العنوان المتاح من البيانات
+                    const custAddress = pos.address || pos.city || custObj?.email || "مبيعات مباشرة (النظام الداخلي)";
 
                     const itemsTotal = posItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
                     const shipping = Number(pos.shipping_cost || 0);
@@ -347,8 +353,8 @@
                         source: 'POS',
                         sourceLabel: '🏢 النظام الداخلي',
                         customerName: custName,
-                        customerPhone: pos.mob || custObj?.phone || "غير مسجل",
-                        address: custObj?.address || custObj?.city || "غير مسجل",
+                        customerPhone: custPhone,
+                        address: custAddress,
                         date: pos.date_order || new Date().toISOString(),
                         seller: pos.seal_man || "مؤسسة ABM",
                         shipping: shipping,
@@ -443,7 +449,7 @@
                     </div>
                     <div style="margin-top:3px;">🧑‍💼 <b>العميل :</b> ${invoice.customerName}</div>
                     <div>📞 <b>الهاتف :</b> ${invoice.customerPhone}</div>
-                    <div>📍 <b>العنوان :</b> ${invoice.address}</div>
+                    <div>📍 <b>العنوان/الملاحظات :</b> ${invoice.address}</div>
                 </div>
 
                 <div class="items-scroll-area" style="padding:4px; overflow-y:auto; max-height: 240px;">
@@ -507,13 +513,11 @@
             modal.classList.add("flex");
         }
 
-        // دالة تحويل الفاتورة بصورتها الملونة وتفريغها لـ Web Share المباشر
         async function shareInvoiceDirectly() {
             const captureArea = document.getElementById("captureArea");
             if (!captureArea || !currentOpenInvoiceData) return alert("لا توجد فاتورة متاحة للمشاركة");
 
             try {
-                // إظهار الجدول بالكامل قبل الصورة
                 const scrollable = captureArea.querySelector('.items-scroll-area');
                 if (scrollable) {
                     scrollable.style.maxHeight = 'none';
@@ -530,7 +534,6 @@
                 canvas.toBlob(async (blob) => {
                     const file = new File([blob], `فاتورة_${currentOpenInvoiceData.officialInvoiceNo}.png`, { type: 'image/png' });
                     
-                    // تحقق من دعم المتصفح لمشاركة الملفات مباشرة
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         try {
                             await navigator.share({
@@ -542,12 +545,11 @@
                             console.log("المشاركة لغيت من قبل المستخدم");
                         }
                     } else {
-                        // كخيار احتياطي إذا كان المتصفح لا يدعم المشاركة المباشرة (مثل الكمبيوتر القديم)
                         const a = document.createElement("a");
                         a.href = URL.createObjectURL(blob);
                         a.download = `فاتورة_${currentOpenInvoiceData.officialInvoiceNo}.png`;
                         a.click();
-                        alert("⚠️ متصفحك لا يدعم المشاركة المباشرة، تم تحميل صورة الفاتورة الملونة بجهازك لترسلها يدوياً للعميل.");
+                        alert("⚠️ تم تنزيل صورة الفاتورة الملونة بجهازك لترسلها يدوياً للعميل.");
                     }
                 });
 
