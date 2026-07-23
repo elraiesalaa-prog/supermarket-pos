@@ -7,7 +7,7 @@
     <title>نظام الفواتير المعتمدة والمدمجة</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- مكتبة تحويل التصميم إلى صورة رسمية ممتازة -->
+    <!-- مكتبة تحويل التصميم إلى صورة عالية الجودة -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght=400;600;700&display=swap" rel="stylesheet">
     
@@ -124,8 +124,8 @@
             <div id="invoiceContent" class="bg-slate-200 p-2 overflow-hidden flex justify-center grow"></div>
             
             <div class="bg-white p-3 shrink-0 border-t flex flex-wrap gap-2 justify-center no-print">
-                <button onclick="shareAsImageWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl font-bold text-xs transition flex items-center gap-1">
-                    🖼️ إرسال صورة ملونة للواتساب
+                <button onclick="shareInvoiceDirectly()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl font-bold text-xs transition flex items-center gap-1">
+                    📱 مشاركة صورة الفاتورة الملونة
                 </button>
                 <button onclick="printInvoice()" class="bg-blue-700 hover:bg-blue-800 text-white px-3 py-2 rounded-xl font-bold text-xs transition">🖨 طباعة</button>
                 <button onclick="closeInvoice()" class="bg-gray-200 hover:bg-gray-300 text-slate-800 px-3 py-2 rounded-xl font-bold text-xs transition">إغلاق</button>
@@ -507,13 +507,13 @@
             modal.classList.add("flex");
         }
 
-        // دالة توليد صورة الفاتورة الملونة بجميع تفاصيلها وإتاحة فتح الواتساب لترفق للعميل فوراً
-        async function shareAsImageWhatsApp() {
+        // دالة تحويل الفاتورة بصورتها الملونة وتفريغها لـ Web Share المباشر
+        async function shareInvoiceDirectly() {
             const captureArea = document.getElementById("captureArea");
             if (!captureArea || !currentOpenInvoiceData) return alert("لا توجد فاتورة متاحة للمشاركة");
 
             try {
-                // إزالة حدود التمرير مؤقتاً لتظهر كاملة وبأفضل جودة
+                // إظهار الجدول بالكامل قبل الصورة
                 const scrollable = captureArea.querySelector('.items-scroll-area');
                 if (scrollable) {
                     scrollable.style.maxHeight = 'none';
@@ -527,26 +527,33 @@
                     scrollable.style.overflowY = 'auto';
                 }
 
-                const image = canvas.toDataURL("image/png");
-                
-                // تنزيل الصورة
-                const a = document.createElement("a");
-                a.href = image;
-                a.download = `فاتورة_${currentOpenInvoiceData.officialInvoiceNo}.png`;
-                a.click();
-
-                // فتح الواتساب مع العميل مباشرةً
-                let phone = (currentOpenInvoiceData.customerPhone || "").replace(/\D/g, '');
-                if (phone.startsWith('1')) { phone = '249' + phone.substring(1); }
-
-                setTimeout(() => {
-                    alert("✅ تم تنزيل صورة الفاتورة الملونة! سيتفتح الواتساب الآن، قم بإرفاق الصورة المحفوظة للعميل.");
-                    window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent("مرحباً، مرفق لكم فاتورة مشترياتكم الرسمية من مؤسسة ABM 🌹")}`, '_blank');
-                }, 600);
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], `فاتورة_${currentOpenInvoiceData.officialInvoiceNo}.png`, { type: 'image/png' });
+                    
+                    // تحقق من دعم المتصفح لمشاركة الملفات مباشرة
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: `فاتورة #${currentOpenInvoiceData.officialInvoiceNo}`,
+                                text: `مرفق لكم الفاتورة الرسمية من مؤسسة ABM`
+                            });
+                        } catch (err) {
+                            console.log("المشاركة لغيت من قبل المستخدم");
+                        }
+                    } else {
+                        // كخيار احتياطي إذا كان المتصفح لا يدعم المشاركة المباشرة (مثل الكمبيوتر القديم)
+                        const a = document.createElement("a");
+                        a.href = URL.createObjectURL(blob);
+                        a.download = `فاتورة_${currentOpenInvoiceData.officialInvoiceNo}.png`;
+                        a.click();
+                        alert("⚠️ متصفحك لا يدعم المشاركة المباشرة، تم تحميل صورة الفاتورة الملونة بجهازك لترسلها يدوياً للعميل.");
+                    }
+                });
 
             } catch (e) {
                 console.error(e);
-                alert("حدث خطأ أثناء إنشاء صورة الفاتورة");
+                alert("حدث خطأ أثناء إعداد صورة الفاتورة");
             }
         }
 
