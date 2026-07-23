@@ -11,8 +11,8 @@
         body { font-family: 'Cairo', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 p-4 md:p-8 pb-24 md:pb-8"> <!-- تم إضافة padding أسفل الصفحة لمنع حجب المحتوى بالشريط العائم في الموبايل -->
- 
+<body class="bg-slate-50 text-slate-800 p-4 md:p-8 pb-24 md:pb-8">
+
     <div class="max-w-4xl mx-auto">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-xl md:text-3xl font-extrabold text-slate-800 flex items-center gap-2">🛒 سلة المشتريات</h1>
@@ -36,7 +36,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1">رقم الهاتف للاتصال</label>
-                    <input type="tel" id="clientPhone" placeholder="+249122324890" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 text-left" dir="ltr">
+                    <input type="tel" id="clientPhone" placeholder="0912345678 أو +249122324890" class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400 text-left" dir="ltr">
                 </div>
                 
                 <!-- اختيار المنطقة ديناميكياً من قاعدة البيانات -->
@@ -56,20 +56,20 @@
                 <div class="border-t pt-3 space-y-2 text-sm font-semibold text-slate-600">
                     <div class="flex justify-between items-center">
                         <span>إجمالي المنتجات:</span>
-                        <span id="productsTotal">0.00 ج.م</span>
+                        <span id="productsTotal">0.00 ج.س</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span>تكلفة التوصيل للمنطقة:</span>
-                        <span id="shippingTotal" class="text-amber-600 font-bold">0.00 ج.م</span>
+                        <span id="shippingTotal" class="text-amber-600 font-bold">0.00 ج.س</span>
                     </div>
                     <div class="flex justify-between items-center font-bold text-lg border-t pt-2 mt-1">
                         <span class="text-slate-800">إجمالي الحساب النهائي:</span>
-                        <span id="cartTotal" class="text-emerald-600">0.00 ج.م</span>
+                        <span id="cartTotal" class="text-emerald-600">0.00 ج.س</span>
                     </div>
                 </div>
 
                 <button onclick="submitOrder()" id="btnSubmit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition cursor-pointer">
-                    🛍️ إارسال الطلب لنظام المبيعات
+                    🛍️ إرسال الطلب لنظام المبيعات
                 </button>
 
                 <!-- قسم التواصل المباشر الجانبي (لشاشات الكمبيوتر والتابلت) -->
@@ -80,7 +80,7 @@
                             💬 واتساب الإدارة
                         </a>
                         <a href="tel:+249122324890" class="flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition text-center">
-                            📞 اتصال هاتي
+                            📞 اتصال هاتفي
                         </a>
                     </div>
                 </div>
@@ -88,7 +88,7 @@
         </div>
     </div>
 
-    <!-- شريط تواصل عائم وثابت أسفل الشاشة (ممتاز جداً لمستخدمي الهواتف الذكية) -->
+    <!-- شريط تواصل عائم وثابت أسفل الشاشة (ممتاز لمستخدمي الهواتف الذكية) -->
     <div class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 p-3 shadow-xl z-50 md:hidden flex items-center justify-between gap-3">
         <div class="text-right">
             <p class="text-[10px] font-bold text-slate-400">للاستفسار وتفاصيل المنتجات:</p>
@@ -115,7 +115,19 @@
         let currentShippingCost = 0;
         let globalTotal = 0; 
 
-        // 1. جلب قائمة المحافظات/المناطق ديناميكياً من جدول الأسطر المنفصلة
+        // دالة لمعالجة وتنسيق رقم الهاتف السوداني
+        function formatSudanPhone(phoneInput) {
+            let cleanNumber = phoneInput.replace(/\D/g, ''); // إزالة الأشكال والمسافات
+            if (cleanNumber.startsWith('0')) {
+                cleanNumber = cleanNumber.substring(1);
+            }
+            if (!cleanNumber.startsWith('249')) {
+                cleanNumber = '249' + cleanNumber;
+            }
+            return '+' + cleanNumber;
+        }
+
+        // 1. جلب قائمة المحافظات/المناطق ديناميكياً
         async function fetchRegions() {
             try {
                 const { data, error } = await supabaseClient
@@ -133,17 +145,17 @@
                         optionsHTML += `<option value="${region.region_name}" data-cost="${region.shipping_cost}">${region.region_name} (${Number(region.shipping_cost).toFixed(2)} ج.س)</option>`;
                     });
                 } else {
-                    optionsHTML = '<option value="شحن عام" data-cost="50">شحن موحد (4000.00 ج.س)</option>';
+                    optionsHTML = '<option value="شحن عام" data-cost="4000">شحن موحد (4000.00 ج.س)</option>';
                 }
                 
                 regionSelect.innerHTML = optionsHTML;
             } catch (err) {
                 console.error("خطأ في جلب مناطق الشحن:", err);
-                document.getElementById("clientRegion").innerHTML = '<option value="شحن عام" data-cost="50">شحن موحد (4000.00 ج.س)</option>';
+                document.getElementById("clientRegion").innerHTML = '<option value="شحن عام" data-cost="4000">شحن موحد (4000.00 ج.س)</option>';
             }
         }
 
-        // 2. تحديث قيمة الشحن والإجمالي الكلي فور تغير اختيار العميل للمنطقة
+        // 2. تحديث قيمة الشحن والإجمالي الكلي
         function updateShippingCost() {
             const selectEl = document.getElementById("clientRegion");
             const selectedOption = selectEl.options[selectEl.selectedIndex];
@@ -191,7 +203,7 @@
             calculateFinalTotals();
         }
 
-        // 4. تجميعة الحسابات وتحديث أرقام الفاتورة في واجهة المستخدم
+        // 4. تجميعة الحسابات وتحديث أرقام الفاتورة
         function calculateFinalTotals() {
             globalTotal = productsSubtotal + currentShippingCost;
             
@@ -213,17 +225,20 @@
             renderCart();
         }
 
-        // 5. رفع الطلب المعتمد متضمناً اسم المنطقة وتكلفة شحنها الصحيحة
+        // 5. رفع الطلب المعتمد وتنسيق رقم الهاتف وتجهيز رسالة الواتساب
         async function submitOrder() {
             const name = document.getElementById("clientName").value.trim();
-            const phone = document.getElementById("clientPhone").value.trim();
+            const rawPhone = document.getElementById("clientPhone").value.trim();
             const region = document.getElementById("clientRegion").value;
             const addressDetails = document.getElementById("clientAddress").value.trim();
 
-            if(!name || !phone || !region || !addressDetails) {
+            if(!name || !rawPhone || !region || !addressDetails) {
                 return alert("الرجاء تحديد منطقة الشحن وتعبئة كامل بيانات العميل!");
             }
             if(cart.length === 0) return alert("السلة فارغة!");
+
+            // تنسيق رقم الهاتف ليحتوي دائماً على المفتاح الدولي (+249)
+            const phone = formatSudanPhone(rawPhone);
 
             const btn = document.getElementById("btnSubmit");
             btn.disabled = true;
@@ -267,14 +282,20 @@
 
                 if (detailsError) throw detailsError;
 
-                alert(`🎉 تم استلام طلبك بنجاح وسيتصل بك مندوبنا للتأكيد.\nرقم الطلب: #${newWebOrderId}`);
+                // 4. إخلاء السلة والتوجيه لواتساب الإدارة
                 localStorage.removeItem('customerCart');
-                window.location.href = "store.html";
+                
+                const storeWhatsapp = "249918237606"; // رقم واتساب المتجر بدون +
+                const whatsappMsg = encodeURIComponent(`مرحباً، تم إرسال طلب جديد من الموقع:\n\n📦 رقم الطلب: #${newWebOrderId}\n👤 الاسم: ${name}\n📞 الهاتف: ${phone}\n📍 العنوان: ${fullAddress}\n💵 الإجمالي: ${globalTotal.toFixed(2)} ج.س`);
+
+                alert(`🎉 تم استلام طلبك بنجاح وسيتصل بك مندوبنا للتأكيد.\nرقم الطلب: #${newWebOrderId}`);
+
+                // فتح واتساب لإرسال ملخص الطلب
+                window.location.href = `https://wa.me/${storeWhatsapp}?text=${whatsappMsg}`;
 
             } catch (error) {
                 console.error(error);
                 alert("خطأ أثناء إرسال الطلب: " + error.message);
-            } finally {
                 btn.disabled = false;
                 btn.innerText = "🛍️ إرسال الطلب لنظام المبيعات";
             }
