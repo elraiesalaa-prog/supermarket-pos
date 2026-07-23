@@ -330,7 +330,7 @@
                         customerPhone: phone,
                         address: address,
                         date: pos.date_order || webOrder.date_created || new Date().toISOString(),
-                        seller: pos.seal_man || "مؤسسة علاء الدين",
+                        seller: pos.seal_man || "مؤسسة ABM",
                         shipping: shippingCost,
                         itemsTotal: itemsTotal,
                         totalAmount: finalGrandTotal,
@@ -339,12 +339,12 @@
                 } else {
                     // فاتورة من النظام الداخلي مباشرة
                     const custObj = customerMap.get(String(pos.customer_id));
-                    let custName = "عميل نقدي";
+                    let custName = "عميل محلي";
                     
                     if (posItems.length > 0 && posItems[0].first_name) {
                         custName = posItems[0].first_name;
                     } else if (custObj) {
-                        custName = custObj.first_name || custObj.name || "عميل نقدي";
+                        custName = custObj.first_name || custObj.name || "عميل محلي";
                     }
 
                     const itemsTotal = posItems.reduce((sum, i) => sum + (Number(i.qte || 1) * Number(i.price || 0)), 0);
@@ -357,10 +357,10 @@
                         source: 'POS',
                         sourceLabel: '🏢 النظام الداخلي',
                         customerName: custName,
-                        customerPhone: pos.mob || custObj?.phone || "غير مدون",
-                        address: custObj?.address || custObj?.city || "غير مدون",
+                        customerPhone: pos.mob || custObj?.phone || "غير مسجل",
+                        address: custObj?.address || custObj?.city || "غير مسجل",
                         date: pos.date_order || new Date().toISOString(),
-                        seller: pos.seal_man || "مؤسسة علاء الدين",
+                        seller: pos.seal_man || "مؤسسة ABM",
                         shipping: shipping,
                         itemsTotal: itemsTotal,
                         totalAmount: itemsTotal + shipping,
@@ -401,7 +401,7 @@
                     </td>
                     <td class="p-3 font-medium text-slate-800">${item.customerName}</td>
                     <td class="p-3 text-center"><span class="text-xs px-2 py-0.5 rounded font-bold ${badgeColor}">${item.sourceLabel}</span></td>
-                    <td class="p-3 font-bold text-green-600 text-center">${money(item.totalAmount)} ج.م</td>
+                    <td class="p-3 font-bold text-green-600 text-center">${money(item.totalAmount)} ج.س</td>
                 </tr>`;
             });
         }
@@ -433,7 +433,7 @@
                     <td style="padding:5px 4px; text-align:center; font-weight:bold; color:#2563eb;">${money(lineTotal)}</td>
                 </tr>`;
 
-                itemsTextForShare += `- ${prodName} (الكمية: ${qty} | السعر: ${money(price)} ج.م)\n`;
+                itemsTextForShare += `- ${prodName} (الكمية: ${qty} | السعر: ${money(price)} ج.س)\n`;
             });
 
             const invoiceObj = new Date(invoice.date);
@@ -459,7 +459,7 @@
             <div style="width:100%; max-width:80mm; background:#fff; border:1px solid #2563eb; border-radius:10px; overflow:hidden; font-family:Cairo,sans-serif; font-size:11px; color:#1e293b; display:flex; flex-direction:column; max-height:100%;">
                 
                 <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#fff; padding:8px 10px; text-align:center; shrink:0;">
-                    <div style="font-size:16px; font-weight:bold;">مؤسسة علاء الدين</div>
+                    <div style="font-size:16px; font-weight:bold;">مؤسسة ABM</div>
                     <div style="font-size:11px; margin-top:1px;">فاتورة مبيعات رقم #${invoice.officialInvoiceNo}</div>
                     ${invoice.idWebOrder ? `<div style="font-size:9px; opacity:0.85;">(مرجع طلب المتجر: #${invoice.idWebOrder})</div>` : ''}
                 </div>
@@ -491,16 +491,16 @@
                 <div style="padding:8px 10px; background:#f1f5f9; border-top:1px solid #cbd5e1; font-size:10.5px; line-height:1.6; shrink:0;">
                     <div style="display:flex; justify-content:space-between; color:#475569;">
                         <span>إجمالي المنتجات:</span>
-                        <span>${money(invoice.itemsTotal)} ج.م</span>
+                        <span>${money(invoice.itemsTotal)} ج.س</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; color:#475569; margin-bottom:3px;">
                         <span>رسوم الشحن والخدمة:</span>
-                        <span>+ ${money(invoice.shipping)} ج.م</span>
+                        <span>+ ${money(invoice.shipping)} ج.س</span>
                     </div>
                     
                     <div style="display:flex; justify-content:space-between; align-items:center; background:#1e40af; color:#fff; padding:6px 10px; border-radius:6px; font-size:12.5px; font-weight:bold;">
                         <span>الإجمالي الكلي</span>
-                        <span>${money(invoice.totalAmount)} ج.م</span>
+                        <span>${money(invoice.totalAmount)} ج.س</span>
                     </div>
                 </div>
 
@@ -524,10 +524,10 @@
                     <p><b>البائع المسؤول:</b> ${invoice.seller}</p>
                     <p><b>تاريخ الفاتورة:</b> ${dateStr} - ${timeStr}</p>
                     <div class="border-t pt-3 text-sm text-gray-600 space-y-1">
-                        <p>مجموع المنتجات: ${money(invoice.itemsTotal)} ج.م</p>
-                        <p>رسوم الشحن: ${money(invoice.shipping)} ج.م</p>
+                        <p>مجموع المنتجات: ${money(invoice.itemsTotal)} ج.س</p>
+                        <p>رسوم الشحن: ${money(invoice.shipping)} ج.س</p>
                     </div>
-                    <p class="text-2xl font-bold text-blue-700 pt-2 border-t">الإجمالي الكلي: ${money(invoice.totalAmount)} ج.م</p>
+                    <p class="text-2xl font-bold text-blue-700 pt-2 border-t">الإجمالي الكلي: ${money(invoice.totalAmount)} ج.س</p>
                 </div>`;
 
             const modal = document.getElementById("invoiceModal");
@@ -537,15 +537,15 @@
 
         function generateShareText() {
             if (!currentOpenInvoiceData) return "";
-            let text = `*فاتورة مبيعات معتمدة (#${currentOpenInvoiceData.officialNo}) - مؤسسة علاء الدين*\n------------------------------------\n`;
+            let text = `*فاتورة مبيعات معتمدة (#${currentOpenInvoiceData.officialNo}) - مؤسسة ABM *\n------------------------------------\n`;
             text += `*العميل:* ${currentOpenInvoiceData.customerName}\n`;
             if (currentOpenInvoiceData.customerPhone) text += `*الهاتف:* ${currentOpenInvoiceData.customerPhone}\n`;
             if (currentOpenInvoiceData.address) text += `*العنوان/المنطقة:* ${currentOpenInvoiceData.address}\n`;
             text += `*البائع:* ${currentOpenInvoiceData.seller}\n`;
             text += `*التاريخ:* ${currentOpenInvoiceData.date}\n------------------------------------\n*الأصناف:*\n`;
             text += currentOpenInvoiceData.itemsText;
-            text += `------------------------------------\n*إجمالي المنتجات:* ${money(currentOpenInvoiceData.subtotal)} ج.م\n`;
-            text += `*الشحن:* ${money(currentOpenInvoiceData.shipping)} ج.م\n*الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.م\n\nشكراً لتعاملكم معنا 🌹`;
+            text += `------------------------------------\n*إجمالي المنتجات:* ${money(currentOpenInvoiceData.subtotal)} ج.س\n`;
+            text += `*الشحن:* ${money(currentOpenInvoiceData.shipping)} ج.س\n*الإجمالي الكلي:* ${currentOpenInvoiceData.total} ج.س\n\nشكراً لتعاملكم معنا 🌹`;
             return text;
         }
 
@@ -573,7 +573,7 @@
                 if (item.source === 'WEB') webCount++;
             });
 
-            document.getElementById("sales").innerText = money(grandTotalSales) + " ج.م";
+            document.getElementById("sales").innerText = money(grandTotalSales) + " ج.س";
             document.getElementById("invCount").innerText = unifiedList.length;
             document.getElementById("posInvCount").innerText = posCount;
             document.getElementById("webInvCount").innerText = webCount;
