@@ -553,7 +553,7 @@
             if (!currentOpenInvoiceData) return alert("الرجاء اختيار فاتورة أولاً!");
             const shareText = generateShareText();
             let phone = (currentOpenInvoiceData.customerPhone || "").replace(/\D/g, '');
-            if (phone.startsWith('01')) { phone = '20' + phone.substring(1); }
+            if (phone.startsWith('1')) { phone = '249' + phone.substring(1); }
             window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(shareText)}`, '_blank');
         }
 
