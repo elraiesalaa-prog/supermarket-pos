@@ -293,7 +293,7 @@
                 shareText += `- ${i.product_name} (الكمية: ${i.qte} | السعر: ${money(i.price)} ج.س)\n`;
             });
 
-            shareText += `\n💵 مجموع المنتجات: ${money(productsTotal)} ج.س\n🚚 رسوم الشحن: ${money(shippingCost)} ج.س\n💰 الإجمالي النهائي: ${money(grandTotal)} ج.س\n🌹 شكراً لتعاملك مع مؤسسة علاء الدين!`;
+            shareText += `\n💵 مجموع المنتجات: ${money(productsTotal)} ج.س\n🚚 رسوم الشحن: ${money(shippingCost)} ج.س\n💰 الإجمالي النهائي: ${money(grandTotal)} ج.س\n🌹 شكراً لتعاملك مع مؤسسة ABM!`;
 
             const dateObj = new Date(order.date_created);
             const formattedDate = dateObj.toLocaleDateString("ar-EG");
