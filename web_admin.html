@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة تحكم طلبات المتجر وإدارة مناطق الشحن</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم طلبات المتجر وإدارة مناطق وتكلفة الشحن</title>
     <!-- استدعاء المكتبات والخطوط -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -26,7 +27,7 @@
                     <label class="block text-xs text-gray-500 mb-1">تكلفة الشحن (ج.س)</label>
                     <input type="number" id="inputRegionCost" placeholder="أدخل التكلفة..." class="w-full border rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-400">
                 </div>
-                <button onclick="addOrUpdateRegion()" id="btnAddRegion" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition">
+                <button onclick="addOrUpdateRegion()" id="btnAddRegion" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition cursor-pointer">
                     ➕ حفظ المنطقة
                 </button>
             </div>
@@ -56,7 +57,7 @@
     <div class="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow">
         <h1 class="text-2xl font-bold text-slate-800 border-b pb-4 mb-6 flex justify-between items-center">
             <span>📦 إدارة واعتماد طلبات المتجر أونلاين</span>
-            <button onclick="loadWebOrders()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-xl">🔄 تحديث القائمة</button>
+            <button onclick="loadWebOrders()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-xl cursor-pointer">🔄 تحديث القائمة</button>
         </h1>
 
         <div class="overflow-x-auto">
@@ -67,13 +68,14 @@
                         <th class="p-3">العميل</th>
                         <th class="p-3">الهاتف</th>
                         <th class="p-3">العنوان / المنطقة</th>
-                        <th class="p-3">الإجمالي الثابت</th>
+                        <th class="p-3">تكلفة الشحن</th>
+                        <th class="p-3">الإجمالي الكلي</th>
                         <th class="p-3">الحالة</th>
                         <th class="p-3 rounded-l-lg">إجراءات</th>
                     </tr>
                 </thead>
                 <tbody id="ordersTableBody" class="text-sm divide-y divide-gray-100">
-                    <tr><td colspan="7" class="p-8 text-gray-400">جاري تحميل الطلبات...</td></tr>
+                    <tr><td colspan="8" class="p-8 text-gray-400">جاري تحميل الطلبات...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -83,8 +85,8 @@
     <div id="invoiceModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
         <div class="bg-white rounded-2xl shadow-2xl w-[96%] max-w-lg overflow-hidden">
             <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
-                <h2 class="font-bold text-lg">📄 معاينة الفاتورة وخيارات المشاركة</h2>
-                <button onclick="closeInvoiceModal()" class="text-white hover:text-red-400 text-xl font-bold">✕</button>
+                <h2 class="font-bold text-lg">📄 معاينة الفاتورة وتفاصيل الشحن</h2>
+                <button onclick="closeInvoiceModal()" class="text-white hover:text-red-400 text-xl font-bold cursor-pointer">✕</button>
             </div>
             
             <div id="invoicePreviewContent" class="p-6 bg-gray-50 max-h-[60vh] overflow-y-auto flex justify-center">
@@ -92,30 +94,33 @@
             </div>
 
             <div class="p-4 bg-white border-t flex flex-wrap gap-2 justify-center">
-                <button id="btnPrintAction" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
+                <button id="btnPrintAction" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1 cursor-pointer">
                     🖨️ طباعة الفاتورة
                 </button>
-                <button id="btnWhatsappAction" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
+                <button id="btnWhatsappAction" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1 cursor-pointer">
                     📱 واتساب العميل
                 </button>
-                <button id="btnCopyAction" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
+                <button id="btnCopyAction" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1 cursor-pointer">
                     📋 نسخ النص
                 </button>
-                <button onclick="closeInvoiceModal()" class="bg-gray-200 hover:bg-gray-300 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold">
+                <button onclick="closeInvoiceModal()" class="bg-gray-200 hover:bg-gray-300 text-slate-700 px-4 py-2 rounded-xl text-sm font-bold cursor-pointer">
                     إغلاق
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- خامساً: شفرة الـ JavaScript المتوافقة مع بنية الجدول الجديد -->
+    <!-- خامساً: شفرة JavaScript مع دالة تضمين تكلفة الشحن -->
     <script>
-        const supabaseClient = supabase.createClient(
-            "https://vmxbedovoahuggfpcmyk.supabase.co",
-            "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"
-        );
+        const SUPABASE_URL = "https://vmxbedovoahuggfpcmyk.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_y-bZryAIeagBLR0Kg0mw2Q_YwpmadhU"; 
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 1. جلب جميع المناطق المخزنة في قاعدة البيانات (كل سطر يمثل منطقة)
+        let loadedOrdersCache = [];
+        let shippingRatesMap = {}; // خريطة لتخزين أسعار الشحن لكل منطقة
+
+        // 1. جلب قائمة مناطق الشحن وتخزين أسعارها
         async function loadShippingRegions() {
             try {
                 const { data, error } = await supabaseClient
@@ -125,17 +130,23 @@
                 
                 if (error) throw error;
 
+                shippingRatesMap = {}; // إعادة تعيين
                 let html = "";
+                
                 if (!data || data.length === 0) {
                     html = `<tr><td colspan="3" class="p-4 text-gray-400">لم يتم إضافة مناطق شحن بعد.</td></tr>`;
                 } else {
                     data.forEach(row => {
+                        // حفظ السعر بربطه باسم المنطقة
+                        shippingRatesMap[row.region_name.trim()] = Number(row.shipping_cost);
+                        const safeRegionName = escapeHtml(row.region_name);
+
                         html += `
                         <tr class="hover:bg-gray-50">
-                            <td class="p-2.5 font-semibold text-gray-700">${row.region_name}</td>
-                            <td class="p-2.5 font-bold text-blue-600">${Number(row.shipping_cost).toFixed(2)} ج.م</td>
+                            <td class="p-2.5 font-semibold text-gray-700">${safeRegionName}</td>
+                            <td class="p-2.5 font-bold text-blue-600">${Number(row.shipping_cost).toFixed(2)} ج.س</td>
                             <td class="p-2.5">
-                                <button onclick="deleteRegion(${row.id}, '${row.region_name}')" class="text-red-500 hover:text-red-700 font-bold px-2">حذف</button>
+                                <button onclick="deleteRegion(${row.id}, '${safeRegionName}')" class="text-red-500 hover:text-red-700 font-bold px-2 cursor-pointer">حذف</button>
                             </td>
                         </tr>`;
                     });
@@ -146,7 +157,21 @@
             }
         }
 
-        // 2. إضافة منطقة جديدة أو تحديث السعر إذا كانت موجودة مسبقاً (Upsert)
+        // 2. دالة لحساب تكلفة الشحن الخاصة بطلب معين بناءً على عنوانه/منطقته
+        function getShippingCostForAddress(address) {
+            if (!address) return 0;
+            const cleanedAddress = address.trim();
+            
+            // البحث عن المنطقة المطابقة من جدول الشحن
+            for (let region in shippingRatesMap) {
+                if (cleanedAddress.includes(region) || region.includes(cleanedAddress)) {
+                    return shippingRatesMap[region];
+                }
+            }
+            return 0; // في حال لم تطابق أي منطقة
+        }
+
+        // 3. إضافة منطقة جديدة أو تحديث السعر
         async function addOrUpdateRegion() {
             const regionName = document.getElementById("inputRegionName").value.trim();
             const shippingCost = parseFloat(document.getElementById("inputRegionCost").value);
@@ -160,7 +185,6 @@
             btn.innerText = "جاري الحفظ...";
 
             try {
-                // استخدام upsert للبحث عن اسم المنطقة، إذا وجدت يعدلها، وإذا لم توجد ينشئها
                 const { error } = await supabaseClient
                     .from("shipping_settings")
                     .upsert(
@@ -173,7 +197,8 @@
                 alert(`🎉 تم حفظ تكلفة الشحن لمنطقة (${regionName}) بنجاح!`);
                 document.getElementById("inputRegionName").value = "";
                 document.getElementById("inputRegionCost").value = "";
-                loadShippingRegions(); 
+                await loadShippingRegions(); 
+                loadWebOrders(); // إعادة حساب وتحديث جدول الطلبات
             } catch (err) {
                 alert("حدث خطأ أثناء الحفظ: " + err.message);
             } finally {
@@ -182,7 +207,7 @@
             }
         }
 
-        // 3. حذف سطر (منطقة) من الجدول نهائياً باستخدام المعرّف ID
+        // 4. حذف منطقة شحن
         async function deleteRegion(id, regionName) {
             if (!confirm(`هل تريد إزالة منطقة (${regionName}) من قائمة أسعار الشحن؟`)) return;
 
@@ -193,52 +218,68 @@
                     .eq("id", id);
 
                 if (error) throw error;
-                loadShippingRegions();
+                await loadShippingRegions();
+                loadWebOrders();
             } catch(err) {
                 alert("فشل الحذف: " + err.message);
             }
         }
 
-        // 4. دالة جلب وعرض طلبات المتجر
+        // 5. جلب وعرض طلبات المتجر مع حساب تكلفة الشحن
         async function loadWebOrders() {
-            const { data, error } = await supabaseClient
-                .from("web_orders")
-                .select("*")
-                .order("id_web_order", { ascending: false });
+            try {
+                const { data, error } = await supabaseClient
+                    .from("web_orders")
+                    .select("*")
+                    .order("id_web_order", { ascending: false });
 
-            if (error) return alert("خطأ أثناء جلب الطلبات: " + error.message);
+                if (error) throw error;
 
-            let html = "";
-            if (data.length === 0) {
-                html = `<tr><td colspan="7" class="p-8 text-gray-400">لا توجد طلبات جديدة حالياً.</td></tr>`;
-            } else {
-                data.forEach(o => {
-                    let isApproved = o.order_status === "تم الاعتماد والتوصيل";
-                    let badgeClass = isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
-                    
-                    html += `
-                    <tr class="hover:bg-slate-50">
-                        <td class="p-3 font-bold text-blue-600">#${o.id_web_order}</td>
-                        <td class="p-3 font-semibold">${o.client_name}</td>
-                        <td class="p-3">${o.client_phone}</td>
-                        <td class="p-3 text-right max-w-xs truncate">${o.client_address}</td>
-                        <td class="p-3 font-bold text-emerald-600">${Number(o.total_amount).toFixed(2)} ج.م</td>
-                        <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${badgeClass}">${o.order_status}</span></td>
-                        <td class="p-3 flex justify-center gap-2 items-center">
-                            <button onclick="previewAndPrepareInvoice(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount}, '${o.date_created}')" class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-amber-600 font-bold">🔍 عرض ومشاركة</button>
-                            ${!isApproved ? `
-                                <button id="btn-approve-${o.id_web_order}" onclick="approveAndDeductStock(${o.id_web_order}, '${o.client_name}', '${o.client_phone}', '${o.client_address}', ${o.total_amount})" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-emerald-700 font-bold">✔️ اعتماد</button>
-                            ` : `<span class="text-xs text-gray-400 font-bold px-2 py-1 bg-gray-100 rounded-lg">🔒 معتمد</span>`}
-                            <button onclick="deleteOrder(${o.id_web_order})" class="bg-red-500 text-white text-xs px-2 py-1.5 rounded-lg hover:bg-red-600">❌</button>
-                        </td>
-                    </tr>`;
-                });
+                loadedOrdersCache = data || [];
+                let html = "";
+
+                if (loadedOrdersCache.length === 0) {
+                    html = `<tr><td colspan="8" class="p-8 text-gray-400">لا توجد طلبات جديدة حالياً.</td></tr>`;
+                } else {
+                    loadedOrdersCache.forEach(o => {
+                        let isApproved = o.order_status === "تم الاعتماد والتوصيل";
+                        let badgeClass = isApproved ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800";
+                        
+                        // احتساب تكلفة الشحن بناءً على المنطقة والإجمالي الكلي
+                        let shippingCost = getShippingCostForAddress(o.client_address);
+                        let subTotal = Number(o.total_amount || 0);
+                        let grandTotal = subTotal + shippingCost; // الإجمالي المكتمل شاملاً الشحن
+
+                        html += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-bold text-blue-600">#${o.id_web_order}</td>
+                            <td class="p-3 font-semibold">${escapeHtml(o.client_name)}</td>
+                            <td class="p-3">${escapeHtml(o.client_phone)}</td>
+                            <td class="p-3 text-right max-w-xs truncate" title="${escapeHtml(o.client_address)}">${escapeHtml(o.client_address)}</td>
+                            <td class="p-3 font-semibold text-orange-600">${shippingCost.toFixed(2)} ج.س</td>
+                            <td class="p-3 font-bold text-emerald-600">${grandTotal.toFixed(2)} ج.س</td>
+                            <td class="p-3"><span class="px-2 py-1 rounded-full text-xs ${badgeClass}">${escapeHtml(o.order_status)}</span></td>
+                            <td class="p-3 flex justify-center gap-2 items-center">
+                                <button onclick="previewAndPrepareInvoice(${o.id_web_order})" class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-amber-600 font-bold cursor-pointer">🔍 عرض ومشاركة</button>
+                                ${!isApproved ? `
+                                    <button id="btn-approve-${o.id_web_order}" onclick="approveAndDeductStock(${o.id_web_order})" class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-emerald-700 font-bold cursor-pointer">✔️ اعتماد</button>
+                                ` : `<span class="text-xs text-gray-400 font-bold px-2 py-1 bg-gray-100 rounded-lg">🔒 معتمد</span>`}
+                                <button onclick="deleteOrder(${o.id_web_order})" class="bg-red-500 text-white text-xs px-2 py-1.5 rounded-lg hover:bg-red-600 cursor-pointer">❌</button>
+                            </td>
+                        </tr>`;
+                    });
+                }
+                document.getElementById("ordersTableBody").innerHTML = html;
+            } catch(err) {
+                alert("خطأ أثناء جلب الطلبات: " + err.message);
             }
-            document.getElementById("ordersTableBody").innerHTML = html;
         }
 
-        // 5. دالة تجهيز ومعاينة الفاتورة للمشاركة والطباعة
-        async function previewAndPrepareInvoice(orderId, name, phone, address, totalAmount, dateStr) {
+        // 6. تجهيز ومعاينة الفاتورة وتضمين الشحن بوضوح
+        async function previewAndPrepareInvoice(orderId) {
+            const order = loadedOrdersCache.find(item => item.id_web_order === orderId);
+            if (!order) return alert("تعذر العثور على معلومات الطلب");
+
             const { data: items, error } = await supabaseClient
                 .from("web_order_details")
                 .select("*")
@@ -247,23 +288,28 @@
             if (error || !items) return alert("فشل جلب تفاصيل المنتجات: " + error.message);
 
             const money = v => Number(v || 0).toLocaleString();
+            
+            let shippingCost = getShippingCostForAddress(order.client_address);
+            let productsTotal = Number(order.total_amount || 0);
+            let grandTotal = productsTotal + shippingCost;
+
             let rows = "";
-            let shareText = `🧾 فاتورة طلب أونلاين رقم: #${orderId}\n👤 العميل: ${name}\n📞 الهاتف: ${phone}\n📍 العنوان/المنطقة: ${address}\n\n📦 المنتجات المطلوبة:\n`;
+            let shareText = `🧾 فاتورة طلب أونلاين رقم: #${orderId}\n👤 العميل: ${order.client_name}\n📞 الهاتف: ${order.client_phone}\n📍 العنوان: ${order.client_address}\n\n📦 المنتجات المطلوبة:\n`;
 
             items.forEach(i => {
                 rows += `
                 <tr>
-                    <td style="padding:6px; border-bottom:1px solid #eee; text-align:right;">${i.product_name}</td>
+                    <td style="padding:6px; border-bottom:1px solid #eee; text-align:right;">${escapeHtml(i.product_name)}</td>
                     <td style="text-align:center; border-bottom:1px solid #eee;">${i.qte}</td>
                     <td style="text-align:center; border-bottom:1px solid #eee;">${money(i.price)}</td>
                     <td style="text-align:center; font-weight:bold; color:#2563eb; border-bottom:1px solid #eee;">${money(i.amount)}</td>
                 </tr>`;
-                shareText += `- ${i.product_name} (الكمية: ${i.qte} | السعر: ${money(i.price)} ج.م)\n`;
+                shareText += `- ${i.product_name} (الكمية: ${i.qte} | السعر: ${money(i.price)} ج.س)\n`;
             });
 
-            shareText += `\n💵 الإجمالي الكلي: ${money(totalAmount)} ج.م\n🌹 شكراً لتعاملك مع مؤسسة علاء الدين!`;
+            shareText += `\n💵 مجموع المنتجات: ${money(productsTotal)} ج.س\n🚚 رسوم الشحن والتوصيل: ${money(shippingCost)} ج.س\n💰 الإجمالي النهائي: ${money(grandTotal)} ج.س\n🌹 شكراً لتعاملك مع مؤسسة علاء الدين!`;
 
-            const dateObj = new Date(dateStr);
+            const dateObj = new Date(order.date_created);
             const formattedDate = dateObj.toLocaleDateString("ar-EG");
 
             const invoiceHTML = `
@@ -277,9 +323,9 @@
                         <span><b>رقم الطلب:</b> #${orderId}</span>
                         <span>${formattedDate}</span>
                     </div>
-                    <div>👤 <b>العميل :</b> ${name}</div>
-                    <div>📞 <b>الهاتف :</b> ${phone}</div>
-                    <div style="font-size:10px; color:#555;">📍 <b>العنوان :</b> ${address}</div>
+                    <div>👤 <b>العميل :</b> ${escapeHtml(order.client_name)}</div>
+                    <div>📞 <b>الهاتف :</b> ${escapeHtml(order.client_phone)}</div>
+                    <div style="font-size:10px; color:#555;">📍 <b>العنوان :</b> ${escapeHtml(order.client_address)}</div>
                 </div>
                 <table style="width:100%; border-collapse:collapse; font-size:10px;">
                     <thead>
@@ -292,10 +338,18 @@
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
-                <div style="padding:8px; background:#f8fafc; border-top:1px solid #ddd;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:6px; border-radius:6px; font-size:13px; font-weight:bold;">
-                        <span>الإجمالي (شاملاً الشحن المطبق)</span>
-                        <span>${money(totalAmount)} ج.م</span>
+                <div style="padding:8px; background:#f8fafc; border-top:1px solid #ddd; font-size:11px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>مجموع المنتجات:</span>
+                        <span>${money(productsTotal)} ج.س</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px; color:#d97706; font-weight:bold;">
+                        <span>🚚 رسوم الشحن للمنطقة:</span>
+                        <span>${money(shippingCost)} ج.س</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:#2563eb; color:#fff; padding:6px; border-radius:6px; font-size:12px; font-weight:bold;">
+                        <span>الإجمالي الكلي النهائي</span>
+                        <span>${money(grandTotal)} ج.س</span>
                     </div>
                 </div>
                 <div style="padding:8px; text-align:center; font-size:10px; color:#666; border-top:1px dashed #ccc;">
@@ -305,6 +359,7 @@
 
             document.getElementById("invoicePreviewContent").innerHTML = invoiceHTML;
 
+            // إعداد أزرار التفاعل
             document.getElementById("btnPrintAction").onclick = function() {
                 const w = window.open("", "_blank");
                 w.document.write(`<html><head><title>طباعة فاتورة</title><style>body{direction:rtl; font-family:Arial; display:flex; justify-content:center; padding:20px;}</style></head><body>${document.getElementById("invoicePreviewContent").innerHTML}<script>window.onload=function(){window.print(); window.close();}<\/script></body></html>`);
@@ -312,14 +367,14 @@
             };
 
             document.getElementById("btnWhatsappAction").onclick = function() {
-                let cleanPhone = phone.replace(/\D/g, ''); 
-                if (cleanPhone.startsWith('01')) { cleanPhone = '20' + cleanPhone.substring(1); }
+                let cleanPhone = String(order.client_phone).replace(/\D/g, ''); 
+                if (cleanPhone.startsWith('01')) { cleanPhone = '249' + cleanPhone.substring(1); } // رمز السودان الدولي 249
                 window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(shareText)}`, '_blank');
             };
 
             document.getElementById("btnCopyAction").onclick = function() {
                 navigator.clipboard.writeText(shareText);
-                alert("📋 تم نسخ نص تفاصيل الفاتورة بنجاح!");
+                alert("📋 تم نسخ نص تفاصيل الفاتورة وتكاليف الشحن بنجاح!");
             };
 
             const modal = document.getElementById("invoiceModal");
@@ -333,13 +388,21 @@
             modal.classList.remove("flex");
         }
 
-        // 6. دالة اعتماد الطلب وخصم المخزون
-        async function approveAndDeductStock(webOrderId, name, phone, address, totalAmount) {
-            if (!confirm(`هل أنت متأكد من اعتماد الطلب #${webOrderId}؟ سيتم خصم الكميات من المخزون وتوليد فاتورة POS.`)) return;
+        // 7. اعتماد الطلب وخصم المخزون مع حفظ التكلفة الشاملة للشحن
+        async function approveAndDeductStock(webOrderId) {
+            const order = loadedOrdersCache.find(item => item.id_web_order === webOrderId);
+            if (!order) return alert("تعذر العثور على معلومات الطلب");
+
+            let shippingCost = getShippingCostForAddress(order.client_address);
+            let finalGrandTotal = Number(order.total_amount || 0) + shippingCost;
+
+            if (!confirm(`هل أنت متأكد من اعتماد الطلب #${webOrderId}؟\nإجمالي المنتجات: ${order.total_amount} ج.س\nرسوم الشحن: ${shippingCost} ج.س\nالإجمالي النهائي: ${finalGrandTotal} ج.س`)) return;
 
             const btn = document.getElementById(`btn-approve-${webOrderId}`);
-            btn.disabled = true;
-            btn.innerText = "جاري الاعتماد...";
+            if(btn) {
+                btn.disabled = true;
+                btn.innerText = "جاري الاعتماد...";
+            }
 
             try {
                 const currentDateTime = new Date().toISOString();
@@ -349,6 +412,7 @@
                 const { data: customerData } = await supabaseClient.from("customers").select("id_customer").limit(1);
                 let fallbackCustomerId = (customerData && customerData.length > 0) ? customerData[0].id_customer : 1;
 
+                // إنشاء الفاتورة الأساسية
                 const { data: orderData, error: orderError } = await supabaseClient.from("orders_o").insert([{
                     customer_id: fallbackCustomerId, date_order: currentDateTime, pay_method: "cash", seal_man: "اعتماد المتجر الإلكتروني"
                 }]).select();
@@ -356,14 +420,17 @@
                 if (orderError) throw orderError;
                 const mainOrderId = orderData[0].id_order;
 
+                // حفظ الأصناف مع إضافة بيان الشحن
                 for (let item of items) {
                     await supabaseClient.from("orders_details").insert([{
                         id_product: Number(item.id_product), id_order: Number(mainOrderId), qte: Number(item.qte),
-                        price: Number(item.price), descount: 0, amount: Number(item.amount), total_amount: Number(totalAmount),
+                        price: Number(item.price), descount: 0, amount: Number(item.amount), total_amount: finalGrandTotal,
                         id_customer: fallbackCustomerId, date_order: currentDateTime, pay_method: "cash",
-                        description_order: `فاتورة متجر معتمدة - منطقة: ${address}`, seal_man: "المتجر الإلكتروني", first_name: name
+                        description_order: `فاتورة متجر معتمدة - المنطقة: ${order.client_address} (رسوم الشحن: ${shippingCost} ج.س)`, 
+                        seal_man: "المتجر الإلكتروني", first_name: order.client_name
                     }]);
 
+                    // خصم المخزون
                     const { data: prodData } = await supabaseClient.from("products").select("qte_in_stock").eq("id_product", item.id_product).single();
                     if (prodData) {
                         let newStock = (Number(prodData.qte_in_stock) || 0) - Number(item.qte);
@@ -372,25 +439,43 @@
                 }
 
                 await supabaseClient.from("web_orders").update({ order_status: "تم الاعتماد والتوصيل" }).eq("id_web_order", webOrderId);
-                alert(`🎉 تم الاعتماد وتحديث المخزون وفاتورة الـ POS رقم: ${mainOrderId}`);
+                alert(`🎉 تم الاعتماد بنجاح وتحديث المخزون!\nرقم الفاتورة: ${mainOrderId}\nالإجمالي شامل الشحن: ${finalGrandTotal} ج.س`);
                 loadWebOrders();
             } catch (error) {
                 alert("حدث خطأ أثناء عملية الاعتماد: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "✔️ اعتماد";
+                if(btn) {
+                    btn.disabled = false;
+                    btn.innerText = "✔️ اعتماد";
+                }
             }
         }
 
-        // 7. دالة حذف الطلب
+        // 8. حذف الطلب
         async function deleteOrder(id) {
             if (!confirm("هل أنت متأكد من حذف الطلب نهائياً؟")) return;
-            await supabaseClient.from("web_orders").delete().eq("id_web_order", id);
-            loadWebOrders();
+            try {
+                const { error } = await supabaseClient.from("web_orders").delete().eq("id_web_order", id);
+                if (error) throw error;
+                loadWebOrders();
+            } catch(err) {
+                alert("تعذر حذف الطلب: " + err.message);
+            }
         }
 
-        // 8. تشغيل الجلب التلقائي للبيانات عند فتح الصفحة
-        window.onload = function() {
-            loadShippingRegions();
+        // دالة الوقاية من XSS
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 9. التشغيل التلقائي عند بداية الصفحة
+        window.onload = async function() {
+            await loadShippingRegions();
             loadWebOrders();
         };
     </script>
